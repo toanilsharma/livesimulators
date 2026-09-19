@@ -14,12 +14,9 @@ export interface LabItem {
   deploymentType: string;
 }
 
-const isProd = typeof import.meta !== 'undefined' && import.meta.env ? Boolean(import.meta.env.PROD) : false;
-
 /**
  * Single source of truth for all Industrial Labs.
- * In dev: points to Netlify deployments with external=true (opens in new tab).
- * In prod: points to live subdomains on livesimulators.com.
+ * Points directly to live, active Netlify cloud deployments with external=true (opens in new tab).
  */
 export const LABS: LabItem[] = [
   {
@@ -30,10 +27,8 @@ export const LABS: LabItem[] = [
     accent: '#06b6d4', // Cyan
     modules: 16,
     shot: '/assets/labs/power-electronics.png',
-    external: !isProd,
-    url: isProd 
-      ? 'https://powerelectronics.livesimulators.com' 
-      : 'https://powerelectronicslab.netlify.app',
+    external: true,
+    url: 'https://powerelectronicslab.netlify.app',
     sectors: ['Renewable Energy', 'EV Powertrains', 'Grid Inverters', 'Industrial VFDs'],
     capabilities: [
       'High-frequency SiC/GaN semiconductor switching dynamics',
@@ -51,10 +46,8 @@ export const LABS: LabItem[] = [
     accent: '#3b82f6', // Blue
     modules: 14,
     shot: '/assets/labs/power-systems.png',
-    external: !isProd,
-    url: isProd 
-      ? 'https://powersystems.livesimulators.com' 
-      : 'https://powersystemlab.netlify.app',
+    external: true,
+    url: 'https://powersystemlab.netlify.app',
     sectors: ['Transmission Grids', 'Substation EPCs', 'Renewable Microgrids', 'Utility Operations'],
     capabilities: [
       'Multi-bus Newton-Raphson & Gauss-Seidel power flow',
@@ -72,10 +65,8 @@ export const LABS: LabItem[] = [
     accent: '#10b981', // Emerald
     modules: 12,
     shot: '/assets/labs/safeops-ups.png',
-    external: !isProd,
-    url: isProd 
-      ? 'https://ups.livesimulators.com' 
-      : 'https://upslab.netlify.app',
+    external: true,
+    url: 'https://upslab.netlify.app',
     sectors: ['Tier IV Data Centers', 'Semiconductor Fabs', 'Hospital ICU Backup', 'Telecom Hubs'],
     capabilities: [
       'Online double-conversion VFI static bypass zero-transfer switching',
@@ -93,10 +84,8 @@ export const LABS: LabItem[] = [
     accent: '#f59e0b', // Amber
     modules: 10,
     shot: '/assets/labs/electrolive.png',
-    external: !isProd,
-    url: isProd 
-      ? 'https://electrical-safety.livesimulators.com' 
-      : 'https://electrolive.netlify.app',
+    external: true,
+    url: 'https://electrolive.netlify.app',
     sectors: ['High-Voltage Operations', 'Mine Sites & Heavy EPC', 'OSHA & EHS Compliance', 'Industrial Plants'],
     capabilities: [
       'IEEE 1584-2018 arc-flash incident energy (cal/cm²) calculation',
