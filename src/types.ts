@@ -90,6 +90,7 @@ export type AppRoute =
   | { view: 'home' }
   | { view: 'department'; departmentId: DisciplineId }
   | { view: 'simulator'; simulatorId: string }
+  | { view: 'lab'; labId: string }
   | { view: 'about' }
   | { view: 'contact' }
   | { view: 'cookie-policy' }

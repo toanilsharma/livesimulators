@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } from '../src/data/simulators';
+import { LABS } from '../src/config/labs';
 import { AppRoute, DisciplineId, SimulatorItem } from '../src/types';
 import { getSeoMetadata } from '../src/utils/seo';
 import { routeToPath, SITE_URL } from '../src/utils/routes';
@@ -301,6 +302,44 @@ function renderContentForRoute(route: AppRoute): string {
       `;
     }
 
+    case 'lab': {
+      const lab = LABS.find((l) => l.id === route.labId) || LABS[0];
+      const capabilitiesHtml = lab.capabilities.map((c) => `<li style="margin-bottom:0.5rem; color:#cbd5e1;">${escapeHtml(c)}</li>`).join('');
+      const sectorsHtml = lab.sectors.map((s) => `<span style="display:inline-block; margin-right:0.5rem; margin-bottom:0.5rem; padding:0.25rem 0.75rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem; color:#38bdf8; font-size:0.75rem;">${escapeHtml(s)}</span>`).join('');
+
+      return `
+      <article style="max-width:72rem; margin:0 auto; padding:2rem 1.5rem 4rem;">
+        <nav style="font-family:monospace; font-size:0.8rem; color:#64748b; margin-bottom:1.5rem;">
+          <a href="/" style="color:#38bdf8; text-decoration:none;">Home</a> / 
+          <a href="/#industrial-labs" style="color:#38bdf8; text-decoration:none;">Industrial Labs</a> / 
+          <span style="color:#ffffff;">${escapeHtml(lab.name)}</span>
+        </nav>
+
+        <header style="margin-bottom:2.5rem; padding:2.5rem; background:#0b1324; border:1px solid #1e293b; border-radius:1rem;">
+          <div style="font-family:monospace; font-size:0.75rem; color:#38bdf8; margin-bottom:0.75rem;">
+            ${escapeHtml(lab.deploymentType)} • ${escapeHtml(lab.standardBadge)} • ${lab.modules} INTERACTIVE MODULES
+          </div>
+          <h1 style="font-size:2.5rem; font-weight:900; color:#ffffff; margin-bottom:1rem;">
+            ${escapeHtml(lab.name)}
+          </h1>
+          <p style="font-size:1.125rem; color:#cbd5e1; max-width:54rem; line-height:1.7;">
+            ${escapeHtml(lab.tagline)}
+          </p>
+        </header>
+
+        <section style="margin-bottom:2.5rem; padding:2rem; background:#0f172a; border:1px solid #1e293b; border-radius:1rem;">
+          <h2 style="font-size:1.5rem; font-weight:800; color:#ffffff; margin-bottom:1rem;">Primary Industry Sectors</h2>
+          <div>${sectorsHtml}</div>
+        </section>
+
+        <section style="margin-bottom:2.5rem; padding:2rem; background:#0f172a; border:1px solid #1e293b; border-radius:1rem;">
+          <h2 style="font-size:1.5rem; font-weight:800; color:#ffffff; margin-bottom:1rem;">Core Capabilities & Analytical Solvers</h2>
+          <ul style="list-style-type:disc; padding-left:1.5rem;">${capabilitiesHtml}</ul>
+        </section>
+      </article>
+      `;
+    }
+
     case 'not-found': {
       return `
       <div style="max-width:48rem; margin:0 auto; padding:5rem 1.5rem; text-align:center; font-family:sans-serif;">
@@ -352,6 +391,7 @@ async function runPrerender() {
     { view: 'terms' },
     ...DISCIPLINES.map((d) => ({ view: 'department' as const, departmentId: d.id })),
     ...ALL_AVAILABLE_SIMULATORS.map((s) => ({ view: 'simulator' as const, simulatorId: s.id })),
+    ...LABS.map((l) => ({ view: 'lab' as const, labId: l.id })),
   ];
 
   console.log(`📦 Prerendering ${routesToPrerender.length} distinct routes...`);
@@ -470,7 +510,7 @@ async function runPrerender() {
     if (p === '/') {
       freq = 'daily';
       prio = '1.0';
-    } else if (p.startsWith('/department/') || p.startsWith('/simulator/')) {
+    } else if (p.startsWith('/department/') || p.startsWith('/simulator/') || p.startsWith('/lab/')) {
       freq = 'weekly';
       prio = '0.9';
     } else if (p === '/about' || p === '/contact') {

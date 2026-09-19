@@ -4,6 +4,7 @@ import { Hero } from './components/Hero';
 import { HomeDepartmentsHub } from './components/HomeDepartmentsHub';
 import { DepartmentPage } from './components/DepartmentPage';
 import { DedicatedSimulatorPage } from './components/DedicatedSimulatorPage';
+import { DedicatedLabPage } from './components/DedicatedLabPage';
 import { WhyInteractive } from './components/WhyInteractive';
 import { HowItWorks } from './components/HowItWorks';
 import { AudiencePillars } from './components/AudiencePillars';
@@ -212,6 +213,16 @@ export default function App() {
             onBackToDepartment={(deptId) => handleSelectDepartment(deptId)}
             onBackToHome={handleBackToHome}
             onSelectSimulator={handleLaunchSimulator}
+          />
+        </main>
+      )}
+
+      {/* Dedicated Full-Scale Industrial Lab Workbench */}
+      {route.view === 'lab' && (
+        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+          <DedicatedLabPage
+            labId={route.labId}
+            onBack={handleBackToHome}
           />
         </main>
       )}

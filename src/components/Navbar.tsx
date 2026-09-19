@@ -12,6 +12,7 @@ import {
   FlaskConical
 } from 'lucide-react';
 import { LABS, trackLabLaunch } from '../config/labs';
+import { navigateTo } from '../utils/routes';
 
 interface NavbarProps {
   onOpenSearch: () => void;
@@ -179,9 +180,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                       href={lab.url}
                       target={lab.external ? '_blank' : undefined}
                       rel={lab.external ? 'noopener noreferrer' : undefined}
-                      onClick={() => {
+                      onClick={(e) => {
                         setLabsDropdownOpen(false);
                         trackLabLaunch(lab.id, 'navbar_dropdown');
+                        if (!lab.external) {
+                          e.preventDefault();
+                          navigateTo(lab.url);
+                        }
                       }}
                       className="block p-2.5 rounded-xl hover:bg-slate-800/70 border border-transparent hover:border-slate-700/60 transition-colors group"
                     >
@@ -359,9 +364,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   href={lab.url}
                   target={lab.external ? '_blank' : undefined}
                   rel={lab.external ? 'noopener noreferrer' : undefined}
-                  onClick={() => {
+                  onClick={(e) => {
                     setMobileMenuOpen(false);
                     trackLabLaunch(lab.id, 'navbar_dropdown');
+                    if (!lab.external) {
+                      e.preventDefault();
+                      navigateTo(lab.url);
+                    }
                   }}
                   className="w-full min-h-[48px] flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-medium transition-colors"
                 >

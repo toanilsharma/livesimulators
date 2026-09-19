@@ -1,5 +1,6 @@
 import { AppRoute, DisciplineId } from '../types';
 import { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
+import { LABS } from '../config/labs';
 
 export const SITE_URL = 'https://livesimulators.com';
 
@@ -7,7 +8,7 @@ export const SITE_URL = 'https://livesimulators.com';
  * Converts a browser URL pathname (and optional legacy hash) to an AppRoute object.
  */
 export function parsePathToRoute(pathname: string, hash?: string): AppRoute {
-  // Check for legacy hash routes first (e.g. #/about, #/simulator/rlc-resonance)
+  // Check for legacy hash routes first (e.g. #/about, #/simulator/rlc-resonance, #/lab/power-electronics-lab)
   if (hash && hash.startsWith('#/')) {
     const hashPath = hash.slice(1); // remove '#'
     return parsePathToRoute(hashPath);
@@ -66,6 +67,16 @@ export function parsePathToRoute(pathname: string, hash?: string): AppRoute {
     return { view: 'not-found', attemptedPath: cleanPath };
   }
 
+  // Match /lab/:labId
+  const labMatch = cleanPath.match(/^\/lab\/([a-zA-Z0-9_-]+)$/);
+  if (labMatch) {
+    const labId = labMatch[1];
+    if (LABS.some((l) => l.id === labId)) {
+      return { view: 'lab', labId: labId };
+    }
+    return { view: 'not-found', attemptedPath: cleanPath };
+  }
+
   // Return branded 404 for any unknown route
   return { view: 'not-found', attemptedPath: cleanPath };
 }
@@ -93,6 +104,8 @@ export function routeToPath(route: AppRoute): string {
       return `/department/${route.departmentId}`;
     case 'simulator':
       return `/simulator/${route.simulatorId}`;
+    case 'lab':
+      return `/lab/${route.labId}`;
     case 'not-found':
       return route.attemptedPath || '/404';
     default:

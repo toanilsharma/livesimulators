@@ -1,5 +1,6 @@
 import { AppRoute, DisciplineId, SimulatorItem } from '../types';
 import { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
+import { LABS } from '../config/labs';
 import { routeToPath, SITE_URL } from './routes';
 
 export interface RouteSeoMetadata {
@@ -512,6 +513,98 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           breadcrumbSchema,
           learningResourceSchema,
           techArticleSchema,
+        ],
+      };
+    }
+
+    case 'lab': {
+      const lab = LABS.find((l) => l.id === route.labId) || LABS[0];
+      const canonicalUrl = `${SITE_URL}/lab/${lab.id}`;
+      const labOgImage = `${SITE_URL}${lab.shot}`;
+
+      const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Industrial Labs Pro', item: `${SITE_URL}/#industrial-labs` },
+          { '@type': 'ListItem', position: 3, name: lab.name, item: canonicalUrl },
+        ],
+      };
+
+      const softwareAppSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        '@id': `${canonicalUrl}#software-application`,
+        name: lab.name,
+        description: lab.tagline,
+        applicationCategory: 'EducationalApplication',
+        operatingSystem: 'All Modern Web Browsers',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        author: {
+          '@type': 'Person',
+          name: 'Anil Sharma',
+          url: 'https://www.linkedin.com/in/toanilsharma/',
+        },
+        publisher: {
+          '@id': `${SITE_URL}/#organization`,
+        },
+        url: canonicalUrl,
+      };
+
+      const learningResourceSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'LearningResource',
+        '@id': `${canonicalUrl}#learning-resource`,
+        name: lab.name,
+        description: lab.tagline,
+        learningResourceType: 'Industrial Simulation Suite',
+        educationalLevel: 'Professional / Graduate Engineering',
+        educationalUse: ['Industrial Simulation', 'Professional Engineering Training', 'Laboratory Workbench'],
+        about: [
+          ...lab.sectors,
+          lab.standardBadge,
+        ],
+        teaches: lab.capabilities.join('. '),
+        author: {
+          '@type': 'Person',
+          name: 'Anil Sharma',
+          url: 'https://www.linkedin.com/in/toanilsharma/',
+        },
+        publisher: {
+          '@id': `${SITE_URL}/#organization`,
+        },
+        isAccessibleForFree: true,
+        inLanguage: 'en',
+        url: canonicalUrl,
+      };
+
+      return {
+        title: `${lab.name} - Interactive Industrial Engineering Lab | LiveSimulators`,
+        description: `${lab.name}: ${lab.tagline} Compliant with ${lab.standardBadge}. Includes ${lab.modules} interactive modules for ${lab.sectors.join(', ')}.`,
+        canonicalUrl,
+        ogType: 'website',
+        ogImage: labOgImage,
+        keywords: [
+          lab.name,
+          ...lab.sectors,
+          ...lab.capabilities,
+          lab.standardBadge,
+          'industrial lab',
+          'engineering workbench',
+          'power simulation',
+          'IEEE standards',
+        ],
+        jsonLd: [
+          ORGANIZATION_SCHEMA,
+          WEBSITE_SCHEMA,
+          breadcrumbSchema,
+          softwareAppSchema,
+          learningResourceSchema,
         ],
       };
     }

@@ -15,6 +15,7 @@ import {
   Award
 } from 'lucide-react';
 import { LABS, trackLabLaunch } from '../config/labs';
+import { navigateTo } from '../utils/routes';
 
 export const IndustrialLabsSection: React.FC = () => {
   return (
@@ -204,7 +205,15 @@ export const IndustrialLabsSection: React.FC = () => {
                     href={lab.url}
                     target={lab.external ? '_blank' : undefined}
                     rel={lab.external ? 'noopener noreferrer' : undefined}
-                    onClick={() => trackLabLaunch(lab.id, 'home_card')}
+                    onClick={(e) => {
+                      if (!lab.external) {
+                        e.preventDefault();
+                        trackLabLaunch(lab.id, 'home_card');
+                        navigateTo(lab.url);
+                      } else {
+                        trackLabLaunch(lab.id, 'home_card');
+                      }
+                    }}
                     className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-display font-extrabold transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-95"
                     style={{
                       backgroundColor: lab.accent,
