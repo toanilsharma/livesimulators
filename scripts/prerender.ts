@@ -334,7 +334,12 @@ async function runPrerender() {
     process.exit(1);
   }
 
-  const templateHtml = fs.readFileSync(templatePath, 'utf8');
+  let templateHtml = fs.readFileSync(templatePath, 'utf8');
+  // Clean any existing injected fallback content or noscript to ensure a clean base template
+  templateHtml = templateHtml.replace(
+    /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
+    '<div id="root"></div>'
+  );
 
   // Define all routes to prerender
   const routesToPrerender: AppRoute[] = [
@@ -416,8 +421,13 @@ async function runPrerender() {
       );
     }
 
-    // 6. Inject Pre-rendered Semantic HTML into root
-    html = html.replace('<div id="root"></div>', `<div id="root">${contentHtml}</div>`);
+    // 6. Inject Pre-rendered Semantic HTML for search crawlers inside <noscript>
+    // Keeping <div id="root"></div> empty prevents the browser from flashing raw fallback HTML
+    // to real users while the React client-side bundle is downloading.
+    html = html.replace(
+      /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
+      `<div id="root"></div>\n    <noscript id="seo-fallback">\n${contentHtml}\n    </noscript>`
+    );
 
     // 7. Output directory and file
     let targetFile: string;
@@ -445,7 +455,10 @@ async function runPrerender() {
   notFoundHtml = setMetaTag(notFoundHtml, 'property', 'og:image', notFoundMeta.ogImage);
   notFoundHtml = setMetaTag(notFoundHtml, 'name', 'twitter:title', notFoundMeta.title);
   notFoundHtml = setMetaTag(notFoundHtml, 'name', 'twitter:image', notFoundMeta.ogImage);
-  notFoundHtml = notFoundHtml.replace('<div id="root"></div>', `<div id="root">${notFoundContent}</div>`);
+  notFoundHtml = notFoundHtml.replace(
+    /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
+    `<div id="root"></div>\n    <noscript id="seo-fallback">\n${notFoundContent}\n    </noscript>`
+  );
   fs.writeFileSync(path.join(distDir, '404.html'), notFoundHtml, 'utf8');
 
   // Build-generated sitemap.xml with today's lastmod for all routes
