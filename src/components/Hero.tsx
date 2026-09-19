@@ -2099,6 +2099,9 @@ export const Hero: React.FC<HeroProps> = ({
 
             {/* Main Headline */}
             <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-[1.14]">
+              <span className="block text-cyan-400 text-xs sm:text-sm lg:text-base font-mono font-semibold tracking-wider uppercase mb-3">
+                LiveSimulators • Interactive Engineering Simulations
+              </span>
               Don't Just Read <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-300">
                 Engineering.
@@ -2107,8 +2110,8 @@ export const Hero: React.FC<HeroProps> = ({
             </h1>
 
             <p className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed">
-              A high-fidelity multi-disciplinary simulation laboratory. Experience living physics,
-              transient dynamics, and closed-loop control in real time.
+              Explore interactive engineering simulations and virtual physics laboratories. Experience living differential formulations,
+              transient dynamics, and real-time control directly in your browser.
             </p>
 
             {/* Department Navigation Hub */}

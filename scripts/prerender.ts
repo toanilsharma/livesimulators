@@ -165,10 +165,11 @@ function renderContentForRoute(route: AppRoute): string {
       <header style="max-width:72rem; margin:0 auto; padding:3rem 1.5rem;">
         <span style="font-family:monospace; font-size:0.75rem; color:#38bdf8; letter-spacing:0.1em;">SOLVER KERNEL ACTIVE • FLOAT64 REAL-TIME NUMERICAL RIGOR</span>
         <h1 style="font-size:2.5rem; font-weight:900; color:#ffffff; margin:1rem 0;">
-          LiveSimulators: Don't Just Read Engineering. See It Happen.
+          <span style="display:block; font-size:1rem; color:#38bdf8; font-family:monospace; margin-bottom:0.5rem; letter-spacing:0.05em;">LIVESIMULATORS • INTERACTIVE ENGINEERING SIMULATIONS</span>
+          Don't Just Read Engineering. See It Happen.
         </h1>
         <p style="font-size:1.125rem; color:#cbd5e1; max-width:48rem; line-height:1.7;">
-          Interactive engineering simulations that turn abstract differential formulations into intuitive, real-time physical behaviors for undergraduate students, university professors, and practicing engineers.
+          Free interactive engineering simulations and virtual laboratories. Don't just read engineering — see it happen with real-time physics in your browser across electrical, mechanical, civil, and control disciplines.
         </p>
       </header>
 
@@ -612,12 +613,12 @@ async function runPrerender() {
       );
     }
 
-    // 6. Inject Pre-rendered Semantic HTML for search crawlers inside <noscript>
-    // Keeping <div id="root"></div> empty prevents the browser from flashing raw fallback HTML
-    // to real users while the React client-side bundle is downloading.
+    // 6. Inject Pre-rendered Semantic HTML directly inside <div id="root">
+    // Ensures strictly ONE canonical <h1> tag per page with zero duplicate H1 warnings.
+    // When React loads, ReactDOM.createRoot cleanly replaces this initial HTML shell.
     html = html.replace(
       /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
-      `<div id="root"></div>\n    <noscript id="seo-fallback">\n${contentHtml}\n    </noscript>`
+      `<div id="root">\n${contentHtml}\n    </div>`
     );
 
     // 7. Output directory and file
@@ -648,7 +649,7 @@ async function runPrerender() {
   notFoundHtml = setMetaTag(notFoundHtml, 'name', 'twitter:image', notFoundMeta.ogImage);
   notFoundHtml = notFoundHtml.replace(
     /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
-    `<div id="root"></div>\n    <noscript id="seo-fallback">\n${notFoundContent}\n    </noscript>`
+    `<div id="root">\n${notFoundContent}\n    </div>`
   );
   fs.writeFileSync(path.join(distDir, '404.html'), notFoundHtml, 'utf8');
 

@@ -122,7 +122,7 @@ export const IndustrialLabsSection: React.FC = () => {
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-950 border-b border-slate-800/80">
                 <img
                   src={lab.shot}
-                  alt={`${lab.name} Screenshot`}
+                  alt={`${lab.name} - Interactive Engineering Simulation Lab`}
                   className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
                   loading="lazy"
                 />

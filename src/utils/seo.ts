@@ -24,17 +24,36 @@ export interface RouteConfig {
 }
 
 /**
+ * Ensures title tags are strictly 60 characters or fewer for optimal search engine display without truncation.
+ */
+export function formatSeoTitle(mainText: string, suffix = 'LiveSimulators'): string {
+  const brandSuffix = ` | ${suffix}`;
+  const maxLen = 60;
+  const targetMainLen = maxLen - brandSuffix.length;
+
+  if (mainText.length <= targetMainLen) {
+    return `${mainText}${brandSuffix}`;
+  }
+
+  const trimmed = mainText.slice(0, targetMainLen).trim();
+  const lastSpace = trimmed.lastIndexOf(' ');
+  const safeText = lastSpace > 18 ? trimmed.slice(0, lastSpace) : trimmed;
+  return `${safeText}${brandSuffix}`;
+}
+
+/**
  * Central Routes Configuration:
  * Defines unique title, meta description, keywords, Open Graph type, and sitemap parameters for every route.
  */
 export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   '/': {
     path: '/',
-    title: 'LiveSimulators - Interactive Engineering Learning Platform | First-Principles Simulations',
-    description: "Don't just read engineering. See it happen. Interactive real-time physics and engineering simulations in electrical, mechanical, control, and civil disciplines.",
+    title: 'LiveSimulators - Interactive Engineering Simulations',
+    description: "Free interactive engineering simulations and virtual laboratories. Don't just read engineering — see it happen with real-time physics in your browser.",
     keywords: [
       'engineering simulations',
       'interactive engineering',
+      'virtual engineering lab',
       'RLC resonance simulator',
       'PID controller simulator',
       'RK4 physics solver',
@@ -48,7 +67,7 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   },
   '/about': {
     path: '/about',
-    title: 'About Us - LiveSimulators | The Numerical Pedagogy Revolution',
+    title: 'About Us - LiveSimulators Engineering Platform',
     description: 'Learn about LiveSimulators mission, our 4th-Order Runge-Kutta (RK4) computational kernel, standards referencing (IEEE, ASME), and founder Anil Sharma.',
     keywords: ['about livesimulators', 'numerical pedagogy', 'engineering education', 'Anil Sharma founder', 'RK4 simulation engine'],
     ogType: 'article',
@@ -57,7 +76,7 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   },
   '/contact': {
     path: '/contact',
-    title: 'Contact Engineering Team - LiveSimulators | Anil Sharma',
+    title: 'Contact Engineering Team - LiveSimulators',
     description: 'Direct communication desk for simulator suggestions, analytical equation inquiries, and academic collaborations with founder Anil Sharma (0808miracle@gmail.com).',
     keywords: ['contact livesimulators', 'Anil Sharma email', 'engineering simulator request', 'academic collaboration'],
     ogType: 'website',
@@ -66,7 +85,7 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   },
   '/cookie-policy': {
     path: '/cookie-policy',
-    title: 'Cookie & Telemetry Policy - LiveSimulators | GDPR & ePrivacy',
+    title: 'Cookie & Telemetry Policy - LiveSimulators',
     description: 'Review our cookie disclosures, Google Analytics (G-WX8V8HH57V) telemetry details, and customize your privacy preferences using our interactive manager.',
     keywords: ['cookie policy', 'privacy preferences', 'Google tag G-WX8V8HH57V', 'ePrivacy compliance'],
     ogType: 'website',
@@ -75,7 +94,7 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   },
   '/disclaimer': {
     path: '/disclaimer',
-    title: 'Engineering Simulation Disclaimer - LiveSimulators | Numerical Idealizations',
+    title: 'Simulation Disclaimer - LiveSimulators',
     description: 'Important legal and technical notice regarding simulation approximations, boundary conditions, and the requirement for licensed Professional Engineer (PE) validation.',
     keywords: ['engineering disclaimer', 'numerical approximation', 'PE validation', 'limitation of liability'],
     ogType: 'website',
@@ -84,7 +103,7 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   },
   '/privacy-policy': {
     path: '/privacy-policy',
-    title: 'Privacy Policy - LiveSimulators | GDPR & CCPA Compliance',
+    title: 'Privacy Policy - LiveSimulators',
     description: 'Transparent privacy policy detailing zero personal data sales, client-side computing architecture, user statutory rights, and data protection officer Anil Sharma.',
     keywords: ['privacy policy', 'GDPR compliance', 'CCPA CPRA', 'Anil Sharma data protection'],
     ogType: 'website',
@@ -93,7 +112,7 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   },
   '/terms': {
     path: '/terms',
-    title: 'Terms of Service - LiveSimulators | Educational Open Access',
+    title: 'Terms of Service - LiveSimulators',
     description: 'Terms of service and acceptable use agreement governing free educational access, classroom presentation rights, and intellectual property.',
     keywords: ['terms of service', 'educational access license', 'acceptable use', 'engineering simulation terms'],
     ogType: 'website',
@@ -393,8 +412,9 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
 
     case 'department': {
       const dept = DISCIPLINES.find((d) => d.id === route.departmentId) || DISCIPLINES[0];
+      const shortDept = dept.name.split('(')[0].trim();
       return {
-        title: `${dept.name} Simulators - Interactive Engineering Labs | LiveSimulators`,
+        title: formatSeoTitle(`${shortDept} Simulators`),
         description: `Explore interactive ${dept.name} simulations. ${dept.description.slice(0, 140)}... Run real-time differential equation solutions online.`,
         canonicalUrl,
         ogType: 'website',
@@ -486,9 +506,14 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         headline: `${sim.title} - Mathematical Formulation & Analytical Proof`,
         description: sim.analyticalProof || sim.description,
         proficiencyLevel: sim.difficulty,
-        author: { '@type': 'Person', name: 'Anil Sharma' },
-        publisher: { '@id': `${SITE_URL}/#organization` },
-        dependencies: sim.standardReference,
+        author: {
+          '@type': 'Person',
+          name: 'Anil Sharma',
+        },
+        publisher: {
+          '@id': `${SITE_URL}/#organization`,
+        },
+        dependencies: sim.standardReference || 'Engineering Standard Reference',
         url: canonicalUrl,
       };
 
@@ -546,7 +571,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
       };
 
       return {
-        title: `${sim.title} - Interactive Engineering Simulator | LiveSimulators`,
+        title: formatSeoTitle(sim.title),
         description: cleanDesc,
         canonicalUrl,
         ogType: 'website',
@@ -576,7 +601,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
     case 'embed': {
       const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || ALL_AVAILABLE_SIMULATORS[0];
       return {
-        title: `${sim.title} (Interactive Embed) | LiveSimulators`,
+        title: formatSeoTitle(`${sim.title} (Embed)`),
         description: `Interactive embed for ${sim.title}. First-principles engineering simulation for laboratory coursework.`,
         canonicalUrl: `${SITE_URL}/simulator/${sim.id}`,
         ogType: 'website',
@@ -656,7 +681,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
       };
 
       return {
-        title: `${lab.name} - Interactive Industrial Engineering Lab | LiveSimulators`,
+        title: formatSeoTitle(lab.name),
         description: `${lab.name}: ${lab.tagline} Referencing ${lab.standardBadge} methodologies. Includes ${lab.modules} interactive modules for ${lab.sectors.join(', ')}.`,
         canonicalUrl,
         ogType: 'website',
@@ -706,7 +731,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
 
     default:
       return {
-        title: 'LiveSimulators - Interactive Engineering Learning Platform',
+        title: 'LiveSimulators - Interactive Engineering Simulations',
         description: 'Interactive real-time physics and engineering simulations.',
         canonicalUrl: SITE_URL,
         ogType: 'website',
