@@ -580,6 +580,44 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     metrics.push({ label: 'Differential Pressure ΔP', value: deltaP_mbar.toFixed(1), unit: 'mbar', description: 'Flange tap pressure difference across plate' });
     metrics.push({ label: 'Discharge Coefficient C_d', value: Cd.toFixed(3), unit: '', description: 'Empirical Stolz discharge calibration' });
     metrics.push({ label: 'Upstream Pipe Velocity', value: v1.toFixed(2), unit: 'm/s', description: 'Mean approach fluid velocity in 100mm line' });
+  } else if (simulator.type === 'cstr') {
+    const T0 = params['feedTemp'] || 300;
+    const Tc = params['coolantTemp'] || 295;
+    const F = params['flowRate'] || 15;
+    const EaOverR = params['activationEnergy'] || 8000;
+    const tau = 100 / F; // V = 100 L
+    const k0 = 1.2e8 / 60; // s^-1
+    // Steady state estimation
+    const estT = Tc + 0.65 * (T0 - Tc) + 35;
+    const kRate = k0 * Math.exp(-EaOverR / estT);
+    const conv = (kRate * tau) / (1 + kRate * tau);
+    const Da = kRate * tau;
+
+    metrics.push({ label: 'Reactor Core Temp T', value: estT.toFixed(1), unit: 'K', description: 'Internal mixed bulk temperature' });
+    metrics.push({ label: 'Reactant Conversion X_A', value: (conv * 100).toFixed(1), unit: '%', description: 'Fraction of reactant A converted to product' });
+    metrics.push({ label: 'Reaction Rate r_A', value: (kRate * (1 - conv)).toFixed(3), unit: 'mol/(L·s)', description: 'Arrhenius kinetic reaction rate' });
+    metrics.push({ label: 'Damköhler Number Da', value: Da.toFixed(2), unit: '', description: 'Reaction rate over mass convection rate' });
+  } else if (simulator.type === 'pn_junction') {
+    const Va = params['biasVoltage'] !== undefined ? params['biasVoltage'] : 0.60;
+    const logNa = params['acceptorDoping'] || 16;
+    const logNd = params['donorDoping'] || 16;
+    const T = params['temp'] || 300;
+    const vBi = 0.72 * (T / 300);
+    const netBarrier = Math.max(0.04, vBi - Va);
+    const wUm = 0.428 * Math.sqrt(netBarrier / vBi);
+    const vt = 0.0259 * (T / 300);
+    let currentMa = 0;
+    if (Va > 0) {
+      currentMa = Math.min(250, 1e-9 * Math.exp(Va / (1.15 * vt)) * 1e3);
+    } else {
+      currentMa = -1e-6;
+    }
+    const eMaxKvc = (2 * netBarrier / (wUm * 1e-4)) * 1e-3;
+
+    metrics.push({ label: 'Forward Current I_D', value: currentMa < 0.01 ? '< 0.01' : currentMa.toFixed(2), unit: 'mA', description: 'Shockley minority carrier diffusion current' });
+    metrics.push({ label: 'Depletion Width W', value: wUm.toFixed(3), unit: 'µm', description: 'Space charge barrier thickness' });
+    metrics.push({ label: 'Effective Barrier Height', value: netBarrier.toFixed(2), unit: 'eV', description: 'Conduction band electron barrier' });
+    metrics.push({ label: 'Peak Junction E-Field', value: eMaxKvc.toFixed(1), unit: 'kV/cm', description: 'Maximum electrostatic gradient at junction' });
   } else {
     simulator.parameters.slice(0, 4).forEach((p) => {
       metrics.push({ label: p.name, value: (params[p.id] || p.default).toString(), unit: p.unit, description: p.description });
@@ -980,6 +1018,224 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
         ctx.font = 'bold 11px "IBM Plex Mono", monospace';
         ctx.fillStyle = '#ec4899';
         ctx.fillText(`FOURIER SERIES SYNTHESIZER (N = ${harmonics} Harmonics | f0 = ${f0} Hz)`, 30, 24);
+      } else if (simulator.type === 'cstr') {
+        const Tc = params['coolantTemp'] || 295;
+        const T0 = params['feedTemp'] || 300;
+        const F = params['flowRate'] || 15;
+        const estT = Tc + 0.65 * (T0 - Tc) + 35;
+        const isRunaway = estT > 370;
+
+        // Jacketed CSTR Vessel on Left
+        const rX = w * 0.28;
+        const rY = h * 0.52;
+        const rW = 140;
+        const rH = 180;
+
+        // Cooling Jacket
+        ctx.fillStyle = isRunaway ? 'rgba(239, 68, 68, 0.25)' : 'rgba(6, 182, 212, 0.2)';
+        ctx.strokeStyle = isRunaway ? '#ef4444' : '#06b6d4';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(rX - rW / 2 - 16, rY - rH / 2 + 20, rW + 32, rH - 15, [0, 0, 30, 30]);
+        ctx.fill();
+        ctx.stroke();
+
+        // Reactor Fluid
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(rX - rW / 2, rY - rH / 2, rW, rH, [18, 18, 26, 26]);
+        ctx.clip();
+        ctx.fillStyle = isRunaway ? 'rgba(239, 68, 68, 0.85)' : 'rgba(124, 58, 237, 0.75)';
+        ctx.fillRect(rX - rW / 2, rY - rH / 2 + 22, rW, rH - 22);
+
+        // Agitator vortex bubbles
+        for (let b = 0; b < 24; b++) {
+          const ang = localTime * 4 + b * 0.6;
+          const rad = (rW * 0.35) * (0.3 + 0.7 * Math.sin(ang));
+          const bx = rX + Math.cos(ang) * rad;
+          const by = rY - rH / 2 + 40 + ((b * 15 + localTime * 30) % (rH - 60));
+          ctx.fillStyle = b % 2 === 0 ? '#fbbf24' : '#c084fc';
+          ctx.beginPath();
+          ctx.arc(bx, by, 2.5, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        // Vessel wall
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(rX - rW / 2, rY - rH / 2, rW, rH, [18, 18, 26, 26]);
+        ctx.stroke();
+
+        // Agitator shaft and rotating turbine
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(rX, rY - rH / 2);
+        ctx.lineTo(rX, rY + rH * 0.25);
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(rX, rY + rH * 0.25);
+        ctx.rotate(localTime * 8);
+        for (let i = 0; i < 4; i++) {
+          ctx.strokeStyle = '#c084fc';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos((i * Math.PI) / 2) * (rW * 0.32), Math.sin((i * Math.PI) / 2) * (rW * 0.32));
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Right side: Van Heerden S-Curve
+        const scX = w * 0.54;
+        const scY = 40;
+        const scW = w - scX - 30;
+        const scH = h - 80;
+
+        ctx.fillStyle = '#060a12';
+        ctx.strokeStyle = '#1e293b';
+        ctx.fillRect(scX, scY, scW, scH);
+        ctx.strokeRect(scX, scY, scW, scH);
+
+        ctx.font = '10px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#c084fc';
+        ctx.fillText('VAN HEERDEN HEAT GENERATION Qg(T) vs REMOVAL Qr(T)', scX + 12, scY + 18);
+
+        // Heat removal line
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(scX + 20, scY + scH - 25);
+        ctx.lineTo(scX + scW - 20, scY + 35);
+        ctx.stroke();
+
+        // Heat generation S-curve
+        ctx.strokeStyle = isRunaway ? '#ef4444' : '#a855f7';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let i = 0; i <= scW - 40; i++) {
+          const normT = i / (scW - 40);
+          const sSig = 1 / (1 + Math.exp(-10 * (normT - 0.45)));
+          const px = scX + 20 + i;
+          const py = scY + scH - 25 - sSig * (scH - 65);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#a855f7';
+        ctx.fillText(`CSTR REACTOR & VAN HEERDEN HEAT BALANCE (T = ${estT.toFixed(1)} K)`, 30, 24);
+      } else if (simulator.type === 'pn_junction') {
+        const Va = params['biasVoltage'] !== undefined ? params['biasVoltage'] : 0.60;
+        const vBi = 0.72;
+        const netBarrier = Math.max(0.04, vBi - Va);
+        const depW = 75 * Math.sqrt(netBarrier / vBi);
+
+        // Band diagram on left
+        const bdX = 30;
+        const bdY = 40;
+        const bdW = w * 0.48;
+        const bdH = h - 80;
+        const jX = bdX + bdW / 2;
+
+        ctx.fillStyle = '#060a12';
+        ctx.strokeStyle = '#1e293b';
+        ctx.fillRect(bdX, bdY, bdW, bdH);
+        ctx.strokeRect(bdX, bdY, bdW, bdH);
+
+        // Depletion zone
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.45)';
+        ctx.fillRect(jX - depW / 2, bdY, depW, bdH);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(jX - depW / 2, bdY);
+        ctx.lineTo(jX - depW / 2, bdY + bdH);
+        ctx.moveTo(jX + depW / 2, bdY);
+        ctx.lineTo(jX + depW / 2, bdY + bdH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Energy band curves Ec & Ev
+        const midY = bdY + bdH * 0.5;
+        const egPix = 50;
+        const deltaE = (netBarrier / vBi) * 35;
+
+        // Ec (Sky)
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let x = bdX; x <= bdX + bdW; x++) {
+          const bend = Math.tanh((x - jX) / (depW / 2));
+          const y = (midY - egPix / 2) - bend * deltaE;
+          if (x === bdX) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Ev (Indigo)
+        ctx.strokeStyle = '#818cf8';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let x = bdX; x <= bdX + bdW; x++) {
+          const bend = Math.tanh((x - jX) / (depW / 2));
+          const y = (midY + egPix / 2) - bend * deltaE;
+          if (x === bdX) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Right side: Shockley I-V Curve
+        const scX = w * 0.54;
+        const scY = 40;
+        const scW = w - scX - 30;
+        const scH = h - 80;
+
+        ctx.fillStyle = '#060a12';
+        ctx.strokeStyle = '#1e293b';
+        ctx.fillRect(scX, scY, scW, scH);
+        ctx.strokeRect(scX, scY, scW, scH);
+
+        const ivOriginX = scX + scW * 0.5;
+        const ivOriginY = scY + scH * 0.7;
+
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(scX, ivOriginY);
+        ctx.lineTo(scX + scW, ivOriginY);
+        ctx.moveTo(ivOriginX, scY);
+        ctx.lineTo(ivOriginX, scY + scH);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let vStep = -3.5; vStep <= 0.85; vStep += 0.05) {
+          let curr = vStep > 0 ? 1e-6 * Math.exp(vStep / 0.035) : -0.2;
+          const px = ivOriginX + vStep * (scW * 0.4);
+          const py = ivOriginY - Math.max(-scH * 0.25, Math.min(scH * 0.65, curr * (scH * 0.4)));
+          if (vStep === -3.5) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Operating dot
+        const curDotX = ivOriginX + Va * (scW * 0.4);
+        let curDotY = ivOriginY;
+        if (Va > 0) curDotY -= Math.min(scH * 0.65, 1e-6 * Math.exp(Va / 0.035) * (scH * 0.4));
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        ctx.arc(curDotX, curDotY, 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`P-N JUNCTION ENERGY BAND BENDING (V_a = ${Va >= 0 ? '+' : ''}${Va.toFixed(2)} V)`, 30, 24);
       } else {
         const midY = h * 0.5;
         ctx.strokeStyle = '#06b6d4';

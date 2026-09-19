@@ -24,7 +24,9 @@ export type SimulatorType =
   | 'spur_gear'
   | 'control_valve'
   | 'current_loop'
-  | 'orifice_meter';
+  | 'orifice_meter'
+  | 'cstr'
+  | 'pn_junction';
 
 export interface ParameterDef {
   id: string;

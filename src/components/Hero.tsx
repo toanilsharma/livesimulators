@@ -23,7 +23,9 @@ import {
   ChevronRight,
   RefreshCw,
   Flame,
-  ShieldCheck
+  ShieldCheck,
+  FlaskConical,
+  Atom
 } from 'lucide-react';
 import { DisciplineId, SimulatorItem } from '../types';
 import {
@@ -31,6 +33,8 @@ import {
   FEATURED_MECHANICAL_SIMULATORS,
   FEATURED_CIVIL_SIMULATORS,
   FEATURED_INSTRUMENTATION_SIMULATORS,
+  FEATURED_CHEMICAL_SIMULATORS,
+  FEATURED_SEMICONDUCTOR_SIMULATORS,
 } from '../data/simulators';
 
 interface HeroProps {
@@ -38,7 +42,7 @@ interface HeroProps {
   onLaunchSimulator?: (simulator: SimulatorItem) => void;
 }
 
-type DeptSimulationMode = 'electrical' | 'mechanical' | 'civil' | 'control';
+type DeptSimulationMode = 'electrical' | 'mechanical' | 'civil' | 'control' | 'chemical' | 'physics';
 type ScenarioMode = 'normal' | 'surge' | 'fault';
 
 export const Hero: React.FC<HeroProps> = ({
@@ -60,6 +64,8 @@ export const Hero: React.FC<HeroProps> = ({
   const [mechRpm, setMechRpm] = useState<number>(45);
   const [civilLoad, setCivilLoad] = useState<number>(60);
   const [pidSetpoint, setPidSetpoint] = useState<number>(70);
+  const [chemTemp, setChemTemp] = useState<number>(345);
+  const [semiBias, setSemiBias] = useState<number>(0.65);
 
   // Canvas interaction & inspection reticle state
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
@@ -92,6 +98,29 @@ export const Hero: React.FC<HeroProps> = ({
     pidPrevError: 0,
     pidCO: 50,
     pidHistory: [] as { sp: number; pv: number; co: number; t: number }[],
+    // Chemical CSTR state (Arrhenius reaction kinetics & Van Heerden thermal balance)
+    cstrCa: 0.15,
+    cstrBubbles: Array.from({ length: 36 }, () => ({
+      x: 0.15 + Math.random() * 0.7,
+      y: 0.2 + Math.random() * 0.6,
+      r: 1.5 + Math.random() * 3,
+      speed: 0.5 + Math.random() * 0.8,
+      angle: Math.random() * Math.PI * 2,
+    })),
+    cstrHistory: [] as { t: number; temp: number; conversion: number }[],
+    // Semiconductor state (Carrier wavepackets & Poisson depletion layer)
+    semiElectrons: Array.from({ length: 24 }, () => ({
+      x: 0.55 + Math.random() * 0.4,
+      y: 0.22 + Math.random() * 0.55,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+    })),
+    semiHoles: Array.from({ length: 24 }, () => ({
+      x: 0.05 + Math.random() * 0.4,
+      y: 0.22 + Math.random() * 0.55,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+    })),
     particles: Array.from({ length: 45 }, (_, i) => ({
       x: 0,
       y: 0,
@@ -131,7 +160,7 @@ export const Hero: React.FC<HeroProps> = ({
   // Auto-tour across departments
   useEffect(() => {
     if (!autoTour) return;
-    const depts: DeptSimulationMode[] = ['electrical', 'mechanical', 'control', 'civil'];
+    const depts: DeptSimulationMode[] = ['electrical', 'mechanical', 'chemical', 'physics', 'control', 'civil'];
     const timer = setInterval(() => {
       setTourCountdown((prev) => {
         if (prev <= 1) {
@@ -161,7 +190,16 @@ export const Hero: React.FC<HeroProps> = ({
           y: canvas.height / 2,
           radius: 10,
           maxRadius: Math.max(canvas.width, canvas.height) * 0.7,
-          color: activeDept === 'electrical' ? '#38bdf8' : activeDept === 'civil' ? '#ef4444' : '#f59e0b',
+          color:
+            activeDept === 'electrical'
+              ? '#38bdf8'
+              : activeDept === 'chemical'
+              ? '#c084fc'
+              : activeDept === 'physics'
+              ? '#38bdf8'
+              : activeDept === 'civil'
+              ? '#ef4444'
+              : '#f59e0b',
           alpha: 0.9,
         });
       }
@@ -187,7 +225,7 @@ export const Hero: React.FC<HeroProps> = ({
       y,
       radius: 5,
       maxRadius: 180,
-      color: '#06b6d4',
+      color: activeDept === 'chemical' ? '#a855f7' : activeDept === 'physics' ? '#38bdf8' : '#06b6d4',
       alpha: 0.85,
     });
     setShockwaveTrigger({ x, y, time: Date.now() });
@@ -216,6 +254,10 @@ export const Hero: React.FC<HeroProps> = ({
         return FEATURED_CIVIL_SIMULATORS[0];
       case 'control':
         return FEATURED_INSTRUMENTATION_SIMULATORS[0];
+      case 'chemical':
+        return FEATURED_CHEMICAL_SIMULATORS[0];
+      case 'physics':
+        return FEATURED_SEMICONDUCTOR_SIMULATORS[0];
     }
   };
 
@@ -1412,6 +1454,570 @@ export const Hero: React.FC<HeroProps> = ({
         ctx.fillText(`• PV = ${pv.toFixed(1)}%`, scX + 8, scY + 44);
         ctx.fillStyle = '#f59e0b';
         ctx.fillText(`• CO = ${co.toFixed(1)}%`, scX + 8, scY + 58);
+
+      // =======================================================================
+      // MODE 5: CHEMICAL & PROCESS (Exothermic Jacketed CSTR & Van Heerden S-Curve)
+      // AIChE / Fogler Arrhenius Reaction Kinetics & Thermal Runaway Dynamics
+      // =======================================================================
+      } else if (activeDept === 'chemical') {
+        const t = state.time;
+        // Arrhenius rate k = k0 * exp(-Ea / (R * T))
+        const k0 = 2.5e6;
+        const EaOverR = 8000; // K
+        let effectiveT = chemTemp;
+        if (scenario === 'surge') effectiveT += 18;
+        if (scenario === 'fault') effectiveT += 45; // Cooling failure leads to runaway!
+
+        const kRate = k0 * Math.exp(-EaOverR / effectiveT);
+        // CSTR mass balance: V*dCa/dt = F*(Ca0 - Ca) - V*k*Ca
+        // Steady conversion X_A = (k * tau) / (1 + k * tau) where tau = V / F
+        const tau = 6.67; // minutes / scale
+        const conversion = Math.min(0.985, (kRate * tau) / (1 + kRate * tau));
+        const ca = Math.max(0.01, 1.0 - conversion);
+        state.cstrCa = ca;
+
+        // Record history for scrolling plot
+        if (state.cstrHistory.length === 0 || t - state.cstrHistory[state.cstrHistory.length - 1].t > 0.12) {
+          state.cstrHistory.push({ t, temp: effectiveT, conversion });
+          if (state.cstrHistory.length > 55) state.cstrHistory.shift();
+        }
+
+        // 1. Left: Jacketed Continuous Stirred Tank Reactor (CSTR) Vessel
+        const rX = w * 0.22;
+        const rY = h * 0.52;
+        const rW = 120;
+        const rH = 160;
+
+        // Outer Cooling Jacket Shell (Annulus)
+        const jW = rW + 28;
+        const jH = rH - 15;
+        const jX = rX - jW / 2;
+        const jY = rY - rH / 2 + 18;
+
+        const isRunaway = effectiveT > 375;
+        const jacketColor = isRunaway ? 'rgba(239, 68, 68, 0.25)' : 'rgba(6, 182, 212, 0.2)';
+        const jacketBorder = isRunaway ? '#ef4444' : '#06b6d4';
+
+        ctx.fillStyle = jacketColor;
+        ctx.strokeStyle = jacketBorder;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(jX, jY, jW, jH, [0, 0, 30, 30]);
+        ctx.fill();
+        ctx.stroke();
+
+        // Jacket Coolant Flow Labels
+        ctx.fillStyle = '#06b6d4';
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillText('COOLANT IN (Tc=295K)', jX - 15, jY + jH - 6);
+        ctx.fillText('COOLANT OUT', jX + jW - 35, jY + 12);
+
+        // Reactor Vessel Body
+        const vX = rX - rW / 2;
+        const vY = rY - rH / 2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(vX, vY, rW, rH, [18, 18, 26, 26]);
+        ctx.clip();
+
+        // Reactive Fluid Fill (shifts with temperature & conversion)
+        const fluidGrad = ctx.createLinearGradient(vX, vY, vX, vY + rH);
+        if (isRunaway) {
+          fluidGrad.addColorStop(0, 'rgba(239, 68, 68, 0.85)');
+          fluidGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.9)');
+          fluidGrad.addColorStop(1, 'rgba(185, 28, 28, 0.95)');
+        } else {
+          fluidGrad.addColorStop(0, 'rgba(147, 51, 234, 0.55)');
+          fluidGrad.addColorStop(0.5, 'rgba(124, 58, 237, 0.75)');
+          fluidGrad.addColorStop(1, 'rgba(76, 29, 149, 0.9)');
+        }
+        ctx.fillStyle = fluidGrad;
+        ctx.fillRect(vX, vY + 22, rW, rH - 22);
+
+        // Vortex meniscus surface
+        ctx.fillStyle = isRunaway ? '#f87171' : '#c084fc';
+        ctx.beginPath();
+        ctx.ellipse(rX, vY + 22, rW / 2 - 2, 8, 0, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Circulating Reaction Bubbles & Reactant Vortices
+        state.cstrBubbles.forEach((b) => {
+          b.angle += dt * 3.5;
+          const swirlRadius = (rW * 0.35) * (0.3 + 0.7 * Math.sin(b.angle * 0.5));
+          const bx = rX + Math.cos(b.angle) * swirlRadius;
+          const by = vY + 35 + ((b.y * (rH - 65) + t * 25 * b.speed) % (rH - 65));
+          
+          ctx.fillStyle = (b.angle % 2 > 1) ? '#fbbf24' : '#c084fc';
+          ctx.beginPath();
+          ctx.arc(bx, by, b.r, 0, 2 * Math.PI);
+          ctx.fill();
+        });
+
+        ctx.restore();
+
+        // Reactor Vessel Outline
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(vX, vY, rW, rH, [18, 18, 26, 26]);
+        ctx.stroke();
+
+        // Agitator Motor M-101 on top
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(rX - 16, vY - 26, 32, 26);
+        ctx.strokeRect(rX - 16, vY - 26, 32, 26);
+
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('AGITATOR', rX - 18, vY - 30);
+
+        // Central Shaft
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(rX, vY);
+        ctx.lineTo(rX, rY + rH * 0.28);
+        ctx.stroke();
+
+        // Rotating Impeller Blades (Axial Pitch Turbine)
+        const bladeAngle = t * 9;
+        ctx.save();
+        ctx.translate(rX, rY + rH * 0.28);
+        ctx.rotate(bladeAngle);
+        for (let b = 0; b < 4; b++) {
+          ctx.strokeStyle = isRunaway ? '#ef4444' : '#c084fc';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos((b * Math.PI) / 2) * (rW * 0.32), Math.sin((b * Math.PI) / 2) * (rW * 0.32));
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Inlet Feed Pipe (Reactant A) Top Left
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(vX - 25, vY + 12);
+        ctx.lineTo(vX + 15, vY + 12);
+        ctx.stroke();
+        ctx.fillStyle = '#a855f7';
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillText('FEED [F, CA0]', vX - 45, vY + 8);
+
+        // Outlet Product Pipe Bottom Right
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(vX + rW - 15, vY + rH - 18);
+        ctx.lineTo(vX + rW + 25, vY + rH - 18);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText('EFFLUENT [CA, T]', vX + rW + 5, vY + rH - 6);
+
+        // Thermowell & Tag TT-101
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(vX + rW - 14, vY + 30);
+        ctx.lineTo(vX + rW - 14, vY + 85);
+        ctx.stroke();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = isRunaway ? '#ef4444' : '#a855f7';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(vX + rW - 14, vY + 95, 12, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillStyle = isRunaway ? '#ef4444' : '#f8fafc';
+        ctx.fillText('TT', vX + rW - 18, vY + 98);
+
+        // 2. Right: Van Heerden Energy Balance & Reaction Rate Scope
+        const scX = w * 0.48;
+        const scY = 32;
+        const scW = w - scX - 18;
+        const scH = h * 0.78;
+
+        ctx.fillStyle = '#060a12';
+        ctx.strokeStyle = '#1e293b';
+        ctx.fillRect(scX, scY, scW, scH);
+        ctx.strokeRect(scX, scY, scW, scH);
+
+        // Graticule grid
+        ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
+        ctx.setLineDash([2, 2]);
+        for (let g = 0.25; g < 1; g += 0.25) {
+          ctx.beginPath();
+          ctx.moveTo(scX, scY + scH * g);
+          ctx.lineTo(scX + scW, scY + scH * g);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // Top half: Van Heerden S-curve (Qg vs Qr)
+        const vhH = scH * 0.50;
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#c084fc';
+        ctx.fillText('VAN HEERDEN HEAT BALANCE [Qg vs Qr]', scX + 8, scY + 14);
+
+        // Heat Removal Line Qr(T) in Cyan
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(scX + 15, scY + vhH - 12);
+        ctx.lineTo(scX + scW - 20, scY + 22);
+        ctx.stroke();
+
+        // Heat Generation Sigmoid S-Curve Qg(T) in Violet/Amber
+        ctx.strokeStyle = isRunaway ? '#ef4444' : '#a855f7';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let i = 0; i <= scW - 35; i++) {
+          const plotT = 290 + (i / (scW - 35)) * 130;
+          const kVal = k0 * Math.exp(-EaOverR / plotT);
+          const xVal = (kVal * tau) / (1 + kVal * tau);
+          const qGen = xVal * 0.85;
+          const px = scX + 15 + i;
+          const py = scY + vhH - 12 - qGen * (vhH - 34);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Operating point dot on S-curve
+        const curNormX = Math.max(0, Math.min(1, (effectiveT - 290) / 130));
+        const dotX = scX + 15 + curNormX * (scW - 35);
+        const dotY = scY + vhH - 12 - conversion * 0.85 * (vhH - 34);
+        ctx.fillStyle = isRunaway ? '#ef4444' : '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 4.5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Bottom half: Dynamic Rolling Traces (Temp & Conversion)
+        const btmY = scY + vhH + 10;
+        const btmH = scH - vhH - 18;
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('DYNAMIC CONVERSION & THERMAL HISTORY', scX + 8, btmY + 12);
+
+        const cHist = state.cstrHistory;
+        if (cHist.length > 1) {
+          // Temperature trace in Amber/Rose
+          ctx.strokeStyle = isRunaway ? '#ef4444' : '#f59e0b';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          for (let k = 0; k < cHist.length; k++) {
+            const hx = scX + 15 + (k / (cHist.length - 1)) * (scW - 30);
+            const normTemp = Math.max(0, Math.min(1, (cHist[k].temp - 290) / 130));
+            const hy = btmY + btmH - 6 - normTemp * (btmH - 24);
+            if (k === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+          }
+          ctx.stroke();
+
+          // Conversion trace in Emerald
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          for (let k = 0; k < cHist.length; k++) {
+            const hx = scX + 15 + (k / (cHist.length - 1)) * (scW - 30);
+            const hy = btmY + btmH - 6 - cHist[k].conversion * (btmH - 24);
+            if (k === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+          }
+          ctx.stroke();
+        }
+
+        // Live HUD Metrics
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.fillStyle = isRunaway ? '#ef4444' : '#f8fafc';
+        ctx.fillText(`• CORE TEMP: T = ${effectiveT.toFixed(1)} K`, scX + 8, scY + scH - 32);
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(`• CONVERSION: X_A = ${(conversion * 100).toFixed(1)}%`, scX + 8, scY + scH - 20);
+        ctx.fillStyle = '#c084fc';
+        ctx.fillText(`• RATE k = ${kRate.toExponential(2)} s⁻¹`, scX + 8, scY + scH - 8);
+
+      // =======================================================================
+      // MODE 6: QUANTUM & SEMICONDUCTOR PHYSICS (Abrupt P-N Junction Diode)
+      // Poisson-Boltzmann Band Bending, Space-Charge Layer & Shockley Transport
+      // =======================================================================
+      } else if (activeDept === 'physics') {
+        const t = state.time;
+        let bias = semiBias;
+        if (scenario === 'surge') bias = Math.min(0.85, bias + 0.15);
+        if (scenario === 'fault') bias = -3.8; // Reverse avalanche breakdown!
+
+        // Built-in barrier potential V_bi ≈ 0.72 V for Silicon at 300K
+        const vBi = 0.72;
+        const netBarrier = Math.max(0.04, vBi - bias);
+        const w0 = 60; // pixel scale for equilibrium depletion width
+        const depW = w0 * Math.sqrt(netBarrier / vBi);
+        const Is = 1e-12; // A
+        const vt = 0.026; // Thermal voltage kT/q = 26 mV
+        let currentMa = 0;
+        if (bias > 0) {
+          currentMa = Math.min(120, Is * Math.exp(bias / (1.2 * vt)) * 1e3);
+        } else if (bias < -3.5) {
+          currentMa = -(Math.abs(bias) - 3.5) * 85;
+        } else {
+          currentMa = -0.05;
+        }
+
+        // 1. Left: Abrupt P-N Junction Energy Band Diagram (Ec, Ev, Ef)
+        const bdX = 25;
+        const bdY = 32;
+        const bdW = w * 0.44;
+        const bdH = h * 0.78;
+        const jX = bdX + bdW / 2;
+
+        ctx.fillStyle = '#060a12';
+        ctx.strokeStyle = '#1e293b';
+        ctx.fillRect(bdX, bdY, bdW, bdH);
+        ctx.strokeRect(bdX, bdY, bdW, bdH);
+
+        // Depletion Zone Shading (Space Charge Region W)
+        const depLeft = jX - depW / 2;
+        const depRight = jX + depW / 2;
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.4)';
+        ctx.fillRect(depLeft, bdY, depW, bdH);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(depLeft, bdY);
+        ctx.lineTo(depLeft, bdY + bdH);
+        ctx.moveTo(depRight, bdY);
+        ctx.lineTo(depRight, bdY + bdH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Region Header Badges
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('P-TYPE (Boron)', bdX + 10, bdY + 14);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText('N-TYPE (Phosphorus)', bdX + bdW - 95, bdY + 14);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`DEPLETION W = ${(depW * 0.007).toFixed(3)} µm`, jX - 38, bdY + bdH - 8);
+
+        // Built-in Electric Field Vector E_bi (pointing right to left)
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(jX + depW * 0.35, bdY + 28);
+        ctx.lineTo(jX - depW * 0.35, bdY + 28);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(jX - depW * 0.35, bdY + 28);
+        ctx.lineTo(jX - depW * 0.35 + 5, bdY + 25);
+        ctx.lineTo(jX - depW * 0.35 + 5, bdY + 31);
+        ctx.closePath();
+        ctx.fillStyle = '#f59e0b';
+        ctx.fill();
+        ctx.font = '7px "IBM Plex Mono", monospace';
+        ctx.fillText('E_bi', jX - 8, bdY + 24);
+
+        // Fixed Ionized Dopant Cores inside Depletion Region
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        for (let row = 0; row < 3; row++) {
+          const iy = bdY + 55 + row * 24;
+          if (depLeft < jX - 10) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText('⊖', jX - depW * 0.35, iy);
+          }
+          if (depRight > jX + 10) {
+            ctx.fillStyle = '#06b6d4';
+            ctx.fillText('⊕', jX + depW * 0.15, iy);
+          }
+        }
+
+        // Energy Band Curves: Ec(x) and Ev(x)
+        const egPix = 46;
+        const midEnergy = bdY + bdH * 0.48;
+        const deltaE = (netBarrier / vBi) * 28;
+
+        // Conduction Band Ec (Sky Blue #38bdf8)
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let x = bdX; x <= bdX + bdW; x++) {
+          const normX = (x - jX) / (depW / 2);
+          const bend = Math.tanh(normX);
+          const ecY = (midEnergy - egPix / 2) - bend * deltaE;
+          if (x === bdX) ctx.moveTo(x, ecY);
+          else ctx.lineTo(x, ecY);
+        }
+        ctx.stroke();
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('E_c', bdX + 6, midEnergy - egPix / 2 + deltaE - 4);
+
+        // Valence Band Ev (Indigo/Violet #818cf8)
+        ctx.strokeStyle = '#818cf8';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let x = bdX; x <= bdX + bdW; x++) {
+          const normX = (x - jX) / (depW / 2);
+          const bend = Math.tanh(normX);
+          const evY = (midEnergy + egPix / 2) - bend * deltaE;
+          if (x === bdX) ctx.moveTo(x, evY);
+          else ctx.lineTo(x, evY);
+        }
+        ctx.stroke();
+        ctx.fillStyle = '#818cf8';
+        ctx.fillText('E_v', bdX + 6, midEnergy + egPix / 2 + deltaE + 12);
+
+        // Quasi-Fermi Levels
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 3]);
+        const efpY = midEnergy + egPix / 2 + deltaE - 10;
+        ctx.beginPath();
+        ctx.moveTo(bdX, efpY);
+        ctx.lineTo(jX - depW * 0.2, efpY);
+        ctx.stroke();
+
+        const efnY = midEnergy - egPix / 2 - deltaE + 10;
+        ctx.beginPath();
+        ctx.moveTo(jX + depW * 0.2, efnY);
+        ctx.lineTo(bdX + bdW, efnY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText('E_F', bdX + bdW - 20, efnY - 4);
+
+        // Free Carriers Swarm & Drift-Diffusion Wavepackets
+        state.semiElectrons.forEach((el) => {
+          el.x += (el.vx + (bias > 0.4 ? -0.4 : 0.05)) * dt;
+          if (el.x < 0.5) {
+            if (bias > 0.5) {
+              if (Math.random() < 0.08) {
+                state.arcFlashes.push({
+                  x1: bdX + el.x * bdW,
+                  y1: midEnergy,
+                  x2: bdX + el.x * bdW + 5,
+                  y2: midEnergy + 10,
+                  life: 0.15,
+                });
+              }
+              el.x = 0.95;
+            } else {
+              el.x = 0.52;
+            }
+          }
+          if (el.x > 0.95) el.x = 0.55;
+          const ex = bdX + el.x * bdW;
+          const ey = midEnergy - egPix / 2 - deltaE - 8 + Math.sin(t * 5 + el.y * 10) * 8;
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.arc(ex, ey, 2.5, 0, 2 * Math.PI);
+          ctx.fill();
+        });
+
+        state.semiHoles.forEach((h) => {
+          h.x += (h.vx + (bias > 0.4 ? 0.4 : -0.05)) * dt;
+          if (h.x > 0.5) {
+            if (bias > 0.5) h.x = 0.05;
+            else h.x = 0.48;
+          }
+          if (h.x < 0.05) h.x = 0.45;
+          const hx = bdX + h.x * bdW;
+          const hy = midEnergy + egPix / 2 + deltaE + 8 + Math.cos(t * 5 + h.y * 10) * 8;
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(hx, hy, 2.5, 0, 2 * Math.PI);
+          ctx.stroke();
+        });
+
+        // 2. Right: Live Shockley Diode I-V Graph & Carrier Scope
+        const scX = w * 0.48;
+        const scY = 32;
+        const scW = w - scX - 18;
+        const scH = h * 0.78;
+
+        ctx.fillStyle = '#060a12';
+        ctx.strokeStyle = '#1e293b';
+        ctx.fillRect(scX, scY, scW, scH);
+        ctx.strokeRect(scX, scY, scW, scH);
+
+        const ivOriginX = scX + scW * 0.55;
+        const ivOriginY = scY + scH * 0.68;
+
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(scX, ivOriginY);
+        ctx.lineTo(scX + scW, ivOriginY);
+        ctx.moveTo(ivOriginX, scY);
+        ctx.lineTo(ivOriginX, scY + scH);
+        ctx.stroke();
+
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('+V (Forward)', scX + scW - 60, ivOriginY - 4);
+        ctx.fillText('-V (Reverse)', scX + 8, ivOriginY - 4);
+        ctx.fillText('+I (mA)', ivOriginX + 6, scY + 14);
+
+        // Analytical Shockley Diode I-V Curve
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const vScale = (scW * 0.38) / 1.0;
+        const iScale = (scH * 0.55) / 100;
+
+        for (let vStep = -3.8; vStep <= 0.85; vStep += 0.02) {
+          let curr = 0;
+          if (vStep > 0) {
+            curr = Is * Math.exp(vStep / (1.2 * vt)) * 1e3;
+          } else if (vStep < -3.5) {
+            curr = -(Math.abs(vStep) - 3.5) * 85;
+          } else {
+            curr = -0.5;
+          }
+          const px = ivOriginX + vStep * vScale;
+          const py = ivOriginY - Math.max(-scH * 0.28, Math.min(scH * 0.65, curr * iScale));
+          if (vStep === -3.8) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Forward Knee Marker at 0.7V
+        const kneeX = ivOriginX + 0.70 * vScale;
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(kneeX, scY + 20);
+        ctx.lineTo(kneeX, scY + scH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText('VF ≈ 0.7V', kneeX - 16, scY + 28);
+
+        // Live Dynamic Operating Point Dot
+        const opX = ivOriginX + bias * vScale;
+        const opY = ivOriginY - Math.max(-scH * 0.28, Math.min(scH * 0.65, currentMa * iScale));
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        ctx.arc(opX, opY, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Live HUD Readouts
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('SHOCKLEY DIODE TRANSPORT SCOPE', scX + 8, scY + 16);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(`• BIAS: V_a = ${bias >= 0 ? '+' : ''}${bias.toFixed(2)} V`, scX + 8, scY + scH - 32);
+        ctx.fillStyle = currentMa > 0.1 ? '#10b981' : currentMa < -1 ? '#ef4444' : '#94a3b8';
+        ctx.fillText(`• CURRENT: I_D = ${currentMa.toFixed(2)} mA`, scX + 8, scY + scH - 20);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText(`• BARRIER: q(Vbi-Va) = ${netBarrier.toFixed(2)} eV`, scX + 8, scY + scH - 8);
       }
 
       // =======================================================================
@@ -1467,7 +2073,7 @@ export const Hero: React.FC<HeroProps> = ({
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [activeDept, scenario, isRunning, simSpeed, elecFreq, mechRpm, civilLoad, pidSetpoint, hoverPos]);
+  }, [activeDept, scenario, isRunning, simSpeed, elecFreq, mechRpm, civilLoad, pidSetpoint, chemTemp, semiBias, hoverPos]);
 
   return (
     <section className="relative overflow-hidden pt-8 pb-14 lg:py-16 border-b border-slate-800/80 bg-gradient-to-b from-[#050912] via-[#070e1c] to-[#080d16]">
@@ -1512,7 +2118,7 @@ export const Hero: React.FC<HeroProps> = ({
                 <span className="text-cyan-400 text-[10px]">SELECT TO LAUNCH</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2.5">
                 <button
                   onClick={() => {
                     setActiveDept('electrical');
@@ -1549,6 +2155,44 @@ export const Hero: React.FC<HeroProps> = ({
                   </div>
                   <div className="mt-2 text-xs font-bold text-white group-hover:text-amber-300">Mechanical</div>
                   <div className="text-[10px] text-slate-400">Gears & Kinematics</div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveDept('chemical');
+                    onSelectDepartment('chemical');
+                  }}
+                  className={`p-3 rounded-xl border text-left transition-all group ${
+                    activeDept === 'chemical'
+                      ? 'bg-purple-950/70 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <FlaskConical className="w-4 h-4 text-purple-400" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <div className="mt-2 text-xs font-bold text-white group-hover:text-purple-300">Chemical</div>
+                  <div className="text-[10px] text-slate-400">CSTR & Runaway Kinetics</div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveDept('physics');
+                    onSelectDepartment('physics');
+                  }}
+                  className={`p-3 rounded-xl border text-left transition-all group ${
+                    activeDept === 'physics'
+                      ? 'bg-sky-950/70 border-sky-500/60 shadow-[0_0_15px_rgba(56,189,248,0.2)]'
+                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <Atom className="w-4 h-4 text-sky-400" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <div className="mt-2 text-xs font-bold text-white group-hover:text-sky-300">Semiconductors</div>
+                  <div className="text-[10px] text-slate-400">Bandgap & P-N Physics</div>
                 </button>
 
                 <button
@@ -1600,13 +2244,13 @@ export const Hero: React.FC<HeroProps> = ({
               <div className="px-3.5 py-2.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                 
                 {/* Department Selector Tabs */}
-                <div className="flex items-center gap-1 p-0.5 bg-slate-900 rounded-lg border border-slate-800">
+                <div className="flex items-center gap-1 p-0.5 bg-slate-900 rounded-lg border border-slate-800 flex-wrap">
                   <button
                     onClick={() => {
                       setActiveDept('electrical');
                       playSynthesizedTone(440, 'sine', 0.1, 0.03);
                     }}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                    className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-all ${
                       activeDept === 'electrical'
                         ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
                         : 'text-slate-400 hover:text-slate-200'
@@ -1620,7 +2264,7 @@ export const Hero: React.FC<HeroProps> = ({
                       setActiveDept('mechanical');
                       playSynthesizedTone(330, 'triangle', 0.1, 0.03);
                     }}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                    className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-all ${
                       activeDept === 'mechanical'
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.25)]'
                         : 'text-slate-400 hover:text-slate-200'
@@ -1631,10 +2275,38 @@ export const Hero: React.FC<HeroProps> = ({
 
                   <button
                     onClick={() => {
+                      setActiveDept('chemical');
+                      playSynthesizedTone(480, 'sine', 0.1, 0.03);
+                    }}
+                    className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-all ${
+                      activeDept === 'chemical'
+                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.25)]'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    🧪 Chem
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveDept('physics');
+                      playSynthesizedTone(580, 'sine', 0.1, 0.03);
+                    }}
+                    className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-all ${
+                      activeDept === 'physics'
+                        ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-[0_0_10px_rgba(56,189,248,0.25)]'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    ⚛️ Semi
+                  </button>
+
+                  <button
+                    onClick={() => {
                       setActiveDept('control');
                       playSynthesizedTone(520, 'sine', 0.1, 0.03);
                     }}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                    className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-all ${
                       activeDept === 'control'
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
                         : 'text-slate-400 hover:text-slate-200'
@@ -1648,7 +2320,7 @@ export const Hero: React.FC<HeroProps> = ({
                       setActiveDept('civil');
                       playSynthesizedTone(260, 'sine', 0.1, 0.03);
                     }}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                    className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-all ${
                       activeDept === 'civil'
                         ? 'bg-pink-500/20 text-pink-300 border border-pink-500/50 shadow-[0_0_10px_rgba(236,72,153,0.25)]'
                         : 'text-slate-400 hover:text-slate-200'
@@ -1751,6 +2423,8 @@ export const Hero: React.FC<HeroProps> = ({
                   <div className="text-slate-400 text-[9px]">
                     {activeDept === 'electrical' && '4-POLE AC STAGE (R-Y-B-N) • PHASOR WHEEL • 3Φ SCOPE'}
                     {activeDept === 'mechanical' && 'EPICYCLIC GEARS • 4-BAR RIBBON TRACER'}
+                    {activeDept === 'chemical' && 'JACKETED CSTR REACTOR • ARRHENIUS KINETICS • VAN HEERDEN'}
+                    {activeDept === 'physics' && 'P-N JUNCTION BAND BENDING • SPACE CHARGE • SHOCKLEY I-V'}
                     {activeDept === 'control' && 'CASCADE PROCESS TANK • CLOSED-LOOP PID'}
                     {activeDept === 'civil' && 'SEISMIC SHAKE TABLE • WARREN TRUSS BMD'}
                   </div>
@@ -1794,6 +2468,39 @@ export const Hero: React.FC<HeroProps> = ({
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
                       />
                       <span className="text-amber-300 font-bold shrink-0 text-xs">{mechRpm} RPM</span>
+                    </div>
+                  )}
+
+                  {activeDept === 'chemical' && (
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="text-slate-400 shrink-0 text-[11px]">Core Temp:</span>
+                      <input
+                        type="range"
+                        min="290"
+                        max="420"
+                        value={chemTemp}
+                        onChange={(e) => setChemTemp(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-400"
+                      />
+                      <span className="text-purple-300 font-bold shrink-0 text-xs">{chemTemp} K</span>
+                    </div>
+                  )}
+
+                  {activeDept === 'physics' && (
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="text-slate-400 shrink-0 text-[11px]">Bias V_a:</span>
+                      <input
+                        type="range"
+                        min="-3.5"
+                        max="0.85"
+                        step="0.05"
+                        value={semiBias}
+                        onChange={(e) => setSemiBias(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                      />
+                      <span className="text-sky-300 font-bold shrink-0 text-xs">
+                        {semiBias >= 0 ? '+' : ''}{semiBias.toFixed(2)} V
+                      </span>
                     </div>
                   )}
 

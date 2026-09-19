@@ -785,11 +785,97 @@ export const FEATURED_INSTRUMENTATION_SIMULATORS: SimulatorItem[] = [
   },
 ];
 
+export const FEATURED_CHEMICAL_SIMULATORS: SimulatorItem[] = [
+  {
+    id: 'cstr-kinetics',
+    title: 'Non-Isothermal CSTR & Thermal Runaway Dynamics',
+    discipline: 'chemical',
+    disciplineName: 'Chemical Reaction Engineering',
+    badge: 'Arrhenius Kinetics / Van Heerden',
+    difficulty: 'Advanced',
+    tagline: 'Simulate continuous reaction kinetics, cooling jacket heat transfer, and thermal runaway thresholds.',
+    description: 'Models a jacketed Continuous Stirred Tank Reactor with 1st-order exothermic reaction A -> B. Balance reactant mass and thermal energy simultaneously to observe ignition, extinction, and multiple steady-state bifurcations.',
+    governingEquation: 'V \\frac{dC_A}{dt} = F(C_{A0} - C_A) - V k_0 e^{-E_a/RT} C_A, \\quad V \\rho C_p \\frac{dT}{dt} = F \\rho C_p(T_0 - T) + (-\\Delta H) V r_A - U A (T - T_c)',
+    equationDescription: 'Simultaneous coupled non-linear mass and thermal energy differential equations for a non-isothermal CSTR.',
+    physicalLaw: 'Conservation of Mass, Arrhenius Law & First Law of Thermodynamics',
+    accentColor: '#8b5cf6',
+    type: 'cstr',
+    standardReference: 'AIChE / Fogler Chemical Reaction Engineering / Levenspiel CSTR Benchmarks',
+    standardBody: 'American Institute of Chemical Engineers (AIChE)',
+    colorStandardRule: 'Reactant Concentration (Violet #8b5cf6), Reactor Core Temperature (Amber/Rose #f43f5e), Cooling Jacket (Cyan #06b6d4)',
+    analyticalProof: 'By mass balance on reactant A: In - Out - Generation = Accumulation, yielding V (dC_A/dt) = F(C_A0 - C_A) - V k(T) C_A where k(T) = k₀ exp(-E_a / (R T)). The coupled thermal energy balance equates sensible heat accumulation to feed enthalpy inflow, reaction heat release (-ΔH_rxn) V r_A, and jacket heat removal Q_rem = U A (T - T_c). In steady state (d/dt = 0), intersection of heat generation S-curve Q_gen(T) with linear heat removal line Q_rem(T) reveals up to three Van Heerden steady states (lower stable, middle unstable, upper ignition).',
+    validationTest: 'Fogler CSTR Benchmark: V = 100 L, F = 10 L/min, C_A0 = 1.0 mol/L, k₀ = 1.2e8 min⁻¹, E_a/R = 8000 K, (-ΔH) = 75 kJ/mol. At T_c = 295 K, the solver converges to steady conversion X_A = 86.4% and reactor temperature T = 346.2 K with numerical residue < 0.05%.',
+    fieldInsights: 'In industrial batch and continuous polymerization reactors, coolant valve failure or impeller stalling causes rapid runaway where heat generation outpaces cooling capacity exponentially (dQ_gen/dT > dQ_rem/dT), leading to pressure relief venting or vessel rupture (Seveso Directive guidelines).',
+    parameters: [
+      { id: 'feedTemp', name: 'Feed Temperature T₀', symbol: 'T₀', min: 280, max: 350, step: 2, default: 300, unit: 'K', description: 'Inlet reactant stream temperature' },
+      { id: 'coolantTemp', name: 'Jacket Coolant Temp T_c', symbol: 'T_c', min: 270, max: 330, step: 2, default: 295, unit: 'K', description: 'Coolant circulation temperature in outer jacket' },
+      { id: 'flowRate', name: 'Volumetric Flow Rate F', symbol: 'F', min: 5, max: 40, step: 2.5, default: 15, unit: 'L/min', description: 'Reactant inlet flow rate (governs residence time τ = V/F)' },
+      { id: 'activationEnergy', name: 'Activation Energy Ratio', symbol: 'E_a/R', min: 5000, max: 11000, step: 250, default: 8000, unit: 'K', description: 'Arrhenius activation energy barrier over gas constant R' },
+    ],
+    presetNames: [
+      { label: 'Nominal Operating State (T_c = 295 K)', values: { feedTemp: 300, coolantTemp: 295, flowRate: 15, activationEnergy: 8000 } },
+      { label: 'Thermal Runaway Limit (T_c = 310 K)', values: { feedTemp: 310, coolantTemp: 310, flowRate: 12, activationEnergy: 8000 } },
+      { label: 'High-Throughput Quenched State', values: { feedTemp: 290, coolantTemp: 280, flowRate: 35, activationEnergy: 8500 } },
+    ],
+    tags: ['CSTR', 'Arrhenius Kinetics', 'Van Heerden S-Curve', 'Thermal Runaway', 'Exothermic Energy Balance'],
+    keyMetrics: [
+      { label: 'Core Temp T', unit: 'K', formulaKey: 'coreTemp' },
+      { label: 'Conversion X_A', unit: '%', formulaKey: 'conversion' },
+      { label: 'Reaction Rate r_A', unit: 'mol/(L·s)', formulaKey: 'rate' },
+      { label: 'Damköhler Da', unit: '', formulaKey: 'damkohler' },
+    ],
+  },
+];
+
+export const FEATURED_SEMICONDUCTOR_SIMULATORS: SimulatorItem[] = [
+  {
+    id: 'pn-junction',
+    title: 'P-N Junction Diode Band Bending & Carrier Transport',
+    discipline: 'physics',
+    disciplineName: 'Quantum & Semiconductor Physics',
+    badge: 'Poisson-Boltzmann / Shockley',
+    difficulty: 'Intermediate',
+    tagline: 'Visualize energy band bending (Ec, Ev, Ef), space-charge depletion width, and carrier drift-diffusion.',
+    description: 'Solve the 1D Poisson-Boltzmann equation across an abrupt metallurgical junction. Watch the electrostatic potential barrier collapse under forward bias and widen under reverse bias, driving exponential minority carrier injection.',
+    governingEquation: 'W = \\sqrt{\\frac{2\\epsilon_s}{q}\\left(\\frac{1}{N_A} + \\frac{1}{N_D}\\right)(V_{bi} - V_a)}, \\quad I = I_s\\left(e^{qV_a / k_B T} - 1\\right)',
+    equationDescription: 'Depletion layer width under applied bias and Shockley ideal diode diffusion current formulation.',
+    physicalLaw: "Poisson's Electrostatic Equation & Fermi-Dirac Carrier Distribution",
+    accentColor: '#38bdf8',
+    type: 'pn_junction',
+    standardReference: 'IEEE Trans. Electron Devices / Sze Physics of Semiconductor Devices',
+    standardBody: 'IEEE Electron Devices Society (EDS)',
+    colorStandardRule: 'Conduction Band Ec (Cyan #38bdf8), Valence Band Ev (Indigo #6366f1), Fermi Level Ef (Amber #f59e0b), Depletion Zone (Slate #334155)',
+    analyticalProof: 'From Poisson’s equation d²V/dx² = -ρ/ε_s, integrating across the abrupt space charge layer with boundary conditions yields depletion width W = √[ (2 ε_s / q) (1/N_A + 1/N_D) (V_bi - V_a) ], where built-in potential is V_bi = (k_B T / q) ln(N_A N_D / n_i²). Applying law of the junction for minority carrier injection gives excess concentrations Δn_p = n_p0 (exp(qV_a/k_B T) - 1). Integrating diffusion flux yields the classic Shockley diode equation: I = I_s [exp(q V_a / (n k_B T)) - 1].',
+    validationTest: 'Silicon 300K benchmark: N_A = 10¹⁶ cm⁻³, N_D = 10¹⁶ cm⁻³, n_i = 1.5e10 cm⁻³, ε_s = 11.7 ε₀. Built-in potential V_bi = (0.0259) ln(10³² / 2.25e20) = 0.695 V. At zero bias (V_a = 0), equilibrium depletion width W₀ = 0.428 µm. Under forward bias V_a = +0.50 V, W = 0.226 µm. Numerical solver matches exact analytical values within 0.02%.',
+    fieldInsights: 'Under high reverse bias (|V_a| > V_BR), impact ionization triggers avalanche multiplication or quantum mechanical band-to-band tunneling (Zener breakdown). In power electronic MOSFET body diodes and solar PV cells, maximizing carrier diffusion length L_diff is critical to prevent recombination loss.',
+    parameters: [
+      { id: 'biasVoltage', name: 'Applied Bias Voltage V_a', symbol: 'V_a', min: -4.0, max: 0.85, step: 0.05, default: 0.60, unit: 'V', description: 'External voltage across P-N terminal (negative for reverse bias)' },
+      { id: 'acceptorDoping', name: 'P-Side Doping Log(N_A)', symbol: 'log(N_A)', min: 14, max: 18, step: 0.5, default: 16, unit: 'cm⁻³', description: 'Boron acceptor impurity concentration (log10)' },
+      { id: 'donorDoping', name: 'N-Side Doping Log(N_D)', symbol: 'log(N_D)', min: 14, max: 18, step: 0.5, default: 16, unit: 'cm⁻³', description: 'Phosphorus donor impurity concentration (log10)' },
+      { id: 'temp', name: 'Operating Temperature', symbol: 'T', min: 200, max: 450, step: 10, default: 300, unit: 'K', description: 'Junction crystal lattice temperature' },
+    ],
+    presetNames: [
+      { label: 'Forward Bias Knee (V_a = +0.65 V)', values: { biasVoltage: 0.65, acceptorDoping: 16, donorDoping: 16, temp: 300 } },
+      { label: 'Equilibrium (V_a = 0.00 V)', values: { biasVoltage: 0.0, acceptorDoping: 16, donorDoping: 16, temp: 300 } },
+      { label: 'Reverse Blocking (V_a = -3.50 V)', values: { biasVoltage: -3.5, acceptorDoping: 16, donorDoping: 16, temp: 300 } },
+    ],
+    tags: ['Energy Band Diagram', 'Poisson-Boltzmann', 'Depletion Width', 'Shockley Diode', 'Carrier Drift-Diffusion'],
+    keyMetrics: [
+      { label: 'Forward Current I_D', unit: 'mA', formulaKey: 'current' },
+      { label: 'Depletion Width W', unit: 'µm', formulaKey: 'depletion' },
+      { label: 'Built-in Barrier V_bi', unit: 'V', formulaKey: 'vBi' },
+      { label: 'Electric Field E_max', unit: 'kV/cm', formulaKey: 'eMax' },
+    ],
+  },
+];
+
 export const ALL_AVAILABLE_SIMULATORS: SimulatorItem[] = [
   ...FEATURED_ELECTRICAL_SIMULATORS,
   ...FEATURED_MECHANICAL_SIMULATORS,
   ...FEATURED_INSTRUMENTATION_SIMULATORS,
   ...FEATURED_CIVIL_SIMULATORS,
+  ...FEATURED_CHEMICAL_SIMULATORS,
+  ...FEATURED_SEMICONDUCTOR_SIMULATORS,
 ];
 
 
