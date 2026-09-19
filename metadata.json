@@ -1,0 +1,7 @@
+{
+  "name": "LiveSimulators - Interactive Engineering Learning Platform",
+  "description": "Don't just read engineering. See it happen. Interactive engineering simulations that turn theory into visual understanding for students, professors, and practicing engineers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

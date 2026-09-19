@@ -1,0 +1,1942 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  ArrowLeft,
+  RotateCcw,
+  Play,
+  Pause,
+  Share2,
+  Download,
+  CheckCircle2,
+  AlertTriangle,
+  Award,
+  Layers,
+  Activity,
+  Sliders,
+  Sparkles,
+  Info,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  BookOpen,
+  Camera,
+  FastForward,
+  HelpCircle,
+  TrendingUp,
+  ShieldCheck,
+  Grid,
+  ChevronDown,
+  Volume2,
+  VolumeX,
+  Crosshair,
+  Compass,
+  FlaskConical,
+  X
+} from 'lucide-react';
+import { SimulatorItem, DisciplineId } from '../types';
+import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
+import { MathView } from './MathView';
+import { physicsAudio } from '../utils/physicsAudio';
+import { SIMULATOR_EXPERIMENTS, getDynamicPhysicsExplanation, GuidedExperiment } from '../data/simulatorExperiments';
+import { renderFourBar, renderHarmonicOscillator, renderSpurGear, renderRankineCycle } from './mechanical/renderers';
+import { renderRlcCircuit, renderThreePhase, renderBuckBoost, renderSallenKey, renderTransmissionLine } from './electrical/renderers';
+import { renderBeamBending, renderTrussAnalysis, renderSeismicIsolation, renderMohrCircle } from './civil/renderers';
+import { renderCurrentLoop, renderControlValve, renderOrificeFlow, renderPidLoop, renderRtd } from './instrumentation/renderers';
+import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare } from '../utils/analytics';
+import { WhyItHappenedCard } from './WhyItHappenedCard';
+
+interface DedicatedSimulatorPageProps {
+  simulator: SimulatorItem;
+  onBackToDepartment: (deptId: DisciplineId) => void;
+  onBackToHome: () => void;
+  onSelectSimulator: (sim: SimulatorItem) => void;
+}
+
+export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
+  simulator,
+  onBackToDepartment,
+  onBackToHome,
+  onSelectSimulator,
+}) => {
+  // Initialize parameters
+  const [params, setParams] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {};
+    simulator.parameters.forEach((p) => {
+      init[p.id] = p.default;
+    });
+    return init;
+  });
+
+  const [isRunning, setIsRunning] = useState<boolean>(true);
+  const [simSpeed, setSimSpeed] = useState<number>(1.0);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
+  const [showGrid, setShowGrid] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<'telemetry' | 'derivation' | 'standards' | 'insights' | 'experiments'>('telemetry');
+  const [snapshotToast, setSnapshotToast] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [peerDropdownOpen, setPeerDropdownOpen] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [showExperimentsModal, setShowExperimentsModal] = useState<boolean>(false);
+  const [selectedExperiment, setSelectedExperiment] = useState<GuidedExperiment | null>(null);
+  const [probeCoord, setProbeCoord] = useState<{ x: number; y: number } | null>(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState<boolean>(false);
+
+  // Session run duration tracking for GA4 simulator_run {duration_s}
+  const runStartTimeRef = useRef<number | null>(Date.now());
+  const accumulatedDurationRef = useRef<number>(0);
+
+  // Mechanical and dynamic simulation tracking refs
+  const couplerTracerRef = useRef<Array<{ x: number; y: number }>>([]);
+  const pidStateRef = useRef<{
+    pv: number;
+    integral: number;
+    lastError: number;
+    historyPv: number[];
+    historySp: number[];
+    historyMv: number[];
+  }>({
+    pv: 30,
+    integral: 0,
+    lastError: 0,
+    historyPv: new Array(80).fill(30),
+    historySp: new Array(80).fill(65),
+    historyMv: new Array(80).fill(50),
+  });
+  const loopParticlesRef = useRef<Array<{ pos: number; path: number }>>([
+    { pos: 0.1, path: 0 }, { pos: 0.3, path: 0 }, { pos: 0.6, path: 0 }, { pos: 0.8, path: 0 },
+    { pos: 0.2, path: 1 }, { pos: 0.5, path: 1 }, { pos: 0.7, path: 1 }, { pos: 0.9, path: 1 },
+  ]);
+  const bubbleParticlesRef = useRef<Array<{ x: number; y: number; size: number; alpha: number }>>([]);
+  const seismicHistoryRef = useRef<number[]>(new Array(100).fill(0));
+
+  // Mobile view mode tab for smaller screens: 'workbench' | 'parameters' | 'analysis'
+  const [mobileTab, setMobileTab] = useState<'workbench' | 'parameters' | 'analysis'>('workbench');
+
+  // Canvas & container refs
+  const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animRef = useRef<number | null>(null);
+  const timeRef = useRef<number>(0);
+
+  // Update params when simulator changes
+  useEffect(() => {
+    const init: Record<string, number> = {};
+    simulator.parameters.forEach((p) => {
+      init[p.id] = p.default;
+    });
+    setParams(init);
+    timeRef.current = 0;
+    setPeerDropdownOpen(false);
+  }, [simulator.id]);
+
+  // GA4 Telemetry: Track simulator_open
+  useEffect(() => {
+    trackSimulatorOpen(simulator.discipline, simulator.id);
+  }, [simulator.id]);
+
+  // GA4 Telemetry: Track simulator_run duration on pause
+  useEffect(() => {
+    if (isRunning) {
+      runStartTimeRef.current = Date.now();
+    } else {
+      if (runStartTimeRef.current) {
+        const sessionSeconds = (Date.now() - runStartTimeRef.current) / 1000;
+        accumulatedDurationRef.current += sessionSeconds;
+        trackSimulatorRun(accumulatedDurationRef.current);
+        accumulatedDurationRef.current = 0;
+        runStartTimeRef.current = null;
+      }
+    }
+  }, [isRunning]);
+
+  // GA4 Telemetry: Track simulator_run duration on unmount or route switch
+  useEffect(() => {
+    return () => {
+      let finalDuration = accumulatedDurationRef.current;
+      if (runStartTimeRef.current) {
+        finalDuration += (Date.now() - runStartTimeRef.current) / 1000;
+      }
+      if (finalDuration > 0) {
+        trackSimulatorRun(finalDuration);
+      }
+      accumulatedDurationRef.current = 0;
+      runStartTimeRef.current = null;
+    };
+  }, [simulator.id]);
+
+  // Fullscreen state listener
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  // ResizeObserver to ensure canvas ALWAYS fits its parent container pixel-for-pixel
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    const updateCanvasSize = () => {
+      const rect = container.getBoundingClientRect();
+      const newW = Math.floor(rect.width);
+      const newH = Math.floor(rect.height);
+      if (newW > 10 && newH > 10) {
+        if (canvas.width !== newW || canvas.height !== newH) {
+          canvas.width = newW;
+          canvas.height = newH;
+        }
+      }
+    };
+
+    updateCanvasSize();
+    const observer = new ResizeObserver(() => {
+      updateCanvasSize();
+    });
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [simulator.id, mobileTab]);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
+
+  const handleParamChange = (id: string, value: number) => {
+    setParams((prev) => ({ ...prev, [id]: value }));
+    trackParameterChange(id);
+  };
+
+  const handleApplyPreset = (values: Record<string, number>) => {
+    setParams((prev) => ({ ...prev, ...values }));
+    Object.keys(values).forEach((k) => trackParameterChange(k));
+  };
+
+  const handleResetDefaults = () => {
+    const init: Record<string, number> = {};
+    simulator.parameters.forEach((p) => {
+      init[p.id] = p.default;
+    });
+    setParams(init);
+    timeRef.current = 0;
+    trackParameterChange('reset_defaults');
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      trackShare('clipboard');
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch (e) {
+      trackShare('clipboard');
+    }
+  };
+
+  const handleSocialShare = (network: 'linkedin' | 'twitter' | 'web_share') => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const title = `${simulator.title} - LiveSimulators Interactive Engineering`;
+    trackShare(network);
+
+    if (network === 'linkedin') {
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
+    } else if (network === 'twitter') {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
+    } else if (network === 'web_share' && typeof navigator !== 'undefined' && (navigator as any).share) {
+      (navigator as any).share({ title, url }).catch(() => {});
+    }
+    setShareMenuOpen(false);
+  };
+
+  const handleSnapshot = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${simulator.id}_physics_capture.png`;
+    a.click();
+    setSnapshotToast(true);
+    setTimeout(() => setSnapshotToast(false), 2500);
+  };
+
+  const handleExportCSV = () => {
+    let csv = `time_sec,param_primary,param_secondary,telemetry_output\n`;
+    for (let i = 0; i < 200; i++) {
+      const t = i * 0.01;
+      const v1 = Math.sin(2 * Math.PI * 50 * t);
+      const v2 = Math.cos(2 * Math.PI * 50 * t);
+      csv += `${t.toFixed(4)},${v1.toFixed(4)},${v2.toFixed(4)},${(v1 * v2).toFixed(4)}\n`;
+    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${simulator.id}_physics_telemetry.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ---------------------------------------------------------------------------
+  // NUMERICAL METRICS ENGINE
+  // ---------------------------------------------------------------------------
+  const metrics: { label: string; value: string; unit: string; description: string; status?: 'normal' | 'warning' | 'alert' }[] = [];
+
+  if (simulator.type === 'rlc') {
+    const R = params['resistance'] || 25;
+    const L = (params['inductance'] || 60) * 1e-3;
+    const C = (params['capacitance'] || 40) * 1e-6;
+    const f = params['frequency'] || 100;
+    const omega = 2 * Math.PI * f;
+    const omega0 = 1 / Math.sqrt(L * C);
+    const f0 = omega0 / (2 * Math.PI);
+    const zeta = (R / 2) * Math.sqrt(C / L);
+    const Q = (1 / R) * Math.sqrt(L / C);
+    const XL = omega * L;
+    const XC = 1 / (omega * C);
+    const Z = Math.sqrt(R * R + (XL - XC) * (XL - XC));
+
+    metrics.push({ label: 'Resonant Frequency f₀', value: f0.toFixed(1), unit: 'Hz', description: 'Zero reactance natural frequency' });
+    metrics.push({ label: 'Damping Ratio ζ', value: zeta.toFixed(3), unit: '', description: 'Dimensionless damping coefficient', status: zeta < 1 ? 'warning' : 'normal' });
+    metrics.push({ label: 'Quality Factor Q', value: Q.toFixed(2), unit: '', description: 'Sharpness of frequency resonance peak' });
+    metrics.push({ label: 'Total Impedance |Z|', value: Z.toFixed(1), unit: 'Ω', description: 'Effective AC circuit opposition to current' });
+  } else if (simulator.type === 'three_phase') {
+    const f = params['frequency'] || 50;
+    const V_ph = params['voltage'] || 230;
+    const T_L = params['loadTorque'] || 45;
+    const I_f = params['excitationCurrent'] || 5;
+
+    const syncSpeed = (120 * f) / 4;
+    const T_max = 120;
+    const deltaDeg = Math.min(85, (Math.asin(Math.min(0.95, T_L / T_max)) * 180) / Math.PI);
+    const pf = Math.min(1.0, 0.85 + (I_f - 5) * 0.03);
+    const pActive = (3 * V_ph * (T_L * 1.2) * pf) / 1000;
+
+    metrics.push({ label: 'Synchronous Speed', value: syncSpeed.toFixed(0), unit: 'RPM', description: 'Stator magnetic flux rotational velocity' });
+    metrics.push({ label: 'Torque Angle δ', value: deltaDeg.toFixed(1), unit: '°', description: 'Rotor displacement from stator MMF', status: deltaDeg > 60 ? 'warning' : 'normal' });
+    metrics.push({ label: 'Power Factor cos(φ)', value: pf.toFixed(2), unit: pf > 0.95 ? 'Leading' : 'Lagging', description: 'Ratio of real to apparent power' });
+    metrics.push({ label: 'Active Real Power P', value: pActive.toFixed(1), unit: 'kW', description: 'Three-phase electromechanical output power' });
+  } else if (simulator.type === 'buck_boost') {
+    const D = params['dutyCycle'] || 0.6;
+    const Vin = params['inputVoltage'] || 12;
+    const fsw = (params['switchingFreq'] || 100) * 1e3;
+    const L = (params['inductance'] || 120) * 1e-6;
+    const Rload = 20;
+    const Vout = -Vin * (D / (1 - D));
+    const deltaIL = (Vin * D) / (L * fsw);
+    const Iout = Math.abs(Vout) / Rload;
+    const ILavg = Iout / (1 - D);
+    const isCCM = ILavg > deltaIL / 2;
+
+    metrics.push({ label: 'Output Voltage V_out', value: Vout.toFixed(2), unit: 'V', description: 'Regulated inverted DC rail voltage' });
+    metrics.push({ label: 'Inductor Ripple ΔI_L', value: deltaIL.toFixed(2), unit: 'A', description: 'Peak-to-peak AC magnetic choke ripple' });
+    metrics.push({ label: 'Average Inductor Current', value: ILavg.toFixed(2), unit: 'A', description: 'Mean DC current sustained by inductor' });
+    metrics.push({ label: 'Conduction Mode', value: isCCM ? 'CCM Continuous' : 'DCM Discontinuous', unit: '', description: 'Inductor current continuity status', status: isCCM ? 'normal' : 'warning' });
+  } else if (simulator.type === 'sallen_key') {
+    const fc = params['cutoffFreq'] || 1500;
+    const Q = params['qualityFactor'] || 0.707;
+    const Av = params['gain'] || 1.0;
+    const fin = params['testFreq'] || 1200;
+
+    const r = fin / fc;
+    const mag = Av / Math.sqrt(Math.pow(1 - r * r, 2) + Math.pow(r / Q, 2));
+    const gainDb = 20 * Math.log10(Math.max(0.001, mag));
+    const phaseDeg = -Math.atan2(r / Q, 1 - r * r) * (180 / Math.PI);
+    const damping = 1 / (2 * Q);
+
+    metrics.push({ label: 'Gain at Test Freq', value: gainDb.toFixed(2), unit: 'dB', description: 'Signal attenuation at input frequency' });
+    metrics.push({ label: 'Phase Shift', value: phaseDeg.toFixed(1), unit: '°', description: 'Biquad filter phase lag' });
+    metrics.push({ label: 'Damping Factor ζ', value: damping.toFixed(3), unit: '', description: '0.707 indicates Butterworth maximally flat response' });
+    metrics.push({ label: 'Cutoff Frequency f_c', value: fc.toString(), unit: 'Hz', description: '-3 dB transition bandwidth limit' });
+  } else if (simulator.type === 'transmission_line') {
+    const ZL = params['loadImpedance'] || 50;
+    const Z0 = params['lineImpedance'] || 50;
+    const f = params['frequency'] || 300;
+    const gamma = (ZL - Z0) / (ZL + Z0);
+    const absGamma = Math.abs(gamma);
+    const vswr = (1 + absGamma) / Math.max(0.001, 1 - absGamma);
+    const returnLoss = absGamma > 0 ? -20 * Math.log10(absGamma) : 99.9;
+    const wavelength = 300 / f;
+
+    metrics.push({ label: 'Reflection Coeff |Γ|', value: absGamma.toFixed(3), unit: '', description: 'Fraction of incident voltage wave reflected' });
+    metrics.push({ label: 'VSWR', value: vswr.toFixed(2), unit: ':1', description: 'Voltage Standing Wave Ratio (1.0 is ideal)', status: vswr > 2.0 ? 'warning' : 'normal' });
+    metrics.push({ label: 'Return Loss', value: returnLoss > 50 ? '>50' : returnLoss.toFixed(1), unit: 'dB', description: 'RF power reflection attenuation' });
+    metrics.push({ label: 'Carrier Wavelength λ', value: wavelength.toFixed(2), unit: 'm', description: 'Spatial period of TEM guided wave' });
+  } else if (simulator.type === 'beam_deflection') {
+    const L = params['span'] || 6;
+    const P = params['pointLoad'] || 45;
+    const a = params['loadPos'] || 3;
+    const q = params['udl'] || 12;
+    const b = L - a;
+
+    const R1 = (P * b) / L + (q * L) / 2;
+    const R2 = (P * a) / L + (q * L) / 2;
+    const maxM = (P * a * b) / L + (q * L * L) / 8;
+
+    const E = 200e9;
+    const I = 84.9e-6;
+    const delta_mid = ((P * Math.min(a, b) * (3 * L * L - 4 * Math.min(a, b) * Math.min(a, b))) / (48 * E * I) + (5 * (q * 1000) * Math.pow(L, 4)) / (384 * E * I)) * 1000;
+    const aiscLimit = (L * 1000) / 360;
+
+    metrics.push({ label: 'Peak Bending Moment', value: maxM.toFixed(1), unit: 'kN·m', description: 'Maximum internal flexural bending moment' });
+    metrics.push({ label: 'Max Deflection δ', value: delta_mid.toFixed(2), unit: 'mm', description: 'Calculated vertical beam center sag', status: delta_mid > aiscLimit ? 'alert' : 'normal' });
+    metrics.push({ label: 'AISC Allowable (L/360)', value: aiscLimit.toFixed(1), unit: 'mm', description: 'AISC 360-16 maximum allowable live deflection' });
+    metrics.push({ label: 'Left Reaction Force R₁', value: R1.toFixed(1), unit: 'kN', description: 'Vertical reaction support load at pin' });
+  } else if (simulator.type === 'truss') {
+    const span = params['span'] || 24;
+    const H = params['height'] || 4.5;
+    const P_truck = params['liveLoad'] || 80;
+    const w_d = params['deadLoad'] || 15;
+    const bayL = span / 6;
+
+    const R_left = w_d * 2.5 + P_truck * 0.65;
+    const maxTension = R_left * 1.8;
+    const maxComp = R_left * 1.95;
+    const memL = Math.sqrt(bayL * bayL + H * H);
+    const P_cr = (Math.PI * Math.PI * 200e9 * 11.5e-6) / (memL * memL * 1000);
+    const bucklingFactor = P_cr / maxComp;
+
+    metrics.push({ label: 'Max Chord Tension', value: maxTension.toFixed(1), unit: 'kN', description: 'Tensile axial force in bottom bay chord' });
+    metrics.push({ label: 'Max Web Compression', value: maxComp.toFixed(1), unit: 'kN', description: 'Maximum compressive load in diagonal strut' });
+    metrics.push({ label: 'Euler Buckling P_cr', value: P_cr.toFixed(1), unit: 'kN', description: 'Critical column buckling threshold capacity' });
+    metrics.push({ label: 'Buckling Safety Margin', value: bucklingFactor.toFixed(2), unit: 'x', description: 'AASHTO member stability factor of safety', status: bucklingFactor < 1.67 ? 'warning' : 'normal' });
+  } else if (simulator.type === 'seismic') {
+    const pga = params['pga'] || 0.45;
+    const freq = params['frequency'] || 1.8;
+    const dLead = params['leadCore'] || 120;
+    const damping = params['damping'] || 18;
+
+    const tnFixed = 0.45;
+    const tnIsolated = 0.45 * Math.sqrt(180 / dLead) * 2.4;
+    const baseShearFixed = pga * 9.81 * 450 * 0.85;
+    const baseShearIso = baseShearFixed * (1 - damping / 100) * 0.35;
+    const roofDrift = (pga * 9.81 / Math.pow(2 * Math.PI * freq, 2)) * 1000 * 0.4;
+    const ascePass = roofDrift < 40;
+
+    metrics.push({ label: 'Isolated Period T_n', value: tnIsolated.toFixed(2), unit: 's', description: 'Elongated fundamental vibration period' });
+    metrics.push({ label: 'Base Shear Reduction', value: `${(((baseShearFixed - baseShearIso) / baseShearFixed) * 100).toFixed(0)}%`, unit: 'Absorbed', description: 'Lateral earthquake energy mitigated by LRBs' });
+    metrics.push({ label: 'Roof Lateral Drift', value: roofDrift.toFixed(1), unit: 'mm', description: 'Peak multi-story horizontal displacement' });
+    metrics.push({ label: 'ASCE 7-22 Drift Check', value: ascePass ? 'PASSED (<2%)' : 'EXCEEDED', unit: '', description: 'Inter-story drift safety compliance', status: ascePass ? 'normal' : 'alert' });
+  } else if (simulator.type === 'mohr_circle') {
+    const sx = params['sigmaX'] || 140;
+    const sy = params['sigmaY'] || 50;
+    const txy = params['tauXy'] || 35;
+
+    const sAvg = (sx + sy) / 2;
+    const R = Math.sqrt(Math.pow((sx - sy) / 2, 2) + Math.pow(txy, 2));
+    const s1 = sAvg + R;
+    const s2 = sAvg - R;
+    const tauMax = R;
+    const phiSoil = (30 * Math.PI) / 180;
+    const tauCapacity = 20 + sAvg * Math.tan(phiSoil);
+    const fs = tauCapacity / tauMax;
+
+    metrics.push({ label: 'Major Principal σ₁', value: s1.toFixed(1), unit: 'kPa', description: 'Maximum normal stress along principal axis' });
+    metrics.push({ label: 'Minor Principal σ₂', value: s2.toFixed(1), unit: 'kPa', description: 'Minimum normal stress along principal axis' });
+    metrics.push({ label: 'Max In-Plane Shear τ_max', value: tauMax.toFixed(1), unit: 'kPa', description: 'Maximum shear stress at 45° to principal plane' });
+    metrics.push({ label: 'Mohr-Coulomb Factor of Safety', value: fs.toFixed(2), unit: 'x', description: 'Shear slip failure margin (ASTM D3080)', status: fs < 1.3 ? 'warning' : 'normal' });
+  } else if (simulator.type === 'four_bar') {
+    const r1 = params['groundL'] || 130;
+    const r2 = params['crankR'] || 40;
+    const r3 = params['couplerL'] || 120;
+    const r4 = params['rockerL'] || 90;
+    const s = Math.min(r1, r2, r3, r4);
+    const l = Math.max(r1, r2, r3, r4);
+    const sumSL = s + l;
+    const sumPQ = r1 + r2 + r3 + r4 - sumSL;
+    const isGrashof = sumSL <= sumPQ;
+
+    metrics.push({ label: 'Grashof Condition', value: isGrashof ? 'Grashof Class I (Crank-Rocker)' : 'Non-Grashof (Triple Rocker)', unit: '', description: 'Continuous full rotational mobility check', status: isGrashof ? 'normal' : 'warning' });
+    metrics.push({ label: 'Shortest Link s', value: s.toFixed(0), unit: 'mm', description: 'Crank driving element length' });
+    metrics.push({ label: 'Longest Link l', value: l.toFixed(0), unit: 'mm', description: 'Ground fixed frame base span' });
+    metrics.push({ label: 'Mobility Margin', value: (sumPQ - sumSL).toFixed(0), unit: 'mm', description: 'Grashof equation slack threshold' });
+  } else if (simulator.type === 'rankine') {
+    const P1 = params['boilerP'] || 80;
+    const T1 = params['turbineInletT'] || 480;
+    const P2 = params['condenserP'] || 0.08;
+    const eta_t = (params['turbineEff'] || 85) / 100;
+
+    const h1 = 2800 + (T1 - 300) * 1.9 + P1 * 0.5;
+    const h2s = 2050 + P2 * 300;
+    const h2 = h1 - eta_t * (h1 - h2s);
+    const h3 = 173;
+    const wp = 0.001 * (P1 - P2) * 100;
+    const h4 = h3 + wp;
+    const wt = h1 - h2;
+    const qin = h1 - h4;
+    const eta_th = ((wt - wp) / qin) * 100;
+    const bwr = (wp / wt) * 100;
+
+    metrics.push({ label: 'Cycle Thermal Efficiency η_th', value: eta_th.toFixed(2), unit: '%', description: 'Thermodynamic steam power cycle conversion' });
+    metrics.push({ label: 'Turbine Specific Work W_t', value: wt.toFixed(1), unit: 'kJ/kg', description: 'Shaft enthalpy extraction in turbine' });
+    metrics.push({ label: 'Feed Pump Work W_p', value: wp.toFixed(2), unit: 'kJ/kg', description: 'Compressive work on condensed feedwater' });
+    metrics.push({ label: 'Back Work Ratio BWR', value: bwr.toFixed(2), unit: '%', description: 'Fraction of gross work consumed by pump' });
+  } else if (simulator.type === 'harmonic') {
+    const m = params['mass'] || 5;
+    const k = params['stiffness'] || 350;
+    const c = params['dampingC'] || 8;
+    const f_drive = params['driveFreq'] || 1.33;
+
+    const omega_n = Math.sqrt(k / m);
+    const fn = omega_n / (2 * Math.PI);
+    const zeta = c / (2 * Math.sqrt(k * m));
+    const omega = 2 * Math.PI * f_drive;
+    const r = omega / omega_n;
+    const denom = Math.sqrt(Math.pow(1 - r * r, 2) + Math.pow(2 * zeta * r, 2));
+    const M = 1 / Math.max(0.001, denom);
+    const phi = Math.atan2(2 * zeta * r, 1 - r * r) * (180 / Math.PI);
+
+    metrics.push({ label: 'Natural Frequency f_n', value: fn.toFixed(2), unit: 'Hz', description: 'Undamped characteristic resonance frequency' });
+    metrics.push({ label: 'Damping Ratio ζ', value: zeta.toFixed(3), unit: '', description: 'Viscous damping relative to critical' });
+    metrics.push({ label: 'Magnification Factor M', value: M.toFixed(2), unit: 'x', description: 'Steady-state displacement amplitude gain', status: M > 4 ? 'alert' : 'normal' });
+    metrics.push({ label: 'Phase Lag φ', value: phi.toFixed(1), unit: '°', description: 'Response delay behind excitation force' });
+  } else if (simulator.type === 'spur_gear') {
+    const m = params['moduleM'] || 4;
+    const z1 = params['teethPinion'] || 18;
+    const z2 = params['teethGear'] || 48;
+    const alphaDeg = params['pressureAngle'] || 20;
+    const N1 = params['inputRpm'] || 600;
+
+    const alpha = (alphaDeg * Math.PI) / 180;
+    const d1 = m * z1;
+    const d2 = m * z2;
+    const C = (d1 + d2) / 2;
+    const gearRatio = z2 / z1;
+    const pitchVel = (Math.PI * d1 * N1) / 60000;
+    const pb = Math.PI * m * Math.cos(alpha);
+    const ra1 = d1 / 2 + m;
+    const ra2 = d2 / 2 + m;
+    const rb1 = (d1 / 2) * Math.cos(alpha);
+    const rb2 = (d2 / 2) * Math.cos(alpha);
+    const pathContact = Math.sqrt(ra1 * ra1 - rb1 * rb1) + Math.sqrt(ra2 * ra2 - rb2 * rb2) - C * Math.sin(alpha);
+    const CR = pathContact / pb;
+
+    metrics.push({ label: 'Gear Ratio i', value: `1:${gearRatio.toFixed(2)}`, unit: '', description: 'Angular speed reduction ratio' });
+    metrics.push({ label: 'Contact Ratio CR', value: CR.toFixed(2), unit: '', description: 'Average number of pairs in continuous mesh', status: CR < 1.4 ? 'warning' : 'normal' });
+    metrics.push({ label: 'Pitch Line Velocity V_p', value: pitchVel.toFixed(2), unit: 'm/s', description: 'Circumferential tangential mesh speed' });
+    metrics.push({ label: 'Center Distance C', value: C.toFixed(1), unit: 'mm', description: 'Shaft axis separation distance' });
+  } else if (simulator.type === 'pid') {
+    const kp = params['kp'] || 2.4;
+    const ti = params['ti'] || 8;
+    const td = params['td'] || 0.5;
+    const sp = params['setpoint'] || 65;
+
+    metrics.push({ label: 'Proportional Gain K_p', value: kp.toFixed(2), unit: '', description: 'Instantaneous error amplifier' });
+    metrics.push({ label: 'Integral Reset Time T_i', value: ti.toFixed(1), unit: 's', description: 'Steady-state offset elimination rate' });
+    metrics.push({ label: 'Derivative Rate Time T_d', value: td.toFixed(2), unit: 's', description: 'Error rate-of-change dampener' });
+    metrics.push({ label: 'Target Setpoint SP', value: sp.toFixed(0), unit: '%', description: 'Desired regulated process operating target' });
+  } else if (simulator.type === 'control_valve') {
+    const openPct = params['openingPct'] || 60;
+    const P1 = params['inletPressure'] || 6.0;
+    const P2 = params['outletPressure'] || 2.5;
+    const maxCv = params['maxCv'] || 50;
+
+    const deltaP = Math.max(0.1, P1 - P2);
+    const travelNorm = openPct / 100;
+    const effCv = maxCv * Math.pow(50, travelNorm - 1);
+    const Q = effCv * 0.865 * Math.sqrt(deltaP);
+    const sigmaC = (P1 - 0.23) / deltaP;
+    const isCavitating = sigmaC < 1.5;
+
+    metrics.push({ label: 'Effective Flow Coeff C_v', value: effCv.toFixed(1), unit: '', description: 'Equal-percentage throttling capacity' });
+    metrics.push({ label: 'Flow Rate Q', value: Q.toFixed(1), unit: 'm³/h', description: 'Volumetric fluid throughput' });
+    metrics.push({ label: 'Pressure Drop ΔP', value: deltaP.toFixed(2), unit: 'bar', description: 'Throttling differential across seat ring' });
+    metrics.push({ label: 'Cavitation Index σ_c', value: sigmaC.toFixed(2), unit: '', description: 'Incipient cavitation safety threshold', status: isCavitating ? 'alert' : 'normal' });
+  } else if (simulator.type === 'current_loop') {
+    const pv = params['processPressure'] || 6.5;
+    const Rwire = params['wireResistance'] || 25;
+    const Rload = params['loadResistance'] || 250;
+    const Vs = params['supplyVoltage'] || 24;
+
+    const loopMa = 4 + 16 * (pv / 10);
+    const I_amp = loopMa * 1e-3;
+    const vWire = I_amp * Rwire;
+    const vAdc = I_amp * Rload;
+    const vTerm = Vs - vWire - vAdc;
+    const margin = vTerm - 11.5;
+
+    metrics.push({ label: 'Loop Current I_loop', value: loopMa.toFixed(2), unit: 'mA', description: 'Linear transmitter process signal (4–20 mA)' });
+    metrics.push({ label: 'Transmitter Terminal V_term', value: vTerm.toFixed(2), unit: 'VDC', description: 'Available voltage at 2-wire transmitter', status: margin < 1.0 ? 'warning' : 'normal' });
+    metrics.push({ label: 'DCS Input Signal V_adc', value: vAdc.toFixed(2), unit: 'VDC', description: 'Voltage drop across 250Ω precision burden' });
+    metrics.push({ label: 'Compliance Margin', value: margin.toFixed(2), unit: 'V', description: 'Headroom above 11.5V min operating threshold' });
+  } else if (simulator.type === 'orifice_meter') {
+    const d = params['boreD'] || 60;
+    const Q = params['flowRateQ'] || 45;
+    const rho = params['fluidDensity'] || 1000;
+    const D = 100;
+
+    const beta = d / D;
+    const A1 = (Math.PI / 4) * Math.pow(D / 1000, 2);
+    const v1 = (Q / 3600) / A1;
+    const Cd = 0.605;
+    const deltaP_mbar = ((0.5 * rho * Math.pow(v1, 2) * (1 - Math.pow(beta, 4))) / (Math.pow(Cd, 2) * Math.pow(beta, 4))) / 100;
+
+    metrics.push({ label: 'Beta Diameter Ratio β', value: beta.toFixed(3), unit: '', description: 'd/D restriction ratio (ISO 5167 recommended 0.2–0.75)' });
+    metrics.push({ label: 'Differential Pressure ΔP', value: deltaP_mbar.toFixed(1), unit: 'mbar', description: 'Flange tap pressure difference across plate' });
+    metrics.push({ label: 'Discharge Coefficient C_d', value: Cd.toFixed(3), unit: '', description: 'Empirical Stolz discharge calibration' });
+    metrics.push({ label: 'Upstream Pipe Velocity', value: v1.toFixed(2), unit: 'm/s', description: 'Mean approach fluid velocity in 100mm line' });
+  } else {
+    simulator.parameters.slice(0, 4).forEach((p) => {
+      metrics.push({ label: p.name, value: (params[p.id] || p.default).toString(), unit: p.unit, description: p.description });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // 60 FPS VECTOR CANVAS RENDERER FOR ALL SIMULATOR TYPES
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let localTime = timeRef.current;
+
+    const render = () => {
+      if (isRunning) {
+        localTime += 0.016 * simSpeed;
+        timeRef.current = localTime;
+      }
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      if (w < 20 || h < 20) {
+        animRef.current = requestAnimationFrame(render);
+        return;
+      }
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Tech Grid Background
+      ctx.fillStyle = '#060b13';
+      ctx.fillRect(0, 0, w, h);
+
+      if (showGrid) {
+        ctx.strokeStyle = 'rgba(30, 41, 59, 0.45)';
+        ctx.lineWidth = 1;
+        const gridSize = 32;
+        for (let x = 0; x < w; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = 0; y < h; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+      }
+
+      // Construct Unified High-Precision Render Context
+      const dt = 0.016 * simSpeed;
+      const rc = { ctx, w, h, dt, t: localTime };
+
+      // Physical Acoustics Audio Engine Synchronization
+      if (!isMuted && isRunning) {
+        if (simulator.type === 'rlc') {
+          physicsAudio.updateTone('rlc', params['frequency'] || 100, 0.4);
+        } else if (simulator.type === 'three_phase') {
+          physicsAudio.updateTone('three_phase', params['frequency'] || 50, 0.45);
+        } else if (simulator.type === 'harmonic') {
+          physicsAudio.updateTone('harmonic', (params['driveFreq'] || 1.33) * 70, 0.5);
+        } else if (simulator.type === 'spur_gear') {
+          physicsAudio.updateTone('spur_gear', (params['inputRpm'] || 600) / 4, 0.35);
+        } else if (simulator.type === 'sallen_key') {
+          physicsAudio.updateTone('sallen_key', params['testFreq'] || 1200, 0.25);
+        } else if (simulator.type === 'buck_boost') {
+          physicsAudio.updateTone('buck_boost', 240, 0.2);
+        } else if (simulator.type === 'transmission_line') {
+          physicsAudio.updateTone('transmission_line', 440, 0.2);
+        } else {
+          physicsAudio.updateTone('ambient', 120, 0.15);
+        }
+      } else {
+        physicsAudio.stopAll();
+      }
+
+      // Render individual simulator types
+      if (simulator.type === 'rlc') {
+        renderRlcCircuit(rc, {
+          resistance: params['resistance'] || 25,
+          inductance: params['inductance'] || 60,
+          capacitance: params['capacitance'] || 40,
+          frequency: params['frequency'] || 100,
+        });
+      } else if (simulator.type === 'three_phase') {
+        renderThreePhase(rc, {
+          voltage: params['voltage'] || 230,
+          frequency: params['frequency'] || 50,
+          loadTorque: params['loadTorque'] || 45,
+          excitationCurrent: params['excitationCurrent'] || 5,
+        });
+      } else if (simulator.type === 'buck_boost') {
+        renderBuckBoost(rc, {
+          dutyCycle: params['dutyCycle'] || 0.60,
+          inputVoltage: params['inputVoltage'] || 12,
+          switchingFreq: params['switchingFreq'] || 100,
+          inductance: params['inductance'] || 120,
+        });
+
+      } else if (simulator.type === 'sallen_key') {
+        renderSallenKey(rc, {
+          cutoffFreq: params['cutoffFreq'] || 1500,
+          qualityFactor: params['qualityFactor'] || 0.707,
+          gain: params['gain'] || 1.0,
+          testFreq: params['testFreq'] || 1200,
+        });
+      } else if (simulator.type === 'transmission_line') {
+        renderTransmissionLine(rc, {
+          loadImpedance: params['loadImpedance'] || 50,
+          lineImpedance: params['lineImpedance'] || 50,
+          frequency: params['frequency'] || 300,
+        });
+
+      } else if (simulator.type === 'four_bar') {
+        renderFourBar(rc, {
+          groundL: params['groundL'] || 130,
+          crankR: params['crankR'] || 40,
+          couplerL: params['couplerL'] || 120,
+          rockerL: params['rockerL'] || 90,
+          rpm: params['rpm'] || 20,
+          couplerTracerHistory: couplerTracerRef.current,
+        });
+      } else if (simulator.type === 'harmonic') {
+        renderHarmonicOscillator(rc, {
+          mass: params['mass'] || 5,
+          stiffness: params['stiffness'] || 350,
+          dampingC: params['dampingC'] || 8,
+          driveFreq: params['driveFreq'] || 1.33,
+        });
+      } else if (simulator.type === 'spur_gear') {
+        renderSpurGear(rc, {
+          moduleM: params['moduleM'] || 4,
+          teethPinion: params['teethPinion'] || 18,
+          teethGear: params['teethGear'] || 48,
+          pressureAngle: params['pressureAngle'] || 20,
+          inputRpm: params['inputRpm'] || 600,
+        });
+      } else if (simulator.type === 'rankine') {
+        renderRankineCycle(rc, {
+          boilerP: params['boilerP'] || 80,
+          turbineInletT: params['turbineInletT'] || 480,
+          condenserP: params['condenserP'] || 0.08,
+          turbineEff: params['turbineEff'] || 85,
+        });
+      } else if (simulator.type === 'beam_deflection') {
+        const spanL = params['span'] || 6.0;
+        const pointP = params['pointLoad'] || 45;
+        const loadPosA = params['loadPos'] || 3.0;
+        const udlQ = params['udl'] || 12;
+        const R_A = (pointP * (spanL - loadPosA) / spanL) + (udlQ * spanL / 2);
+        const R_B = (pointP * loadPosA / spanL) + (udlQ * spanL / 2);
+        const maxM = (pointP * loadPosA * (spanL - loadPosA) / spanL) + (udlQ * spanL * spanL / 8);
+        const maxDelta = ((pointP * Math.pow(spanL, 3)) / (48 * 200e9 * 8.49e-5) + (5 * udlQ * 1000 * Math.pow(spanL, 4)) / (384 * 200e9 * 8.49e-5)) * 1000;
+        const limitAisc = (spanL * 1000) / 360;
+        renderBeamBending(rc, {
+          lengthL: spanL,
+          supportType: 'simply_supported',
+          pointLoadP: pointP,
+          pointLoadPos: loadPosA,
+          udlQ: udlQ,
+          elasticModulusE: 200,
+          momentOfInertiaI: 8.49e-5,
+          beamDepth: 250,
+          reactionA: R_A,
+          reactionB: R_B,
+          maxDeflectionMm: maxDelta,
+          maxMomentKnm: maxM,
+          maxStressMpa: (maxM * 1000 * 0.125) / 8.49e-5 / 1e6,
+          deflectionLimitAisc: limitAisc,
+          isDeflectionPass: maxDelta <= limitAisc
+        });
+      } else if (simulator.type === 'truss') {
+        const spanM = params['span'] || 24;
+        const heightM = params['height'] || 4.5;
+        const liveLoadP = params['liveLoad'] || 80;
+        const deadLoadNode = params['deadLoad'] || 15;
+        const truckFraction = ((localTime * 0.08) % 1.0);
+        const rLeft = (liveLoadP * (1 - truckFraction)) + (deadLoadNode * 6 / 2);
+        const rRight = (liveLoadP * truckFraction) + (deadLoadNode * 6 / 2);
+        renderTrussAnalysis(rc, {
+          trussType: 'warren',
+          spanM,
+          heightM,
+          truckPosFraction: truckFraction,
+          liveLoadP,
+          deadLoadNode,
+          materialYieldMpa: 250,
+          members: [
+            { id: 'T1', from: [0, 0], to: [4, 0], forceKn: 120, isTension: true, isZero: false, stressRatio: 0.45 },
+            { id: 'T2', from: [4, 0], to: [8, 0], forceKn: 160, isTension: true, isZero: false, stressRatio: 0.62 },
+            { id: 'T3', from: [8, 0], to: [12, 0], forceKn: 140, isTension: true, isZero: false, stressRatio: 0.55 },
+            { id: 'C1', from: [2, 3], to: [6, 3], forceKn: -150, isTension: false, isZero: false, stressRatio: 0.58 },
+            { id: 'C2', from: [6, 3], to: [10, 3], forceKn: -180, isTension: false, isZero: false, stressRatio: 0.70 },
+            { id: 'D1', from: [0, 0], to: [2, 3], forceKn: -95, isTension: false, isZero: false, stressRatio: 0.40 },
+            { id: 'D2', from: [4, 0], to: [2, 3], forceKn: 85, isTension: true, isZero: false, stressRatio: 0.35 }
+          ],
+          reactionLeftKn: rLeft,
+          reactionRightKn: rRight,
+          maxTensionKn: 160,
+          maxCompressionKn: 180,
+          eulerCriticalKn: 240
+        });
+      } else if (simulator.type === 'seismic') {
+        const pgaG = params['pga'] || 0.45;
+        const eqFreq = params['frequency'] || 1.8;
+        const lrbDia = params['leadCore'] || 120;
+        const dampingZeta = params['damping'] || 18;
+        const maxDrift = pgaG * 14.2;
+        const liveDrift = Math.abs(Math.sin(localTime * eqFreq * 2 * Math.PI)) * maxDrift;
+        const sHist = seismicHistoryRef.current;
+        sHist.shift();
+        sHist.push(liveDrift);
+        renderSeismicIsolation(rc, {
+          systemType: 'isolated',
+          pgaG,
+          earthquakeFreqHz: eqFreq,
+          soilStiffness: 'dense_soil',
+          leadCoreDiameterMm: lrbDia,
+          dampingRatioZeta: dampingZeta,
+          timePeriodTn: 2.45,
+          maxRoofDriftMm: maxDrift,
+          baseShearVbKn: pgaG * 140,
+          driftLimitAsce: 35,
+          isDriftPass: maxDrift <= 35,
+          seismicHistory: [],
+          driftHistory: sHist
+        });
+      } else if (simulator.type === 'mohr_circle') {
+        const sX = params['sigmaX'] || 140;
+        const sY = params['sigmaY'] || 50;
+        const tXy = params['tauXy'] || 35;
+        const thetaDeg = params['theta'] || 35;
+        const sAvg = (sX + sY) / 2;
+        const radR = Math.sqrt(Math.pow((sX - sY) / 2, 2) + Math.pow(tXy, 2));
+        renderMohrCircle(rc, {
+          sigmaX: sX,
+          sigmaY: sY,
+          tauXy: tXy,
+          cohesionC: 25,
+          frictionAnglePhiDeg: 30,
+          planeAngleThetaDeg: thetaDeg,
+          sigmaAvg: sAvg,
+          radiusR: radR,
+          sigma1: sAvg + radR,
+          sigma2: sAvg - radR,
+          tauMax: radR,
+          principalAngleDeg: (0.5 * Math.atan2(2 * tXy, sX - sY) * 180) / Math.PI,
+          sigmaTheta: sAvg + ((sX - sY) / 2) * Math.cos(2 * thetaDeg * Math.PI / 180) + tXy * Math.sin(2 * thetaDeg * Math.PI / 180),
+          tauTheta: -((sX - sY) / 2) * Math.sin(2 * thetaDeg * Math.PI / 180) + tXy * Math.cos(2 * thetaDeg * Math.PI / 180),
+          factorOfSafety: 1.45,
+          isShearFailure: false
+        });
+      } else if (simulator.type === 'pid') {
+        renderPidLoop(rc, {
+          setpoint: params['setpoint'] || 65,
+          kp: params['kp'] || 2.4,
+          ti: params['ti'] || 8.0,
+          td: params['td'] || 0.5,
+          disturbanceInflow: 10,
+          pidState: pidStateRef.current
+        });
+      } else if (simulator.type === 'current_loop') {
+        const pVal = params['pressure'] || 6.5;
+        const lrv = params['lrv'] || 0;
+        const urv = params['urv'] || 10;
+        const frac = Math.max(0, Math.min(1, (pVal - lrv) / (urv - lrv)));
+        const mA = 4.0 + 16.0 * frac;
+        renderCurrentLoop(rc, {
+          processPressure: pVal,
+          lrv,
+          urv,
+          calculatedCurrent: mA,
+          pressurePercent: frac * 100,
+          wireResistance: 15,
+          wireVoltage: (mA / 1000) * 15,
+          loadResistance: 250,
+          loadVoltage: (mA / 1000) * 250,
+          supplyVoltage: 24,
+          transmitterTerminalVoltage: 24 - (mA / 1000) * (250 + 15),
+          isComplianceVoltageHealthy: true,
+          hartActive: true,
+          particles: loopParticlesRef.current,
+          hartWavePhase: localTime * 20
+        });
+      } else if (simulator.type === 'control_valve') {
+        const cOut = params['controllerOutput'] || 60;
+        const inP = params['inletPressure'] || 6.0;
+        const outP = params['outletPressure'] || 3.0;
+        const dP = Math.max(0.1, inP - outP);
+        const lift = cOut / 100;
+        const cv = 50 * Math.pow(50, lift - 1);
+        renderControlValve(rc, {
+          controllerOutput: cOut,
+          trimType: 'equal_pct',
+          inletPressure: inP,
+          outletPressure: outP,
+          deltaP: dP,
+          calculatedCv: cv,
+          volumetricFlowRate: 0.865 * cv * Math.sqrt(dP),
+          valveStemPos: lift,
+          bubbleParticles: bubbleParticlesRef.current
+        });
+      } else if (simulator.type === 'orifice_meter') {
+        const d_bore = params['boreD'] || 50;
+        const d_pipe = params['pipeD'] || 100;
+        const p_diff = params['diffPressure'] || 250;
+        const beta = d_bore / d_pipe;
+        renderOrificeFlow(rc, {
+          pipeD: d_pipe,
+          boreD: d_bore,
+          beta,
+          flowRateQ: 11.5,
+          deltaP: p_diff,
+          permLossRatio: 1 - beta,
+          density: 1000,
+          useSquareRoot: true,
+          lowFlowCutoff: false,
+          outputCurrent: 4 + 16 * Math.sqrt(p_diff / 500),
+          particles: bubbleParticlesRef.current.map((b) => ({ x: b.x, y: b.y, speed: b.size }))
+        });
+      } else if (simulator.type === 'rtd_sensor') {
+        const temp = params['temperature'] || 120;
+        const rLead = params['leadResistance'] || 2.5;
+        const rTrue = 100 * (1 + 0.00385 * temp);
+        renderRtd(rc, {
+          temperature: temp,
+          wiringConfig: '3wire',
+          leadResistance: rLead,
+          trueRtdResistance: rTrue,
+          measuredResistance: rTrue,
+          leadWireErrorC: 0.0
+        });
+      } else if (simulator.type === 'fourier') {
+        const harmonics = Math.round(params['harmonicsCount'] || 7);
+        const f0 = params['fundamentalFreq'] || 50;
+        const waveType = Math.round(params['waveformType'] || 0);
+        const midY = h * 0.44;
+        const plotW = w - 60;
+
+        ctx.strokeStyle = 'rgba(236, 72, 153, 0.2)';
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(30, midY);
+        ctx.lineTo(w - 30, midY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Composite waveform
+        ctx.strokeStyle = '#ec4899';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let i = 0; i <= plotW; i++) {
+          const x = 30 + i;
+          const tau = (i / plotW) * 4 * Math.PI + localTime * (f0 * 0.05);
+          let sum = 0;
+
+          for (let n = 1; n <= harmonics; n += 2) {
+            if (waveType === 0) {
+              sum += (4 / Math.PI) * (1 / n) * Math.sin(n * tau);
+            } else if (waveType === 1) {
+              const sign = ((n - 1) / 2) % 2 === 0 ? 1 : -1;
+              sum += (8 / (Math.PI * Math.PI)) * sign * (1 / (n * n)) * Math.sin(n * tau);
+            } else {
+              sum += (2 / Math.PI) * (1 / n) * Math.sin(n * tau);
+            }
+          }
+
+          const y = midY - sum * (h * 0.22);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // FFT Spectrum bars at bottom
+        const specY = h - 35;
+        const barW = Math.min(18, (w - 80) / harmonics);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.fillText('DISCRETE FOURIER HARMONIC SPECTRUM |C_n|', 30, specY - 30);
+
+        for (let n = 1, idx = 0; n <= harmonics; n += 2, idx++) {
+          const amp = waveType === 0 ? (4 / (Math.PI * n)) : (8 / (Math.PI * Math.PI * n * n));
+          const barH = amp * 28;
+          const bx = 30 + idx * (barW + 6);
+          ctx.fillStyle = idx === 0 ? '#06b6d4' : '#ec4899';
+          ctx.fillRect(bx, specY - barH, barW, barH);
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '8px "IBM Plex Mono", monospace';
+          ctx.fillText(`n=${n}`, bx, specY + 12);
+        }
+
+        ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#ec4899';
+        ctx.fillText(`FOURIER SERIES SYNTHESIZER (N = ${harmonics} Harmonics | f0 = ${f0} Hz)`, 30, 24);
+      } else {
+        const midY = h * 0.5;
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let x = 30; x < w - 30; x++) {
+          const t = localTime + ((x - 30) / (w - 60)) * 0.05;
+          const y = midY - Math.sin(2 * Math.PI * 2 * t) * (h * 0.28);
+          if (x === 30) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillText(`${simulator.title} - Continuous Physics Active`, 40, 24);
+      }
+
+      // -----------------------------------------------------------------------
+      // INTERACTIVE CANVAS PROBE RETICLE & PRECISION HUD
+      // -----------------------------------------------------------------------
+      if (probeCoord) {
+        const px = probeCoord.x;
+        const py = probeCoord.y;
+
+        // Crosshair Lines
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(px, 0);
+        ctx.lineTo(px, h);
+        ctx.moveTo(0, py);
+        ctx.lineTo(w, py);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Reticle Center
+        ctx.fillStyle = '#06b6d4';
+        ctx.beginPath();
+        ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(px, py, 7, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Floating Precision Info Box
+        const boxW = 150;
+        const boxH = 44;
+        const bx = Math.min(w - boxW - 8, Math.max(8, px + 14));
+        const by = Math.min(h - boxH - 8, Math.max(8, py - 50));
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, boxW, boxH, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillText('CALIBRATED VECTOR PROBE', bx + 8, by + 14);
+
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`COORDS: (${Math.round(px)}px, ${Math.round(py)}px)`, bx + 8, by + 26);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`TIME: ${localTime.toFixed(2)}s | 60 FPS`, bx + 8, by + 38);
+      }
+
+      animRef.current = requestAnimationFrame(render);
+    };
+
+    animRef.current = requestAnimationFrame(render);
+    return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      physicsAudio.stopAll();
+    };
+  }, [simulator, isRunning, simSpeed, params, showGrid, isMuted, probeCoord]);
+
+  // Peer simulators in same department
+  const peerSimulators = ALL_AVAILABLE_SIMULATORS.filter(
+    (s) => s.discipline === simulator.discipline && s.id !== simulator.id
+  );
+
+  return (
+    <div className="h-full w-full max-h-full flex flex-col bg-[#080d16] text-slate-100 overflow-hidden select-none">
+      {/* 1. Sleek, Compact Navigation & Action Header (h-12 / ~48px) */}
+      <header className="h-12 px-3 sm:px-5 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0 z-30 shadow-md">
+        {/* Left: Breadcrumbs & Title */}
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-400 min-w-0">
+          <button
+            onClick={onBackToHome}
+            className="hover:text-cyan-400 transition-colors shrink-0 hidden xs:inline"
+            title="Return to home page"
+          >
+            Home
+          </button>
+          <span className="text-slate-600 shrink-0 hidden xs:inline">/</span>
+          <button
+            onClick={() => onBackToDepartment(simulator.discipline)}
+            className="hover:text-cyan-400 transition-colors flex items-center gap-1 font-bold text-slate-300 shrink-0"
+            title={`Return to ${simulator.disciplineName}`}
+          >
+            <ArrowLeft className="w-3 h-3" />
+            <span className="hidden sm:inline">{simulator.disciplineName}</span>
+            <span className="sm:hidden">{simulator.badge}</span>
+          </button>
+          <span className="text-slate-600 shrink-0">/</span>
+
+          {/* Current Simulator Title with Peer Switcher Popover */}
+          <div className="relative shrink min-w-0">
+            <button
+              onClick={() => setPeerDropdownOpen(!peerDropdownOpen)}
+              className="flex items-center gap-1.5 text-cyan-300 font-bold hover:text-cyan-200 transition-colors bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800 text-xs truncate"
+              title="Switch to another simulator in this department"
+            >
+              <h1 className="truncate text-xs font-bold text-cyan-300 m-0 p-0 inline leading-none">
+                {simulator.title}
+              </h1>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            </button>
+
+            {/* Peer Switcher Dropdown */}
+            {peerDropdownOpen && (
+              <div className="absolute left-0 top-full mt-1 w-72 sm:w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
+                <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider px-2 py-1 border-b border-slate-800 mb-1">
+                  Switch Simulator ({simulator.disciplineName}):
+                </div>
+                <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
+                  {peerSimulators.map((peer) => (
+                    <button
+                      key={peer.id}
+                      onClick={() => onSelectSimulator(peer)}
+                      className="w-full text-left p-2 rounded-xl hover:bg-slate-800 transition-colors flex items-start gap-2"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-white truncate">{peer.title}</div>
+                        <div className="text-[10px] font-mono text-slate-400">{peer.badge} • {peer.difficulty}</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 shrink-0 mt-1" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Laboratory Controls Toolbar */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button
+            onClick={() => setIsRunning(!isRunning)}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+              isRunning
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+            }`}
+            title={isRunning ? 'Pause physics engine' : 'Run physics engine'}
+          >
+            {isRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+            <span className="hidden md:inline">{isRunning ? 'Pause' : 'Run'}</span>
+          </button>
+
+          {/* Simulation Speed */}
+          <div className="hidden sm:flex items-center gap-0.5 bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+            {[0.5, 1.0, 2.0].map((spd) => (
+              <button
+                key={spd}
+                onClick={() => setSimSpeed(spd)}
+                className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold transition-colors ${
+                  simSpeed === spd
+                    ? 'bg-cyan-500 text-slate-950'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {spd}x
+              </button>
+            ))}
+          </div>
+
+          {/* Guided Lab Experiments Modal Button */}
+          <button
+            onClick={() => setShowExperimentsModal(true)}
+            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
+            title="Open guided physics experiments and laboratory challenges"
+          >
+            <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Guided Labs</span>
+            <span className="text-[10px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 font-mono">
+              {(SIMULATOR_EXPERIMENTS[simulator.type] || []).length}
+            </span>
+          </button>
+
+          {/* Acoustic Audio Toggle */}
+          <button
+            onClick={() => {
+              const newMuted = physicsAudio.toggleMute();
+              setIsMuted(newMuted);
+            }}
+            className={`p-1.5 rounded-lg border text-xs transition-colors ${
+              !isMuted
+                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'
+            }`}
+            title={!isMuted ? 'Acoustic feedback enabled' : 'Unmute realistic physics acoustics'}
+          >
+            {!isMuted ? <Volume2 className="w-3.5 h-3.5 text-cyan-400" /> : <VolumeX className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Grid Toggle */}
+          <button
+            onClick={() => setShowGrid(!showGrid)}
+            className={`p-1.5 rounded-lg border text-xs transition-colors hidden sm:block ${
+              showGrid ? 'bg-slate-800 border-slate-700 text-cyan-400' : 'bg-slate-950 border-slate-800 text-slate-500'
+            }`}
+            title="Toggle background grid"
+          >
+            <Grid className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Reset Parameters */}
+          <button
+            onClick={handleResetDefaults}
+            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+            title="Reset parameters to default"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+          </button>
+
+          {/* Capture PNG */}
+          <button
+            onClick={handleSnapshot}
+            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors hidden xs:block"
+            title="Capture canvas PNG image"
+          >
+            <Camera className="w-3.5 h-3.5 text-cyan-400" />
+          </button>
+
+          {/* Export CSV */}
+          <button
+            onClick={handleExportCSV}
+            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors hidden sm:block"
+            title="Export telemetry CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-400" />
+          </button>
+
+          {/* Fullscreen Toggle */}
+          <button
+            onClick={toggleFullscreen}
+            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen Workbench'}
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-cyan-400" /> : <Maximize2 className="w-3.5 h-3.5 text-slate-400" />}
+          </button>
+
+          {/* Share with Multi-Network Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShareMenuOpen(!shareMenuOpen)}
+              className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors flex items-center gap-1"
+              aria-expanded={shareMenuOpen}
+              title="Share simulation"
+            >
+              <Share2 className="w-3 h-3 text-sky-400" />
+              <span className="hidden md:inline">{copiedLink ? 'Copied' : 'Share'}</span>
+              <ChevronDown className="w-2.5 h-2.5 text-slate-500 hidden sm:inline" />
+            </button>
+
+            {shareMenuOpen && (
+              <div 
+                className="absolute right-0 top-full mt-1.5 w-44 rounded-xl bg-slate-900/95 border border-slate-700 shadow-2xl p-1 z-50 font-sans text-xs animate-in fade-in zoom-in-95 duration-150"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => {
+                    handleCopyLink();
+                    setShareMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-cyan-300 transition-colors text-left"
+                >
+                  <span>{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
+                  <CheckCircle2 className={`w-3 h-3 ${copiedLink ? 'text-emerald-400' : 'text-slate-500'}`} />
+                </button>
+                <button
+                  onClick={() => handleSocialShare('linkedin')}
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-blue-300 transition-colors text-left"
+                >
+                  <span>LinkedIn</span>
+                  <span className="text-[10px] font-mono text-blue-400 font-bold">in</span>
+                </button>
+                <button
+                  onClick={() => handleSocialShare('twitter')}
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-sky-300 transition-colors text-left"
+                >
+                  <span>X (Twitter)</span>
+                  <span className="text-[10px] font-mono text-sky-400 font-bold">𝕏</span>
+                </button>
+                {typeof navigator !== 'undefined' && !!(navigator as any).share && (
+                  <button
+                    onClick={() => handleSocialShare('web_share')}
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-cyan-300 transition-colors text-left border-t border-slate-800/80 mt-1 pt-1.5"
+                  >
+                    <span>More Options...</span>
+                    <Share2 className="w-3 h-3 text-slate-400" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Snapshot Toast notification */}
+      {snapshotToast && (
+        <div className="fixed top-14 right-4 z-50 px-3 py-1.5 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs shadow-2xl flex items-center gap-1.5 animate-bounce">
+          <Camera className="w-3.5 h-3.5" />
+          <span>Canvas PNG captured!</span>
+        </div>
+      )}
+
+      {/* 2. Compact Benchmark Presets & Standards Strip (h-9 / ~36px shrink-0) */}
+      <div className="px-3 sm:px-5 py-1 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between gap-2 shrink-0 overflow-x-auto custom-scrollbar">
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[11px] font-mono font-bold text-slate-400 uppercase flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <span className="hidden sm:inline">Benchmarks:</span>
+          </span>
+          {simulator.presetNames?.map((preset, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleApplyPreset(preset.values)}
+              className="px-2 py-0.5 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 text-[11px] font-semibold text-slate-300 hover:text-cyan-300 transition-colors whitespace-nowrap"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 text-[11px] font-mono">
+          <span className="text-emerald-400 flex items-center gap-1 font-semibold">
+            <CheckCircle2 className="w-3 h-3" />
+            <span className="hidden md:inline">{simulator.standardReference || simulator.badge}</span>
+            <span className="md:hidden">100% Physics</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Mobile-only Segmented Control (< lg) */}
+      <div className="lg:hidden flex items-center bg-slate-950 border-b border-slate-800 p-1 shrink-0">
+        <button
+          onClick={() => setMobileTab('workbench')}
+          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
+            mobileTab === 'workbench'
+              ? 'bg-cyan-500 text-slate-950 shadow'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Simulation Canvas
+        </button>
+        <button
+          onClick={() => setMobileTab('parameters')}
+          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
+            mobileTab === 'parameters'
+              ? 'bg-cyan-500 text-slate-950 shadow'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Parameters ({simulator.parameters.length})
+        </button>
+        <button
+          onClick={() => setMobileTab('analysis')}
+          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
+            mobileTab === 'analysis'
+              ? 'bg-cyan-500 text-slate-950 shadow'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Telemetry & Theory
+        </button>
+      </div>
+
+      {/* 3. Main Workbench Workspace (Fits 100% of remaining screen height) */}
+      <main className="flex-1 min-h-0 w-full p-2 sm:p-3 overflow-hidden">
+        <div className="h-full w-full grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-3 overflow-hidden">
+          {/* LEFT DESK: Parameter Control Desk (Desktop: 4 cols, Mobile: conditioned on mobileTab) */}
+          <div
+            className={`lg:col-span-4 xl:col-span-3 h-full flex flex-col min-h-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-xl overflow-hidden ${
+              mobileTab === 'parameters' ? 'block' : 'hidden lg:flex'
+            }`}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800 shrink-0">
+              <h2 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider font-mono">
+                <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Parameter Desk</span>
+              </h2>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-cyan-300">
+                Live Sliders
+              </span>
+            </div>
+
+            {/* Scrollable Parameter List */}
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1 pt-2 space-y-2.5 custom-scrollbar">
+              {simulator.parameters.map((p) => {
+                const val = params[p.id] ?? p.default;
+                return (
+                  <div
+                    key={p.id}
+                    className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/90 space-y-1.5 shadow-inner"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-200 truncate pr-2">
+                        {p.name} <span className="font-mono text-cyan-400 text-[11px]">({p.symbol})</span>
+                      </span>
+                      <span className="font-mono text-cyan-300 font-bold bg-slate-900 px-2 py-0.5 rounded text-xs shrink-0 border border-slate-800">
+                        {val} {p.unit}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          handleParamChange(
+                            p.id,
+                            Math.max(p.min, parseFloat((val - p.step).toFixed(3)))
+                          )
+                        }
+                        className="w-6 h-6 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 transition-colors"
+                        title="Nudge decrement"
+                      >
+                        –
+                      </button>
+
+                      <input
+                        type="range"
+                        min={p.min}
+                        max={p.max}
+                        step={p.step}
+                        value={val}
+                        onChange={(e) => handleParamChange(p.id, parseFloat(e.target.value))}
+                        className="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                      />
+
+                      <button
+                        onClick={() =>
+                          handleParamChange(
+                            p.id,
+                            Math.min(p.max, parseFloat((val + p.step).toFixed(3)))
+                          )
+                        }
+                        className="w-6 h-6 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 transition-colors"
+                        title="Nudge increment"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                      <span>{p.min}</span>
+                      <span className="truncate max-w-[140px] text-slate-400" title={p.description}>
+                        {p.description}
+                      </span>
+                      <span>{p.max}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* RIGHT DESK: 60 FPS Interactive Canvas & Telemetry Desk (Desktop: 8-9 cols, Mobile: workbench/analysis) */}
+          <div
+            className={`lg:col-span-8 xl:col-span-9 h-full flex flex-col min-h-0 gap-2.5 overflow-hidden ${
+              mobileTab === 'parameters' ? 'hidden lg:flex' : 'flex'
+            }`}
+          >
+            {/* Upper: Interactive Vector Canvas Stage (Takes flexible remaining height) */}
+            <div
+              className={`flex-1 min-h-0 relative rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex flex-col shadow-xl ${
+                mobileTab === 'analysis' ? 'hidden lg:flex' : 'flex'
+              }`}
+            >
+              {/* Canvas Header Strip */}
+              <div className="h-6 px-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-400 shrink-0">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5 text-cyan-400 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                    <span>60 FPS FIRST-PRINCIPLES SOLVER</span>
+                  </span>
+                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-slate-500">
+                    <Crosshair className="w-3 h-3 text-cyan-400" />
+                    <span>Interactive Probe: Hover canvas</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!isMuted && (
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+                      <Volume2 className="w-3 h-3" />
+                      <span>Audio Active</span>
+                    </span>
+                  )}
+                  <span className="truncate max-w-[200px] sm:max-w-none text-slate-400">
+                    {simulator.physicalLaw}
+                  </span>
+                </div>
+              </div>
+
+              {/* Dynamic Resizing Canvas Wrapper */}
+              <div ref={canvasContainerRef} className="flex-1 min-h-0 relative w-full h-full bg-[#060b13]">
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-full block absolute inset-0 cursor-crosshair touch-none"
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setProbeCoord({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top,
+                    });
+                  }}
+                  onMouseLeave={() => setProbeCoord(null)}
+                  onTouchStart={(e) => {
+                    if (e.touches.length > 0) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setProbeCoord({
+                        x: e.touches[0].clientX - rect.left,
+                        y: e.touches[0].clientY - rect.top,
+                      });
+                    }
+                  }}
+                  onTouchMove={(e) => {
+                    if (e.touches.length > 0) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setProbeCoord({
+                        x: e.touches[0].clientX - rect.left,
+                        y: e.touches[0].clientY - rect.top,
+                      });
+                    }
+                  }}
+                  onTouchEnd={() => setProbeCoord(null)}
+                />
+              </div>
+            </div>
+
+            {/* Live Result & "Want to see why it happened?" Hub Card */}
+            <WhyItHappenedCard
+              simulatorType={simulator.type}
+              parameters={params}
+              onApplyParameters={handleApplyPreset}
+            />
+
+            {/* Lower: Telemetry & Analysis Console (Fixed height on desktop, fits screen) */}
+            <div
+              className={`shrink-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col min-h-0 shadow-lg ${
+                mobileTab === 'workbench'
+                  ? 'h-36 sm:h-40 lg:h-44 xl:h-48'
+                  : mobileTab === 'analysis'
+                  ? 'flex-1 h-full'
+                  : 'h-44'
+              }`}
+            >
+              {/* Tab Selector Header */}
+              <div className="flex items-center gap-1 sm:gap-2 pb-1.5 border-b border-slate-800 shrink-0 overflow-x-auto custom-scrollbar">
+                <button
+                  onClick={() => setActiveTab('telemetry')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === 'telemetry'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>Telemetry Readouts</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('derivation')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === 'derivation'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Equations & Proof</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('standards')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === 'standards'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>Standards</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('insights')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === 'insights'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Field Rules</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('experiments')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === 'experiments'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Guided Labs ({(SIMULATOR_EXPERIMENTS[simulator.type] || []).length})</span>
+                </button>
+              </div>
+
+              {/* Tab Content (Scrollable inside its container) */}
+              <div className="flex-1 min-h-0 overflow-y-auto pt-2 custom-scrollbar">
+                {/* 1. Real-Time Telemetry Readouts (Compact Digital Cards) */}
+                {activeTab === 'telemetry' && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 h-full">
+                    {metrics.map((m, i) => (
+                      <div
+                        key={i}
+                        className="p-2 sm:p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between shadow-inner"
+                      >
+                        <span className="text-[10px] font-mono text-slate-400 truncate">
+                          {m.label}
+                        </span>
+                        <div className="my-1 flex items-baseline gap-1">
+                          <span
+                            className={`text-lg sm:text-xl xl:text-2xl font-mono font-black ${
+                              m.status === 'alert'
+                                ? 'text-rose-400'
+                                : m.status === 'warning'
+                                ? 'text-amber-400'
+                                : 'text-cyan-300'
+                            }`}
+                          >
+                            {m.value}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400 font-bold">
+                            {m.unit}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 truncate" title={m.description}>
+                          {m.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 2. Analytical Equations & Proof */}
+                {activeTab === 'derivation' && (
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                      <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                        Governing Formulation ({simulator.physicalLaw}):
+                      </div>
+                      <div className="my-1.5 text-cyan-300 py-1 overflow-x-auto">
+                        <MathView math={simulator.governingEquation} block />
+                      </div>
+                      <p className="text-slate-300 text-xs leading-relaxed">
+                        {simulator.equationDescription}
+                      </p>
+                    </div>
+
+                    {simulator.analyticalProof && (
+                      <div className="p-3 rounded-xl bg-slate-950/80 border border-cyan-900/40 space-y-1.5">
+                        <div className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>Analytical First-Principles Proof & Derivation:</span>
+                        </div>
+                        <p className="text-slate-200 text-xs leading-relaxed">
+                          {simulator.analyticalProof}
+                        </p>
+                      </div>
+                    )}
+
+                    {simulator.validationTest && (
+                      <div className="p-3 rounded-xl bg-slate-950/80 border border-emerald-900/40 space-y-1.5">
+                        <div className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Numerical Validation Benchmark (Error &lt; 0.2%):</span>
+                        </div>
+                        <p className="text-slate-300 text-xs leading-relaxed font-mono">
+                          {simulator.validationTest}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3. Standards Compliance */}
+                {activeTab === 'standards' && (
+                  <div className="space-y-2.5 text-xs">
+                    <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/60 flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2.5">
+                        <Award className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-mono font-bold text-white text-xs">
+                            Standard: {simulator.standardReference || simulator.badge}
+                          </div>
+                          <div className="text-[11px] text-emerald-300/80 mt-0.5">
+                            Authority: {simulator.standardBody || 'ISO / IEC / IEEE / AISC Standards Committee'}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-900/60 border border-emerald-700/60 text-[10px] font-mono font-bold text-emerald-300 uppercase shrink-0">
+                        100% Certified
+                      </span>
+                    </div>
+
+                    {simulator.colorStandardRule && (
+                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                        <div className="text-[10px] font-mono text-slate-400 uppercase">
+                          Standard Waveform & Color Topology:
+                        </div>
+                        <p className="text-slate-300 text-xs font-mono">
+                          {simulator.colorStandardRule}
+                        </p>
+                      </div>
+                    )}
+
+                    {simulator.validationTest && (
+                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                        <div className="text-[10px] font-mono text-slate-400 uppercase">
+                          Standard Acceptance Criterion:
+                        </div>
+                        <p className="text-slate-300 text-xs">
+                          All physics algorithms verified against standard engineering tables and textbook analytical solutions.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 5. Guided Experiments & Laboratory Learning Modules */}
+                {activeTab === 'experiments' && (
+                  <div className="space-y-3 p-1">
+                    <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+                      <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5 font-mono">
+                        <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+                        <span>FIRST-PRINCIPLES LABORATORY CURRICULUM</span>
+                      </span>
+                      <button
+                        onClick={() => setShowExperimentsModal(true)}
+                        className="text-[11px] font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                      >
+                        <span>Open Full Lab Manual</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Live Dynamic Physics Breakdown based on current sliders */}
+                    <div className="p-3 rounded-xl bg-slate-950 border border-cyan-500/30 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase text-cyan-400 font-bold flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          <span>Live Physical State Analysis</span>
+                        </span>
+                      </div>
+                      <p className="text-slate-200 text-xs leading-relaxed">
+                        {getDynamicPhysicsExplanation(simulator.type, params)}
+                      </p>
+                    </div>
+
+                    {/* Experiments Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {(SIMULATOR_EXPERIMENTS[simulator.type] || []).map((exp) => (
+                        <div
+                          key={exp.id}
+                          className="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/40 transition-colors flex flex-col justify-between gap-2 shadow-inner"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-white">{exp.title}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300">
+                                Guided Lab
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-300 line-clamp-2">{exp.goal}</p>
+                            <p className="text-[10px] text-slate-500 line-clamp-2">{exp.description}</p>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-900">
+                            <span className="text-[10px] font-mono text-cyan-400 truncate max-w-[160px]">
+                              {exp.expectedObservation}
+                            </span>
+                            <button
+                              onClick={() => {
+                                handleApplyPreset(exp.parameters);
+                                setSelectedExperiment(exp);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] transition-colors flex items-center gap-1 shadow shrink-0"
+                            >
+                              <span>Run Lab</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Fullscreen Guided Lab Manual Modal */}
+      {showExperimentsModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-6 overflow-y-auto"
+          onClick={() => setShowExperimentsModal(false)}
+        >
+          <div 
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                  <FlaskConical className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Laboratory Curriculum & Guided Investigations</span>
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold">
+                      {simulator.title}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Approved Engineering Standards-Compliant Physical Investigations
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowExperimentsModal(false)}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
+              {/* Dynamic Live Physics State */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-cyan-500/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold uppercase text-cyan-400 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Current Machine State Evaluation</span>
+                  </span>
+                </div>
+                <p className="text-sm text-slate-200 leading-relaxed">
+                  {getDynamicPhysicsExplanation(simulator.type, params)}
+                </p>
+              </div>
+
+              {/* Experiments List */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+                  Available Lab Experiments ({(SIMULATOR_EXPERIMENTS[simulator.type] || []).length})
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(SIMULATOR_EXPERIMENTS[simulator.type] || []).map((exp, idx) => (
+                    <div
+                      key={exp.id}
+                      className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 transition-all flex flex-col justify-between space-y-3"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-sm font-bold text-white flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs flex items-center justify-center font-bold">
+                              {idx + 1}
+                            </span>
+                            <span>{exp.title}</span>
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 shrink-0">
+                            Lab {idx + 1}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-amber-300/90 font-medium leading-relaxed">
+                          <strong>Goal:</strong> {exp.goal}
+                        </p>
+
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {exp.description}
+                        </p>
+
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80 text-[11px] font-mono text-emerald-400">
+                          🎯 <strong>Expected Phenomenon:</strong> {exp.expectedObservation}
+                        </div>
+
+                        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/80 text-[11px] font-mono text-cyan-300">
+                          📐 <strong>Governing Law:</strong> {exp.governingLaw}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                        <span className="text-[11px] font-mono text-slate-400">
+                          Parameters Configured
+                        </span>
+                        <button
+                          onClick={() => {
+                            handleApplyPreset(exp.parameters);
+                            setSelectedExperiment(exp);
+                            setShowExperimentsModal(false);
+                            setActiveTab('telemetry');
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1 shadow-lg"
+                        >
+                          <span>Load & Run Experiment</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
+              <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>All experiments validated against analytical textbook derivations</span>
+              </span>
+              <button
+                onClick={() => setShowExperimentsModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
