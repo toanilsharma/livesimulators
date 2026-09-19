@@ -183,106 +183,6 @@ export const Footer: React.FC<FooterProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 relative z-10">
 
 
-        {/* Companion Engineering Platforms by Anil Sharma */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800/80">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span className="text-xs font-display font-bold text-white tracking-wide uppercase">
-                Engineering Ecosystem by Anil Sharma
-              </span>
-              <span className="text-[10px] font-mono text-slate-500 hidden sm:inline">• Free Companion Portals</span>
-            </div>
-            <span className="text-[10px] font-mono text-slate-500 hidden md:inline">
-              Multi-Disciplinary Calculation & Plant Reliability
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Card 1: DesignCalculators.co.in (Emerald / Cyan Highlight) */}
-            <a
-              href="https://designcalculators.co.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-4 rounded-xl bg-slate-900/60 hover:bg-slate-900/90 border border-emerald-500/30 hover:border-emerald-400/80 transition-all duration-200 flex flex-col justify-between gap-2.5 hover:shadow-[0_0_20px_rgba(16,185,129,0.12)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
-                    <Calculator className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-display font-bold text-sm text-white group-hover:text-emerald-300 transition-colors">
-                        DesignCalculators.co.in
-                      </span>
-                      <ExternalLink className="w-3.5 h-3.5 text-emerald-400 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                    </div>
-                    <span className="text-[10px] font-mono text-emerald-400/90 block">
-                      Standards Calculation Suite (IEC • IEEE • ASME • API • ISA)
-                    </span>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shrink-0">
-                  50k+ Engineers
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-400 leading-relaxed">
-                IEC 60364 cable sizing & voltage drop, IEEE 80 grounding, ASME Sec VIII pressure vessels, Darcy hydraulics, and ISA-75 valve <span className="font-mono text-slate-300">Cv</span>.
-              </p>
-
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-800/60">
-                <span className="text-emerald-400/80">100% Free Access</span>
-                <span className="text-emerald-400 font-medium group-hover:underline flex items-center gap-1">
-                  Visit portal ↗
-                </span>
-              </div>
-            </a>
-
-            {/* Card 2: ReliabilityTools.co.in (Violet / Fuchsia Highlight) */}
-            <a
-              href="https://reliabilitytools.co.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-4 rounded-xl bg-slate-900/60 hover:bg-slate-900/90 border border-violet-500/30 hover:border-violet-400/80 transition-all duration-200 flex flex-col justify-between gap-2.5 hover:shadow-[0_0_20px_rgba(139,92,246,0.12)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0 group-hover:scale-105 transition-transform">
-                    <Wrench className="w-4 h-4 text-violet-400" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-display font-bold text-sm text-white group-hover:text-violet-300 transition-colors">
-                        ReliabilityTools.co.in
-                      </span>
-                      <ExternalLink className="w-3.5 h-3.5 text-violet-400 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </div>
-                    <span className="text-[10px] font-mono text-violet-400/90 block">
-                      Plant Reliability & Maintenance Analytics
-                    </span>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-violet-500/10 text-violet-300 border border-violet-500/30 shrink-0">
-                  Weibull • MTBF • SIL
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-400 leading-relaxed">
-                2P/3P Weibull life analysis, MTBF/MTTR uptime modeling, OEE six big losses, and IEC 61508 / 61511 SIL verification.
-              </p>
-
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-800/60">
-                <span className="text-violet-400/80">Asset Optimization</span>
-                <span className="text-violet-400 font-medium group-hover:underline flex items-center gap-1">
-                  Visit portal ↗
-                </span>
-              </div>
-            </a>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
           
           {/* Brand & Mission Column */}
@@ -637,6 +537,106 @@ export const Footer: React.FC<FooterProps> = ({
                 </>
               )}
             </button>
+          </div>
+        </div>
+
+        {/* Companion Engineering Platforms by Anil Sharma (Side-by-Side in Row) */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800/80">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              <span className="text-xs font-display font-bold text-white tracking-wide uppercase">
+                Engineering Ecosystem by Anil Sharma
+              </span>
+              <span className="text-[10px] font-mono text-slate-500 hidden sm:inline">• Free Companion Portals</span>
+            </div>
+            <span className="text-[10px] font-mono text-slate-500 hidden md:inline">
+              Standards-Referenced Calculation & Plant Reliability Analytics
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Card 1: DesignCalculators.co.in (Emerald / Cyan Highlight) */}
+            <a
+              href="https://designcalculators.co.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative p-4 rounded-xl bg-slate-900/60 hover:bg-slate-900/90 border border-emerald-500/30 hover:border-emerald-400/80 transition-all duration-200 flex flex-col justify-between gap-3 hover:shadow-[0_0_20px_rgba(16,185,129,0.12)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
+                    <Calculator className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-display font-bold text-sm text-white group-hover:text-emerald-300 transition-colors">
+                        DesignCalculators.co.in
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 text-emerald-400 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400/90 block">
+                      Electrical • Mechanical • Instrumentation Calculators
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shrink-0">
+                  IEEE • IEC • ASME
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300/90 leading-relaxed">
+                Free engineering calculators for Electrical, Mechanical, and Instrumentation disciplines referencing approved international standards (IEEE, IEC, ASME, API, ISA)—covering cable sizing, substation grounding, pressure vessels, pipe hydraulics, and control valve sizing (<span className="font-mono text-slate-200">Cv</span>).
+              </p>
+
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-800/60">
+                <span className="text-emerald-400/80">Approved International Standards</span>
+                <span className="text-emerald-400 font-medium group-hover:underline flex items-center gap-1">
+                  Visit portal ↗
+                </span>
+              </div>
+            </a>
+
+            {/* Card 2: ReliabilityTools.co.in (Violet / Fuchsia Highlight) */}
+            <a
+              href="https://reliabilitytools.co.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative p-4 rounded-xl bg-slate-900/60 hover:bg-slate-900/90 border border-violet-500/30 hover:border-violet-400/80 transition-all duration-200 flex flex-col justify-between gap-3 hover:shadow-[0_0_20px_rgba(139,92,246,0.12)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0 group-hover:scale-105 transition-transform">
+                    <Wrench className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-display font-bold text-sm text-white group-hover:text-violet-300 transition-colors">
+                        ReliabilityTools.co.in
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 text-violet-400 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </div>
+                    <span className="text-[10px] font-mono text-violet-400/90 block">
+                      Plant Reliability & Maintenance Analytics
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-violet-500/10 text-violet-300 border border-violet-500/30 shrink-0">
+                  Uptime & Analytics
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300/90 leading-relaxed">
+                Improve your plant’s reliability and reduce downtime using free reliability tools—including 2P/3P Weibull failure analysis, MTBF/MTTR uptime modeling, Root Cause Analysis (RCA), OEE loss tracking, and IEC 61508/61511 SIL verification.
+              </p>
+
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-800/60">
+                <span className="text-violet-400/80">Asset Optimization & RCA</span>
+                <span className="text-violet-400 font-medium group-hover:underline flex items-center gap-1">
+                  Visit portal ↗
+                </span>
+              </div>
+            </a>
           </div>
         </div>
 
