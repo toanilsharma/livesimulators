@@ -166,7 +166,7 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
         }
 
       } else if (simulator.type === 'three_phase') {
-        // 3-Phase balanced voltages with approved R-Y-B-N standard colors
+        // 3-Phase balanced voltages with standard R-Y-B-N phase color conventions
         const f = params['frequency'] || 50;
         const phaseColors = [
           { name: 'R', color: '#ef4444', label: 'Phase R' },
@@ -885,27 +885,27 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
             </p>
           </div>
 
-          {/* Approved Engineering Standards, Codes & Verification */}
+          {/* Referenced Engineering Standards & Technical Formulas */}
           <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 space-y-3 text-xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-mono text-emerald-400 font-semibold">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Approved Standards, Codes & Verified Procedures</span>
+                <span>Referenced Engineering Standards & Technical Formulas</span>
               </div>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950 border border-emerald-700/60 text-emerald-300 font-bold uppercase tracking-wider">
-                100% Trustworthy
+                Reference Model
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-[11px]">
               <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1">
-                <span className="text-slate-400 text-[10px] block uppercase">Governing Engineering Standard:</span>
+                <span className="text-slate-400 text-[10px] block uppercase">Referenced Standard (Academic):</span>
                 <span className="text-emerald-300 font-semibold">
-                  {simulator.standardReference || `${simulator.disciplineName} Reference Standard`}
+                  {simulator.standardReference || `${simulator.disciplineName} Reference Literature`}
                 </span>
               </div>
               <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1">
-                <span className="text-slate-400 text-[10px] block uppercase">Governing Body / Code Body:</span>
+                <span className="text-slate-400 text-[10px] block uppercase">Publishing Body (Reference Only):</span>
                 <span className="text-cyan-300 font-semibold">
                   {simulator.standardBody || 'ISO / IEC / IEEE / ANSI'}
                 </span>
@@ -914,7 +914,7 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
 
             {simulator.colorStandardRule && (
               <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1 font-mono text-[11px]">
-                <span className="text-slate-400 text-[10px] block uppercase">Approved Standard Color & Legend Rules:</span>
+                <span className="text-slate-400 text-[10px] block uppercase">Color & Diagram Legend Conventions:</span>
                 <span className="text-slate-200">
                   {simulator.colorStandardRule}
                 </span>
@@ -924,7 +924,7 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
             <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
               <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>
-                All symbols, governing differential equations, sign conventions, and analytical benchmarks strictly follow approved international engineering guidelines.
+                Formulas and nomenclature reference published technical literature for educational study. Standards are cited for identification only; no official affiliation or endorsement is implied.
               </span>
             </div>
           </div>

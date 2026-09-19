@@ -143,20 +143,20 @@ export default function App() {
 
   // Helper to find simulator by ID
   const activeSimulator =
-    route.view === 'simulator'
+    route.view === 'simulator' || route.view === 'embed'
       ? ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || FEATURED_ELECTRICAL_SIMULATORS[0]
       : null;
 
   return (
     <div
       className={`bg-[#080d16] text-slate-100 flex flex-col selection:bg-cyan-500/25 selection:text-cyan-200 w-full max-w-full overflow-x-hidden ${
-        route.view === 'simulator'
+        route.view === 'simulator' || route.view === 'embed'
           ? 'h-[100dvh] max-h-[100dvh] overflow-hidden'
           : 'min-h-screen'
       }`}
     >
-      {/* 1. Global Navigation Bar (shown on all pages except full-screen workbench) */}
-      {route.view !== 'simulator' && (
+      {/* 1. Global Navigation Bar (shown on all pages except full-screen workbench and embed) */}
+      {route.view !== 'simulator' && route.view !== 'embed' && (
         <Navbar
           onOpenSearch={() => {
             setSearchInitialQuery('');
@@ -210,6 +210,19 @@ export default function App() {
         <main className="flex-1 min-h-0 h-full w-full max-w-full overflow-hidden flex flex-col">
           <DedicatedSimulatorPage
             simulator={activeSimulator}
+            onBackToDepartment={(deptId) => handleSelectDepartment(deptId)}
+            onBackToHome={handleBackToHome}
+            onSelectSimulator={handleLaunchSimulator}
+          />
+        </main>
+      )}
+
+      {/* Embedded Iframe View for University LMS (Canvas, Moodle, Blackboard) */}
+      {route.view === 'embed' && activeSimulator && (
+        <main className="flex-1 min-h-0 h-full w-full max-w-full overflow-hidden flex flex-col bg-[#070b12]">
+          <DedicatedSimulatorPage
+            simulator={activeSimulator}
+            isEmbed
             onBackToDepartment={(deptId) => handleSelectDepartment(deptId)}
             onBackToHome={handleBackToHome}
             onSelectSimulator={handleLaunchSimulator}
@@ -311,7 +324,7 @@ export default function App() {
       />
 
       {/* 4. Global Footer with all compliance & legal links */}
-      {route.view !== 'simulator' && (
+      {route.view !== 'simulator' && route.view !== 'embed' && (
         <Footer
           onSelectDiscipline={(discId) => handleSelectDepartment(discId as DisciplineId)}
           onOpenTopic={handleOpenTopic}
@@ -325,8 +338,10 @@ export default function App() {
         />
       )}
 
-      {/* 5. Non-intrusive Cookie Consent Banner */}
-      <CookieBanner onNavigateToCookiePolicy={handleNavigateToCookiePolicy} />
+      {/* 5. Non-intrusive Cookie Consent Banner (suppressed in LMS embed) */}
+      {route.view !== 'embed' && (
+        <CookieBanner onNavigateToCookiePolicy={handleNavigateToCookiePolicy} />
+      )}
     </div>
   );
 }

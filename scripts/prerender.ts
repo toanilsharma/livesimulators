@@ -19,6 +19,118 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+ 
+/**
+ * Generates official llms.txt and llms-full.txt files following https://llmstxt.org/
+ * Enables AI search engines (Perplexity, ChatGPT/SearchGPT, Claude, Gemini) to index
+ * all mathematical models, physical formulations, parameter bounds, and validation tests.
+ */
+function generateLlmsTxt(): { summary: string; full: string } {
+  const summaryLines: string[] = [
+    '# LiveSimulators',
+    '',
+    '> LiveSimulators (https://livesimulators.com) is an open-access engineering simulation and virtual laboratory platform. It executes first-principles physical and mathematical models directly in the user browser at 60 FPS using Float64 numerical integrators (including 4th-Order Runge-Kutta). Built for university engineering syllabi, laboratory exploration, and industrial plant troubleshooting.',
+    '',
+    '## Academic & Industrial Disciplines',
+  ];
+
+  for (const d of DISCIPLINES) {
+    summaryLines.push(`- [${d.name} (${d.code})](https://livesimulators.com/department/${d.id}): ${d.description} Core equation: \`${d.coreEquation}\``);
+  }
+
+  summaryLines.push('');
+  summaryLines.push('## Interactive Engineering Simulators');
+  for (const s of ALL_AVAILABLE_SIMULATORS) {
+    summaryLines.push(`- [${s.title}](https://livesimulators.com/simulator/${s.id}): ${s.tagline} Physical law: ${s.physicalLaw}. Governing formulation: \`${s.governingEquation}\`. Level: ${s.difficulty}.`);
+  }
+
+  summaryLines.push('');
+  summaryLines.push('## Industrial Engineering Labs Workbench');
+  for (const lab of LABS) {
+    summaryLines.push(`- [${lab.name}](https://livesimulators.com/lab/${lab.id}): ${lab.tagline}. Discipline: ${lab.dept} | ${lab.modules} Interactive Modules | Reference: ${lab.standardBadge}.`);
+  }
+
+  summaryLines.push('');
+  summaryLines.push('## Companion Engineering Portals');
+  summaryLines.push('- [DesignCalculators.co.in](https://designcalculators.co.in): Free multi-disciplinary engineering calculators (Electrical, Mechanical, Instrumentation) referencing published standards (IEEE, IEC, ASME, API, ISA).');
+  summaryLines.push('- [ReliabilityTools.co.in](https://reliabilitytools.co.in): Free plant reliability, asset uptime analytics, 2P/3P Weibull failure modeling, MTBF/MTTR, RCA, and IEC 61508/61511 SIL verification.');
+
+  summaryLines.push('');
+  summaryLines.push('## Standards Reference & Non-Affiliation Notice');
+  summaryLines.push('All standard designations and acronyms (IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI) belong to their respective owners and are referenced solely for technical identification and academic study. LiveSimulators is an independent educational platform and makes no claim of endorsement or official affiliation.');
+
+  summaryLines.push('');
+  summaryLines.push('## Full Technical Documentation');
+  summaryLines.push('- [Complete Equations, Mathematical Proofs & Benchmark Tests](https://livesimulators.com/llms-full.txt): Detailed mathematical derivations, analytical validation benchmarks, and complete parameter tables for all simulators.');
+
+  // Full technical document
+  const fullLines: string[] = [
+    '# LiveSimulators - Complete Technical & Mathematical Knowledge Base',
+    '',
+    '> Complete first-principles equations, analytical proofs, NIST/IEEE/ASME validation benchmarks, and parameter definitions for all LiveSimulators computational models.',
+    '',
+    'Website: https://livesimulators.com',
+    'Founder & Lead Computational Engineer: Anil Sharma (0808miracle@gmail.com)',
+    '',
+    '---',
+    '',
+  ];
+
+  for (const s of ALL_AVAILABLE_SIMULATORS) {
+    fullLines.push(`## ${s.title}`);
+    fullLines.push(`- **URL**: https://livesimulators.com/simulator/${s.id}`);
+    fullLines.push(`- **Discipline**: ${s.disciplineName} (${s.discipline}) | **Level**: ${s.difficulty} | **Badge**: ${s.badge}`);
+    fullLines.push(`- **Overview**: ${s.description}`);
+    fullLines.push(`- **Physical Law**: ${s.physicalLaw}`);
+    fullLines.push(`- **Governing Formulation**: \`${s.governingEquation}\``);
+    fullLines.push(`- **Equation Description**: ${s.equationDescription}`);
+    if (s.standardReference) {
+      fullLines.push(`- **Referenced Standards**: ${s.standardReference}`);
+    }
+    if (s.analyticalProof) {
+      fullLines.push(`- **Analytical Proof & Mathematical Derivation**: ${s.analyticalProof}`);
+    }
+    if (s.validationTest) {
+      fullLines.push(`- **Benchmark Validation Test**: ${s.validationTest}`);
+    }
+    if (s.fieldInsights) {
+      fullLines.push(`- **Industrial Practical Insights**: ${s.fieldInsights}`);
+    }
+    if (s.parameters && s.parameters.length > 0) {
+      fullLines.push('- **Tunable Parameters**:');
+      for (const p of s.parameters) {
+        fullLines.push(`  - \`${p.name}\` (${p.symbol}): Range [${p.min} to ${p.max} ${p.unit}], Default: ${p.default} ${p.unit}. ${p.description}`);
+      }
+    }
+    if (s.keyMetrics && s.keyMetrics.length > 0) {
+      fullLines.push(`- **Solved Real-Time Outputs**: ${s.keyMetrics.map((m) => `${m.label} (${m.unit || 'dimensionless'})`).join(', ')}`);
+    }
+    if (s.courseMapping) {
+      fullLines.push(`- **University Course Mapping**: ${s.courseMapping}`);
+    }
+    if (s.textbookReferences) {
+      fullLines.push(`- **Standard Textbook References**: ${s.textbookReferences}`);
+    }
+    if (s.faqs && s.faqs.length > 0) {
+      fullLines.push('- **Frequently Asked Questions & Theoretical Concepts**:');
+      for (const faq of s.faqs) {
+        fullLines.push(`  - Q: ${faq.question}`);
+        fullLines.push(`    A: ${faq.answer}`);
+      }
+    }
+    if (s.tags && s.tags.length > 0) {
+      fullLines.push(`- **Curricular Tags**: ${s.tags.join(', ')}`);
+    }
+    fullLines.push('');
+    fullLines.push('---');
+    fullLines.push('');
+  }
+
+  return {
+    summary: summaryLines.join('\n'),
+    full: fullLines.join('\n'),
+  };
+}
 
 /**
  * Builds rich, accessible, crawler-indexable semantic HTML content for each route.
@@ -203,7 +315,45 @@ function renderContentForRoute(route: AppRoute): string {
           <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; margin-bottom:0.75rem;">Field Engineering Insights</h2>
           <p style="color:#cbd5e1; font-size:0.875rem; line-height:1.6;">${escapeHtml(sim.fieldInsights)}</p>
         </section>` : ''}
+
+        ${sim.courseMapping ? `
+        <section style="margin-bottom:2.5rem; padding:1.5rem; background:#0b1324; border:1px solid #1e293b; border-radius:1rem;">
+          <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; margin-bottom:0.75rem;">University Syllabus & Curriculum Mapping</h2>
+          <p style="color:#38bdf8; font-family:monospace; font-size:0.9rem; margin-bottom:0.5rem;">${escapeHtml(sim.courseMapping)}</p>
+          ${sim.textbookReferences ? `<p style="color:#94a3b8; font-size:0.85rem;">Standard References: ${escapeHtml(sim.textbookReferences)}</p>` : ''}
+        </section>` : ''}
+
+        ${sim.faqs && sim.faqs.length > 0 ? `
+        <section style="margin-bottom:2.5rem; padding:1.5rem; background:#0b1324; border:1px solid #1e293b; border-radius:1rem;">
+          <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; margin-bottom:1rem;">Frequently Asked Technical Questions</h2>
+          ${sim.faqs.map(f => `
+            <div style="margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid #1e293b;">
+              <h3 style="font-size:1rem; font-weight:bold; color:#f8fafc; margin-bottom:0.4rem;">${escapeHtml(f.question)}</h3>
+              <p style="font-size:0.875rem; color:#94a3b8; line-height:1.6;">${escapeHtml(f.answer)}</p>
+            </div>
+          `).join('')}
+        </section>` : ''}
       </article>
+      `;
+    }
+
+    case 'embed': {
+      const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || ALL_AVAILABLE_SIMULATORS[0];
+      return `
+      <div style="font-family:sans-serif; background:#030712; color:#f8fafc; padding:1.5rem; border-radius:0.75rem; min-height:100vh;">
+        <header style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1e293b; padding-bottom:1rem; margin-bottom:1.5rem;">
+          <div>
+            <span style="font-family:monospace; font-size:0.75rem; color:#38bdf8; letter-spacing:0.05em;">LIVESIMULATORS • VIRTUAL LAB EMBED</span>
+            <h1 style="font-size:1.5rem; font-weight:800; color:#ffffff; margin:0.25rem 0;">${escapeHtml(sim.title)}</h1>
+          </div>
+          <a href="/simulator/${sim.id}" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem; font-weight:bold; color:#06b6d4; text-decoration:none; padding:0.4rem 0.8rem; background:#0f172a; border:1px solid #1e293b; border-radius:0.5rem;">Launch Full Lab ↗</a>
+        </header>
+        <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">${escapeHtml(sim.description)}</p>
+        <div style="font-family:monospace; color:#38bdf8; font-size:0.9rem; padding:0.75rem; background:#0f172a; border-radius:0.5rem; margin-bottom:1rem;">
+          ${escapeHtml(sim.governingEquation)}
+        </div>
+        <p style="color:#64748b; font-size:0.8rem;">Physical Law: ${escapeHtml(sim.physicalLaw)} | Reference: ${escapeHtml(sim.standardReference || 'Standard Reference')}</p>
+      </div>
       `;
     }
 
@@ -391,6 +541,7 @@ async function runPrerender() {
     { view: 'terms' },
     ...DISCIPLINES.map((d) => ({ view: 'department' as const, departmentId: d.id })),
     ...ALL_AVAILABLE_SIMULATORS.map((s) => ({ view: 'simulator' as const, simulatorId: s.id })),
+    ...ALL_AVAILABLE_SIMULATORS.map((s) => ({ view: 'embed' as const, simulatorId: s.id })),
     ...LABS.map((l) => ({ view: 'lab' as const, labId: l.id })),
   ];
 
@@ -503,7 +654,9 @@ async function runPrerender() {
 
   // Build-generated sitemap.xml with today's lastmod for all routes
   const today = new Date().toISOString().split('T')[0];
-  const sitemapEntries = routesToPrerender.map((r) => {
+  const sitemapEntries = routesToPrerender
+    .filter((r) => r.view !== 'embed')
+    .map((r) => {
     const p = routeToPath(r);
     let freq = 'weekly';
     let prio = '0.8';
@@ -542,8 +695,16 @@ ${sitemapEntries}
   fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemapXml, 'utf8');
   console.log('🗺️ Generated sitemap.xml with lastmod for all routes');
 
+  // Build-generated llms.txt and llms-full.txt (https://llmstxt.org)
+  const { summary: llmsTxtContent, full: llmsFullTxtContent } = generateLlmsTxt();
+  fs.writeFileSync(path.join(publicDir, 'llms.txt'), llmsTxtContent, 'utf8');
+  fs.writeFileSync(path.join(distDir, 'llms.txt'), llmsTxtContent, 'utf8');
+  fs.writeFileSync(path.join(publicDir, 'llms-full.txt'), llmsFullTxtContent, 'utf8');
+  fs.writeFileSync(path.join(distDir, 'llms-full.txt'), llmsFullTxtContent, 'utf8');
+  console.log('🤖 Generated llms.txt & llms-full.txt for AI Search & LLM Discovery');
+
   // Copy static assets from public to dist
-  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png'];
+  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt'];
   for (const asset of assetsToCopy) {
     const srcFile = path.join(publicDir, asset);
     if (fs.existsSync(srcFile)) {

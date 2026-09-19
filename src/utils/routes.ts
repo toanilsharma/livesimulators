@@ -67,6 +67,16 @@ export function parsePathToRoute(pathname: string, hash?: string): AppRoute {
     return { view: 'not-found', attemptedPath: cleanPath };
   }
 
+  // Match /embed/:simulatorId (clean embeddable view for university LMS, Moodle, Canvas, Blogs)
+  const embedMatch = cleanPath.match(/^\/embed\/([a-zA-Z0-9_-]+)$/);
+  if (embedMatch) {
+    const simId = embedMatch[1];
+    if (ALL_AVAILABLE_SIMULATORS.some((s) => s.id === simId)) {
+      return { view: 'embed', simulatorId: simId };
+    }
+    return { view: 'not-found', attemptedPath: cleanPath };
+  }
+
   // Match /lab/:labId
   const labMatch = cleanPath.match(/^\/lab\/([a-zA-Z0-9_-]+)$/);
   if (labMatch) {
@@ -104,6 +114,8 @@ export function routeToPath(route: AppRoute): string {
       return `/department/${route.departmentId}`;
     case 'simulator':
       return `/simulator/${route.simulatorId}`;
+    case 'embed':
+      return `/embed/${route.simulatorId}`;
     case 'lab':
       return `/lab/${route.labId}`;
     case 'not-found':

@@ -70,6 +70,9 @@ export interface SimulatorItem {
   validationTest?: string;
   fieldInsights?: string;
   colorStandardRule?: string;
+  courseMapping?: string;
+  textbookReferences?: string;
+  faqs?: Array<{ question: string; answer: string }>;
 }
 
 export interface DisciplineInfo {
@@ -90,6 +93,7 @@ export type AppRoute =
   | { view: 'home' }
   | { view: 'department'; departmentId: DisciplineId }
   | { view: 'simulator'; simulatorId: string }
+  | { view: 'embed'; simulatorId: string }
   | { view: 'lab'; labId: string }
   | { view: 'about' }
   | { view: 'contact' }

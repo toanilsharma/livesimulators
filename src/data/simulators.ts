@@ -90,6 +90,22 @@ export const FEATURED_ELECTRICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Starting from Kirchhoff’s Voltage Law (KVL): v(t) = L (di/dt) + R i(t) + (1/C) ∫ i(t) dt. Differentiating yields the canonical 2nd-order ODE: d²i/dt² + (R/L) di/dt + (1/LC) i = 0. The characteristic equation s² + 2ζω₀s + ω₀² = 0 defines natural frequency ω₀ = 1/√(LC) and damping ratio ζ = (R/2)√(C/L). For ζ < 1, roots are s = -ζω₀ ± jω₀√(1 - ζ²), generating underdamped ringing.',
     validationTest: 'NIST/IEEE benchmark: L = 60 mH, C = 40 µF yields theoretical f₀ = 1/(2π√(LC)) = 102.73 Hz. With R = 25 Ω, critical resistance R_crit = 2√(L/C) = 77.46 Ω; ζ = 25 / 77.46 = 0.323. Relative solver deviation < 0.01%.',
     fieldInsights: 'In high-voltage grid substations, series LC resonance triggers destructive overvoltage surges. Surge arresters and series damping inductors (IEEE 3002.8) are installed to force ζ > 0.707 to suppress harmonic resonance.',
+    courseMapping: 'EE-201: Electric Circuits | ECE-210: Network Theory & Transient Analysis',
+    textbookReferences: 'Fundamentals of Electric Circuits (Alexander & Sadiku, 7th Ed., Ch. 8-9) | Engineering Circuit Analysis (Hayt, Kemmerly & Phillips, 9th Ed., Ch. 14)',
+    faqs: [
+      {
+        question: 'What is the physical condition for resonance in a series RLC circuit?',
+        answer: 'Resonance occurs when inductive reactance equals capacitive reactance (X_L = X_C, or ωL = 1/(ωC)). At this resonant frequency f₀ = 1 / (2π√(LC)), net circuit impedance is purely resistive (|Z| = R), and current reaches its maximum possible amplitude for a given source voltage.',
+      },
+      {
+        question: 'How does damping resistance R dictate circuit transient stability?',
+        answer: 'Resistance R dissipates electromagnetic energy as Joule heat. The damping ratio ζ = (R/2)√(C/L) increases linearly with R. For ζ < 1 the circuit is underdamped and rings with decaying sinusoids; for ζ = 1 it achieves critical damping (fastest return to equilibrium without overshoot); for ζ > 1 it is overdamped and sluggish.',
+      },
+      {
+        question: 'What is Quality Factor Q and why is it critical in filter selectivity?',
+        answer: 'Quality Factor Q = 1/(2ζ) = (1/R)√(L/C) measures the ratio of maximum stored energy to energy dissipated per oscillation radian. High Q indicates lower energy loss per cycle, producing a sharp, highly selective impedance resonance peak.',
+      },
+    ],
     parameters: [
       { id: 'resistance', name: 'Damping Resistance', symbol: 'R', min: 2, max: 150, step: 1, default: 25, unit: 'Ω', description: 'Controls energy dissipation rate and damping ratio' },
       { id: 'inductance', name: 'Inductance', symbol: 'L', min: 10, max: 200, step: 5, default: 60, unit: 'mH', description: 'Energy stored in the magnetic field (opposes dI/dt)' },
@@ -129,6 +145,22 @@ export const FEATURED_ELECTRICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Three balanced spatial windings displaced by 120° are energized by balanced time-harmonic currents: i_R = I_m cos(ωt), i_Y = I_m cos(ωt - 2π/3), i_B = I_m cos(ωt - 4π/3). Spatial vector sum B_net(t) = (3/2) B_m [cos(ωt) î + sin(ωt) ĵ], producing a constant-magnitude vector rotating at synchronous mechanical speed N_s = 120 f / P.',
     validationTest: 'IEC 60034-1 benchmark: For f = 50 Hz on a 4-pole synchronous machine, synchronous speed N_s = (120 × 50)/4 = 1500 RPM. At rated torque angle δ = 30°, shaft torque T = 3 V_ph I_ph cos(φ)/ω_m conforms with dyno measurements within ±0.05%.',
     fieldInsights: 'Operating with torque angle δ > 60° introduces severe vulnerability to pull-out pole slip under grid voltage dips. Field excitation I_f must maintain generator operation within the IEEE capability curve limits.',
+    courseMapping: 'EE-301: Electric Machinery | EE-340: Power Systems Analysis',
+    textbookReferences: 'Electric Machinery Fundamentals (Chapman, 5th Ed., Ch. 4-5) | Fitzgerald & Kingsley’s Electric Machinery (Umashankar, Ch. 6)',
+    faqs: [
+      {
+        question: 'How do three stationary coils produce a rotating magnetic flux vector?',
+        answer: 'Three spatial windings displaced by 120° physical degrees are fed by sinusoidal currents displaced 120° in electrical time phase. Taking the spatial vector sum at any instant yields a net magnetic flux vector B_net of constant magnitude (1.5 × peak single-coil flux) that sweeps around the airgap at synchronous electrical speed N_s = 120f / P.',
+      },
+      {
+        question: 'What is torque angle δ and what causes synchronous pull-out?',
+        answer: 'Torque angle δ is the angular lag of the rotor magnetic poles behind the rotating stator field. Electromagnetic torque is proportional to sin(δ). When mechanical shaft load increases, δ increases. If δ exceeds 90° (pull-out limit), magnetic synchronization breaks, causing severe torque oscillations and motor stall.',
+      },
+      {
+        question: 'How does rotor DC field excitation control grid power factor?',
+        answer: 'Adjusting rotor DC field current I_f controls the internal induced counter-EMF (E_f). Under-excitation (low I_f) draws reactive VARs from the grid (lagging power factor). Over-excitation (high I_f) injects reactive VARs into the grid (leading power factor), allowing synchronous motors to compensate industrial plant power factor as synchronous condensers.',
+      },
+    ],
     parameters: [
       { id: 'frequency', name: 'Grid Frequency', symbol: 'f', min: 25, max: 100, step: 1, default: 50, unit: 'Hz', description: 'AC power line frequency determining synchronous speed' },
       { id: 'voltage', name: 'Phase Voltage RMS', symbol: 'V_ph', min: 110, max: 480, step: 10, default: 230, unit: 'V', description: 'Line-to-neutral terminal voltage' },
@@ -168,6 +200,22 @@ export const FEATURED_ELECTRICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'By inductor volt-second balance in steady state: ∫₀^(T_s) v_L(t) dt = 0. During switch-on (D T_s), v_L = V_in. During switch-off ((1-D) T_s), v_L = V_out. Therefore, V_in (D T_s) + V_out (1 - D) T_s = 0, directly giving V_out = -V_in [D / (1 - D)]. Peak ripple is ΔI_L = (V_in D) / (L f_sw).',
     validationTest: 'Power benchmark: V_in = 12 V, D = 0.60 gives ideal V_out = -12 × (0.6/0.4) = -18.00 V. For L = 120 µH, f_sw = 100 kHz, inductor ripple ΔI_L = (12 × 0.60) / (120e-6 × 100e3) = 0.60 A. Numerical solver matches exact analytical value.',
     fieldInsights: 'To guarantee Continuous Conduction Mode (CCM), inductor must exceed L_crit = (1 - D)² R_load / (2 f_sw). In DCM mode, the output voltage becomes load dependent and dynamic transient regulation degrades.',
+    courseMapping: 'EE-450: Power Electronics | ECE-472: Switching Power Supply Design',
+    textbookReferences: 'Fundamentals of Power Electronics (Erickson & Maksimovic, 3rd Ed., Ch. 2-3) | Power Electronics: Converters, Applications, and Design (Mohan, Undeland, Robbins, 3rd Ed., Ch. 7)',
+    faqs: [
+      {
+        question: 'What is the principle of inductor volt-second balance in DC-DC converters?',
+        answer: 'In periodic steady-state operation, the average voltage across an inductor over one switching period T_s must be exactly zero. The positive volt-seconds applied during the switch ON-time must equal the negative volt-seconds during switch OFF-time, preventing the inductor core from experiencing flux staircase saturation.',
+      },
+      {
+        question: 'What determines the boundary between Continuous (CCM) and Discontinuous (DCM) Conduction Mode?',
+        answer: 'The boundary occurs when inductor current drops to zero precisely at the conclusion of the switching period. If inductance L exceeds L_crit = (1 - D)² R_load / (2 f_sw), the inductor current never reaches zero (CCM) and voltage conversion ratio V_out / V_in depends solely on duty cycle D.',
+      },
+      {
+        question: 'Why does the inverting buck-boost converter produce negative polarity?',
+        answer: 'During the switch ON-phase, current flows into the inductor from V_in, storing magnetic energy. When the switch turns off, inductor current continues in the same direction (Lenz’s Law), pulling current through the ground reference rail and depositing charge on the output capacitor with negative potential relative to ground.',
+      },
+    ],
     parameters: [
       { id: 'dutyCycle', name: 'PWM Duty Cycle', symbol: 'D', min: 0.15, max: 0.85, step: 0.02, default: 0.60, unit: '', description: 'Ratio of MOSFET ON-time to total switching period' },
       { id: 'inputVoltage', name: 'Input Voltage', symbol: 'V_in', min: 5, max: 48, step: 1, default: 12, unit: 'V', description: 'DC primary source voltage' },
@@ -207,6 +255,18 @@ export const FEATURED_ELECTRICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Nodal KCL analysis around the op-amp feedback loop yields characteristic polynomial s² + (ω_c / Q) s + ω_c². Corner frequency f_c = 1 / (2π √(R₁ R₂ C₁ C₂)). Setting Q = 1/√2 ≈ 0.7071 yields the maximally flat Butterworth response with zero passband ripple and asymptotic -40 dB/decade rolloff.',
     validationTest: 'Active filter benchmark: For f_c = 1500 Hz, Q = 0.707, theoretical attenuation at f = f_c is exactly -3.0103 dB with phase shift -90.0°. Computed filter response precisely reproduces the theoretical pole trajectory.',
     fieldInsights: 'Resistor and capacitor component tolerances directly degrade Q. A 5% capacitor drift in a Q = 2 Chebyshev configuration can cause a 2.5 dB unexpected gain peak in the passband. In industrial designs, 1% metal film resistors and COG/NPO dielectric capacitors are mandated.',
+    courseMapping: 'EE-310: Analog Integrated Circuits | ECE-320: Active Filter Design',
+    textbookReferences: 'Microelectronic Circuits (Sedra & Smith, 8th Ed., Ch. 17) | Design with Operational Amplifiers and Analog Integrated Circuits (Franco, 4th Ed., Ch. 3-4)',
+    faqs: [
+      {
+        question: 'How does Q factor dictate the passband frequency response of a 2nd-order active filter?',
+        answer: 'When Q = 0.7071 (1/√2), the filter achieves maximally flat passband response (Butterworth alignment) with zero ripple and -3 dB attenuation at cutoff. When Q > 0.7071, gain peaking occurs near cutoff (Chebyshev response), steepening rolloff at the expense of passband ripple.',
+      },
+      {
+        question: 'What is the asymptotic attenuation rolloff rate of a 2nd-order Sallen-Key low-pass filter?',
+        answer: 'Because a 2nd-order filter introduces two complex poles in the left half of the s-plane, attenuation above cutoff rolls off at -40 dB per decade (-12 dB per octave), providing far superior high-frequency harmonic attenuation compared to single-pole passive RC networks.',
+      },
+    ],
     parameters: [
       { id: 'cutoffFreq', name: 'Corner Frequency', symbol: 'f_c', min: 100, max: 10000, step: 100, default: 1500, unit: 'Hz', description: '-3dB transition frequency' },
       { id: 'qualityFactor', name: 'Quality Factor', symbol: 'Q', min: 0.3, max: 3.0, step: 0.1, default: 0.707, unit: '', description: '0.707 for Butterworth (maximally flat), >0.707 for Chebyshev ripple' },
@@ -246,6 +306,18 @@ export const FEATURED_ELECTRICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Deriving from Telegrapher equations ∂V/∂z = -Z I and ∂I/∂z = -Y V, the TEM standing wave solution is V(z) = V₀⁺ e^(-γz) + V₀⁻ e^(+γz). Boundary reflection Γ = (Z_L - Z₀)/(Z_L + Z₀). Constructive and destructive interference gives V_max = |V₀⁺|(1 + |Γ|) and V_min = |V₀⁺|(1 - |Γ|), defining VSWR = (1 + |Γ|) / (1 - |Γ|).',
     validationTest: 'RF benchmark: For Z₀ = 50 Ω, Z_L = 25 Ω: reflection coefficient Γ = (25 - 50)/(25 + 50) = -0.3333; |Γ| = 1/3. Theoretical VSWR = (1 + 1/3)/(1 - 1/3) = 2.000:1. Return loss = -20 log₁₀(1/3) = 9.54 dB. Solver calculates exactly 2.00:1.',
     fieldInsights: 'In high-power RF systems, VSWR > 1.5 causes excessive voltage standing wave peaks that can trigger dielectric breakdown in coaxial cables or destroy power amplifier transistors due to reflected power.',
+    courseMapping: 'EE-380: Electromagnetic Fields & Waves | RF-410: Microwave Engineering',
+    textbookReferences: 'Microwave Engineering (David M. Pozar, 4th Ed., Ch. 2) | Engineering Electromagnetics (Hayt & Buck, 9th Ed., Ch. 10)',
+    faqs: [
+      {
+        question: 'What creates voltage standing waves along an RF transmission line?',
+        answer: 'When the load impedance Z_L does not match characteristic impedance Z₀, incident energy cannot be fully absorbed. A reflected wave propagates back towards the source, creating spatial constructive and destructive interference envelopes known as standing waves.',
+      },
+      {
+        question: 'How is Voltage Standing Wave Ratio (VSWR) related to reflection coefficient Γ?',
+        answer: 'VSWR is the ratio of maximum to minimum voltage along the line: VSWR = (1 + |Γ|) / (1 - |Γ|), where Γ = (Z_L - Z₀) / (Z_L + Z₀). For matched termination (Z_L = Z₀), |Γ| = 0 and VSWR = 1.0 (ideal). Open or short loads yield |Γ| = 1.0 and VSWR = ∞.',
+      },
+    ],
     parameters: [
       { id: 'loadImpedance', name: 'Load Impedance', symbol: 'Z_L', min: 0, max: 250, step: 5, default: 50, unit: 'Ω', description: 'Load termination at the end of the transmission line' },
       { id: 'lineImpedance', name: 'Characteristic Z₀', symbol: 'Z_0', min: 25, max: 100, step: 5, default: 50, unit: 'Ω', description: 'Intrinsic line impedance (standard coaxial is 50Ω)' },
@@ -285,6 +357,18 @@ export const FEATURED_ELECTRICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Fourier basis functions are orthogonal over period T. Truncating the square wave expansion at N harmonics produces Gibbs phenomenon overshoot at jump discontinuities converging analytically to (2/π) ∫₀^π (sin(u)/u) du - 1 ≈ 8.9490%.',
     validationTest: 'IEEE 519 benchmark: Fundamental peak is 4/π ≈ 1.2732. Peak overshoot of synthesized square wave for N = 15 is 1.0895 times nominal pulse height (8.95% Gibbs overshoot). Total Harmonic Distortion (THD) conforms to IEEE 519 calculation formula.',
     fieldInsights: 'Industrial variable frequency drives generate 5th, 7th, 11th, and 13th current harmonics. IEEE 519 enforces strict limits on Total Demand Distortion (TDD < 5% at Point of Common Coupling) to prevent transformer core overheating.',
+    courseMapping: 'EE-250: Signals and Systems | MATH-302: Applied Fourier Analysis',
+    textbookReferences: 'Signals and Systems (Oppenheim & Willsky, 2nd Ed., Ch. 3) | Linear Systems and Signals (Lathi & Green, 3rd Ed., Ch. 4)',
+    faqs: [
+      {
+        question: 'What causes the Gibbs phenomenon overshoot at jump discontinuities?',
+        answer: 'When approximating a discontinuous periodic signal (such as a square wave) with a finite Fourier series sum, non-uniform convergence near the discontinuity causes persistent overshoot ringing that peaks at approximately 8.95% of the step height regardless of how many harmonics are summed.',
+      },
+      {
+        question: 'How is Total Harmonic Distortion (THD) quantified mathematically?',
+        answer: 'THD is the square root of the sum of squares of all harmonic amplitudes divided by the fundamental amplitude: THD = √(V₂² + V₃² + V₄² + ...) / V₁. Lower THD indicates a purer sine wave with higher power quality.',
+      },
+    ],
     parameters: [
       { id: 'harmonicsCount', name: 'Number of Harmonics', symbol: 'N', min: 1, max: 31, step: 2, default: 7, unit: '', description: 'Highest odd harmonic included in the partial sum' },
       { id: 'fundamentalFreq', name: 'Fundamental Freq', symbol: 'f_0', min: 10, max: 100, step: 5, default: 50, unit: 'Hz', description: 'Base repetition frequency' },
@@ -327,6 +411,22 @@ export const FEATURED_CIVIL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'From Euler-Bernoulli beam theory: planar cross sections remain plane and normal to the deformed centroidal axis, yielding strain ε = -y (d²w/dx²). Combining with Hooke’s law σ = E ε and moment equilibrium d²M/dx² = -q(x) gives the 4th-order ODE: EI (d⁴w/dx⁴) = q(x). Integrating with pinned-pinned boundary conditions w(0)=w(L)=0 yields midspan deflection δ_max = (P L³)/(48 E I) + (5 q L⁴)/(384 E I).',
     validationTest: 'AISC W250×67 benchmark: Span L = 6.0 m, P = 45 kN at midspan, q = 12 kN/m (E = 200 GPa, I = 84.9×10⁻⁶ m⁴). Theoretical midspan deflection δ_mid = 11.93 mm (point) + 11.93 mm (UDL) = 23.86 mm. AISC L/360 allowable limit = 6000/360 = 16.67 mm.',
     fieldInsights: 'AISC 360-16 Table L-1 specifies L/360 for floor beams carrying brittle plaster ceilings and L/240 for general structural roof members. Extreme fiber stress σ = M_max y / I must satisfy LRFD strength φ_b M_n where φ_b = 0.90.',
+    courseMapping: 'CE-310: Mechanics of Materials | CE-330: Structural Analysis I',
+    textbookReferences: 'Mechanics of Materials (R.C. Hibbeler, 10th Ed., Ch. 6, 12) | Mechanics of Materials (Gere & Goodno, 9th Ed., Ch. 9-10)',
+    faqs: [
+      {
+        question: 'How do Shear Force Diagrams (SFD) and Bending Moment Diagrams (BMD) relate mathematically?',
+        answer: 'Transverse shear force V(x) equals the first spatial derivative of the bending moment: V(x) = dM/dx. Locations where the shear force crosses zero (V = 0) correspond precisely to local maximum or minimum bending moments along the beam span.',
+      },
+      {
+        question: 'What is the AISC L/360 deflection limit criterion?',
+        answer: 'AISC 360 specifies serviceability live-load deflection limits (commonly L/360 for plastered floors or L/240 for roof structures) to prevent plaster cracking, sagging ponding, and perceived floor bounce under normal occupancy.',
+      },
+      {
+        question: 'What fundamental kinematic assumptions govern Euler-Bernoulli beam theory?',
+        answer: 'Euler-Bernoulli theory assumes cross-sections normal to the neutral axis remain plane and perpendicular to the deformed centroidal axis, neglecting transverse shear deformation (valid for slender beams with span-to-depth ratio L/d > 10).',
+      },
+    ],
     parameters: [
       { id: 'span', name: 'Span Length L', symbol: 'L', min: 2, max: 12, step: 0.5, default: 6, unit: 'm', description: 'Clear distance between support boundaries' },
       { id: 'pointLoad', name: 'Concentrated Load P', symbol: 'P', min: 0, max: 150, step: 5, default: 45, unit: 'kN', description: 'Point load applied along beam span' },
@@ -366,6 +466,18 @@ export const FEATURED_CIVIL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Planar pin-jointed truss equilibrium relies on static determinacy: b + r = 2j. At each node, the vector force balance ∑ F_x = 0 and ∑ F_y = 0 is formulated into a global equilibrium matrix [A] {F} = {P}. For compressive members of length L and radius of gyration r_g, Euler column theory establishes the elastic critical buckling capacity: P_cr = (π² E I) / (K L)², where effective length factor K = 1.0 for pinned chord/web joints.',
     validationTest: 'AASHTO LRFD benchmark: 6-bay Warren truss (span L = 24 m, height H = 4.5 m) with dead load w_d = 15 kN/joint and truck axle P = 80 kN. Nodal reactions and internal forces achieve perfect static balance (∑ F_y = 0.000 kN). Critical compression member verifies Euler buckling factor.',
     fieldInsights: 'AASHTO LRFD specifies member slenderness limit K L / r ≤ 120 for main compression members and ≤ 140 for secondary bracing. Impact dynamic allowance (IM = 33%) is applied to vehicular axle live loads.',
+    courseMapping: 'CE-200: Statics | CE-340: Structural Steel Design',
+    textbookReferences: 'Vector Mechanics for Engineers: Statics (Beer & Johnston, 12th Ed., Ch. 6) | Structural Analysis (Hibbeler, 10th Ed., Ch. 3)',
+    faqs: [
+      {
+        question: 'How does the Method of Joints resolve member axial forces?',
+        answer: 'Assuming pin-connected nodes and weightless members loaded only at joints, each node constitutes a concurrent coplanar force system in static equilibrium: ∑ F_x = 0 and ∑ F_y = 0. Solving joint by joint yields internal axial tension and compression values.',
+      },
+      {
+        question: 'Why do compression members fail by Euler buckling before material yield?',
+        answer: 'Slender compressive struts experience geometric lateral instability at the critical Euler load P_cr = π² E I / (K L)². If compressive load exceeds P_cr, the member buckles catastrophically even though stress remains well below the steel yield limit σ_y.',
+      },
+    ],
     parameters: [
       { id: 'span', name: 'Bridge Span L', symbol: 'L', min: 12, max: 36, step: 2, default: 24, unit: 'm', description: 'Total span length of the truss bridge structure' },
       { id: 'height', name: 'Truss Depth H', symbol: 'H', min: 3, max: 8, step: 0.5, default: 4.5, unit: 'm', description: 'Vertical distance between top and bottom chords' },
@@ -405,6 +517,18 @@ export const FEATURED_CIVIL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Base isolation shifts the fundamental structure period T_i = 2π √(W / (k_eff g)) well beyond the high-energy spectrum zone (from 0.4s up to 2.5s+). Lead-rubber hysteresis provides energy dissipation with equivalent damping ratio β_eff = (4 Q (D - D_y)) / (2 π k_eff D²), reducing story drift by over 75%.',
     validationTest: 'ASCE 7-22 benchmark: 4-story building subjected to 0.45g PGA. Base shear is reduced from fixed-base 1720 kN to isolated 480 kN (72% reduction), keeping peak interstory drift ratio below 0.015 (ASCE 7-22 Table 12.12-1 limit satisfied).',
     fieldInsights: 'Seismic isolation joints must accommodate total maximum displacement D_TM = S_D1 T_i / (4 π² B_M) plus bidirectional torsion. Flexible utility loops (gas, water, electrical) must be designed to withstand up to 400 mm of lateral ground displacement without rupture.',
+    courseMapping: 'CE-450: Structural Dynamics | CE-540: Earthquake Engineering',
+    textbookReferences: 'Dynamics of Structures: Theory and Applications to Earthquake Engineering (Chopra, 5th Ed., Ch. 13, 20) | Design of Seismic Isolated Structures (Naeim & Kelly)',
+    faqs: [
+      {
+        question: 'How does seismic base isolation decouple a building from ground acceleration?',
+        answer: 'By inserting low-horizontal-stiffness elastomeric bearings at the foundation level, the natural period of the building is lengthened from the resonance range (0.3 - 0.8 s) out to 2.5 - 3.5 s. The superstructure responds nearly as a rigid body with drastically reduced floor accelerations and interstory drift.',
+      },
+      {
+        question: 'What is the role of the central lead core in Lead-Rubber Bearings (LRB)?',
+        answer: 'The central lead core yields plastically at low shear strain (approximately 10 MPa yield stress). As the bearing undergoes horizontal cyclic shear during an earthquake, plastic deformation of the lead produces broad hysteretic loops that dissipate 15% to 25% equivalent viscous damping.',
+      },
+    ],
     parameters: [
       { id: 'pga', name: 'Ground Accel (PGA)', symbol: 'PGA', min: 0.1, max: 0.8, step: 0.05, default: 0.45, unit: 'g', description: 'Peak Ground Acceleration from seismic event' },
       { id: 'frequency', name: 'Earthquake Frequency', symbol: 'f_eq', min: 0.5, max: 4.0, step: 0.1, default: 1.8, unit: 'Hz', description: 'Dominant frequency of seismic shear wave excitation' },
@@ -444,6 +568,18 @@ export const FEATURED_CIVIL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'From 2D stress transformation: σ_θ = (σ_x + σ_y)/2 + ((σ_x - σ_y)/2) cos(2θ) + τ_xy sin(2θ) and τ_θ = -((σ_x - σ_y)/2) sin(2θ) + τ_xy cos(2θ). These form a circle (σ - σ_avg)² + τ² = R² with center σ_avg = (σ_x + σ_y)/2 and radius R = √[((σ_x - σ_y)/2)² + τ_xy²]. Failure occurs if the Mohr circle intercepts or touches the Coulomb envelope τ_f = c + σ_n tan(φ).',
     validationTest: 'ASTM D3080 triaxial benchmark: σ_x = 140 kPa, σ_y = 50 kPa, τ_xy = 35 kPa. Center σ_avg = 95.0 kPa, radius R = √[45² + 35²] = 57.01 kPa. Major principal stress σ₁ = 152.01 kPa, minor principal stress σ₂ = 37.99 kPa, max shear τ_max = 57.01 kPa. Principal angle θ_p = 18.94°.',
     fieldInsights: 'Eurocode 7 mandates partial safety factors on soil parameters: γ_φ = 1.25 on tan(φ) and γ_c = 1.25 on cohesion c. Pore water pressure u reduces effective stress σ\' = σ - u, shifting the Mohr circle leftward toward premature shear slip liquefaction.',
+    courseMapping: 'CE-330: Soil Mechanics | CE-420: Geotechnical Engineering Design',
+    textbookReferences: 'Principles of Geotechnical Engineering (Braja M. Das & Sobhan, 9th Ed., Ch. 12) | Craig’s Soil Mechanics (Knappett & Craig, 9th Ed., Ch. 4)',
+    faqs: [
+      {
+        question: 'How do principal stresses (σ₁, σ₂) relate to the center and radius of Mohr’s Circle?',
+        answer: 'Mohr’s circle center is the average normal stress σ_avg = (σ_x + σ_y)/2, and its radius R = √[((σ_x - σ_y)/2)² + τ_xy²]. Major and minor principal stresses are σ₁ = σ_avg + R and σ₂ = σ_avg - R, representing the planes of pure normal stress where shear stress is exactly zero.',
+      },
+      {
+        question: 'What constitutes shear failure according to the Mohr-Coulomb rupture criterion?',
+        answer: 'Shear failure occurs when the state of stress represented by Mohr’s circle touches or intersects the Mohr-Coulomb failure envelope: τ_f = c + σ_n tan(φ), where c is soil cohesion and φ is the internal friction angle.',
+      },
+    ],
     parameters: [
       { id: 'sigmaX', name: 'Normal Stress σx', symbol: 'σ_x', min: 20, max: 250, step: 5, default: 140, unit: 'kPa', description: 'Normal stress applied on vertical face X' },
       { id: 'sigmaY', name: 'Normal Stress σy', symbol: 'σ_y', min: 0, max: 180, step: 5, default: 50, unit: 'kPa', description: 'Confining normal stress applied on horizontal face Y' },
@@ -486,6 +622,18 @@ export const FEATURED_MECHANICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Grashof’s Theorem establishes that for a planar four-bar link assembly with link lengths s, l, p, q, at least one link can make a complete 360° revolution if and only if s + l ≤ p + q. Vector loop closure r₂ + r₃ - r₄ - r₁ = 0 leads to Freudenstein’s equation: K₁ cos(θ₄) - K₂ cos(θ₂) + K₃ = cos(θ₂ - θ₄), where K₁ = r₁/r₂, K₂ = r₁/r₄, and K₃ = (r₁² + r₂² - r₃² + r₄²) / (2 r₂ r₄).',
     validationTest: 'Kinematic benchmark: r₁ = 130 mm, r₂ = 40 mm, r₃ = 120 mm, r₄ = 90 mm. s + l = 40 + 130 = 170 mm ≤ p + q = 90 + 120 = 210 mm (Grashof Class I crank-rocker verified). Transmission angle μ remains within safe operating limits 40° ≤ μ ≤ 140° throughout full cycle.',
     fieldInsights: 'Transmission angle μ between coupler and output rocker dictates mechanical force transmission efficiency. If μ drops below 35° in industrial pick-and-place linkages, the mechanism can toggle or bind due to joint pin friction.',
+    courseMapping: 'ME-301: Kinematics and Dynamics of Machinery | ME-320: Mechanism Design',
+    textbookReferences: 'Design of Machinery (Robert L. Norton, 6th Ed., Ch. 2-4) | Theory of Machines and Mechanisms (Uicker, Pennock, Shigley, 5th Ed., Ch. 3)',
+    faqs: [
+      {
+        question: 'What is the Grashof criterion for a planar four-bar mechanism?',
+        answer: 'Grashof’s condition states that if the sum of the shortest (s) and longest (l) link lengths is less than or equal to the sum of the remaining two link lengths (s + l ≤ p + q), at least one link is capable of making a continuous 360° rotation relative to the frame.',
+      },
+      {
+        question: 'Why is transmission angle μ critical in mechanical link design?',
+        answer: 'The transmission angle μ is the acute angle between the coupler link and output rocker. It dictates force transmission efficiency: if μ drops below 40° or exceeds 140°, mechanical advantage plummets and joint pin binding or toggle lock can occur.',
+      },
+    ],
     parameters: [
       { id: 'crankR', name: 'Crank Length r2', symbol: 'r_2', min: 20, max: 80, step: 2, default: 40, unit: 'mm', description: 'Input rotating crank link length' },
       { id: 'couplerL', name: 'Coupler Length r3', symbol: 'r_3', min: 60, max: 180, step: 5, default: 120, unit: 'mm', description: 'Floating coupler connector link' },
@@ -526,6 +674,18 @@ export const FEATURED_MECHANICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'The Rankine cycle processes: 1→2: Turbine expansion w_t = h₁ - h₂; 2→3: Condenser rejection q_out = h₂ - h₃; 3→4: Feed pump compression w_p = v₃(P_high - P_low) = h₄ - h₃; 4→1: Boiler heat addition q_in = h₁ - h₄. Cycle thermal efficiency is η_th = w_net / q_in = [(h₁ - h₂) - (h₄ - h₃)] / (h₁ - h₄). Actual turbine expansion incorporates isentropic efficiency η_t = (h₁ - h₂) / (h₁ - h_2s).',
     validationTest: 'ASME PTC 6 steam benchmark: P₁ = 80 bar (superheat T₁ = 480°C, h₁ = 3348 kJ/kg), P₂ = 0.08 bar (T_sat = 41.5°C, h₃ = 173.8 kJ/kg, w_p = 8.0 kJ/kg), turbine η_t = 85%: cycle thermal efficiency η_th = 37.8%, BWR = 0.72%, matching ASME PTC 6 power plant formulations within ±0.2%.',
     fieldInsights: 'ASME PTC 6 mandates steam quality x₂ at the turbine exhaust stage to remain strictly above 88% (x₂ > 0.88). Water droplet moisture below 88% causes severe supersonic blade erosion on low-pressure turbine titanium stages.',
+    courseMapping: 'ME-320: Thermodynamics II | ME-440: Power Plant Engineering',
+    textbookReferences: 'Fundamentals of Engineering Thermodynamics (Moran, Shapiro, Boettner & Bailey, 9th Ed., Ch. 8) | Thermodynamics: An Engineering Approach (Cengel & Boles, 9th Ed., Ch. 10)',
+    faqs: [
+      {
+        question: 'Why does superheating steam improve Rankine cycle efficiency?',
+        answer: 'Superheating raises the average temperature of heat addition T_H in the boiler while keeping heat rejection temperature T_C in the condenser constant. According to Carnot’s theorem (η ≤ 1 - T_C/T_H), higher T_H increases thermal efficiency while preventing moisture condensation on turbine blades.',
+      },
+      {
+        question: 'Why is condenser vacuum pressure kept as low as possible?',
+        answer: 'Lower condenser pressure decreases the boiling saturation temperature, lowering the cold reservoir temperature T_C and expanding the enthalpy drop across the turbine (w_t = h₁ - h₂), thereby maximizing net work output.',
+      },
+    ],
     parameters: [
       { id: 'boilerP', name: 'Boiler Pressure P_high', symbol: 'P_1', min: 20, max: 160, step: 5, default: 80, unit: 'bar', description: 'Steam generator operating pressure' },
       { id: 'turbineInletT', name: 'Turbine Superheat Temp', symbol: 'T_1', min: 300, max: 600, step: 10, default: 480, unit: '°C', description: 'Steam inlet temperature entering turbine stage' },
@@ -565,6 +725,18 @@ export const FEATURED_MECHANICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Applying Newton’s 2nd Law to a mass-spring-damper: m ẍ + c ẋ + k x = F₀ cos(ω t). In canonical form: ẍ + 2ζω_n ẋ + ω_n² x = (F₀/m) cos(ω t), where natural frequency ω_n = √(k/m) and damping ratio ζ = c / (2√(k m)). Harmonic steady-state solution yields magnification factor M(r) = 1 / √[(1 - r²)² + (2ζ r)²] where r = ω / ω_n, with phase angle φ = arctan(2ζ r / (1 - r²)).',
     validationTest: 'ISO 10816 benchmark: m = 5 kg, k = 350 N/m, c = 8 N·s/m: natural frequency f_n = (1/2π)√(350/5) = 1.330 Hz. Critical damping c_c = 2√(350×5) = 83.66 N·s/m; ζ = 8 / 83.66 = 0.0956. At excitation f = 1.33 Hz (r = 1.0), magnification M = 1 / (2 × 0.0956) = 5.23x and phase lag φ = 90.0°.',
     fieldInsights: 'ISO 10816-1 Zone A/B limits vibration severity velocity below 2.8 mm/s RMS for rigid machinery foundations. Operating within ±15% of the natural frequency resonance band causes fatigue failure in rotor shafts and bearing raceways.',
+    courseMapping: 'ME-310: Mechanical Vibrations | ME-350: System Dynamics and Response',
+    textbookReferences: 'Mechanical Vibrations (Singiresu S. Rao, 6th Ed., Ch. 2-3) | Engineering Vibration (Daniel J. Inman, 4th Ed., Ch. 2)',
+    faqs: [
+      {
+        question: 'What is the dynamic magnification factor M(ω) at resonance?',
+        answer: 'When excitation frequency matches natural frequency (r = ω/ω_n = 1), the inertial forces and spring elastic forces exactly cancel, leaving only damper dissipation. The magnification factor peaks at M ≈ 1 / (2ζ), producing large oscillation amplitudes under light damping.',
+      },
+      {
+        question: 'Why does a 90° phase shift occur exactly at resonance?',
+        answer: 'Below resonance, displacement is in phase with force (stiffness dominated). Above resonance, displacement is 180° out of phase (mass/inertia dominated). At resonance (ω = ω_n), velocity is in phase with force while displacement lags by exactly 90°, so input power directly feeds viscous dissipation.',
+      },
+    ],
     parameters: [
       { id: 'mass', name: 'Oscillator Mass m', symbol: 'm', min: 1, max: 20, step: 0.5, default: 5, unit: 'kg', description: 'Inertial mass vibrating on spring suspension' },
       { id: 'stiffness', name: 'Spring Stiffness k', symbol: 'k', min: 50, max: 1000, step: 25, default: 350, unit: 'N/m', description: 'Linear elastic spring constant' },
@@ -604,6 +776,18 @@ export const FEATURED_MECHANICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Involute tooth profiles obey the Fundamental Law of Gearing: the common normal to tooth profiles at contact always passes through the fixed pitch point P. Pitch diameters are d₁ = m z₁, d₂ = m z₂. Base radii are r_b1 = (d₁/2) cos(α), r_b2 = (d₂/2) cos(α). Path of contact length g_α = √(r_a1² - r_b1²) + √(r_a2² - r_b2²) - C sin(α). Contact ratio CR = g_α / (π m cos(α)). Under AGMA 2001, CR must exceed 1.20 to guarantee smooth tooth handover.',
     validationTest: 'AGMA 2001 benchmark: module m = 4 mm, z₁ = 18, z₂ = 48, α = 20°. Pitch diameters d₁ = 72 mm, d₂ = 192 mm; center distance C = 132 mm. Path of contact g_α = 18.27 mm; base pitch p_b = 11.808 mm. Contact ratio CR = 18.27 / 11.808 = 1.547 (AGMA compliant).',
     fieldInsights: 'AGMA 2001 specifies minimum contact ratio CR ≥ 1.4 for industrial gear drives to prevent impact noise and tooth scuffing. AGMA bending stress formula evaluates tooth root bending fatigue life exceeding 10⁷ cycles.',
+    courseMapping: 'ME-420: Mechanical Component Design | ME-430: Machine Design II',
+    textbookReferences: 'Shigley’s Mechanical Engineering Design (Budynas & Nisbett, 11th Ed., Ch. 13-14) | Machine Design: An Integrated Approach (Norton, 6th Ed., Ch. 11)',
+    faqs: [
+      {
+        question: 'Why are gear teeth shaped as involute curves?',
+        answer: 'Involute tooth profiles satisfy the Fundamental Law of Gearing regardless of minor variations in center distance C. The common normal at any point of contact remains collinear with the fixed pressure line (line of action), ensuring a strictly constant angular velocity ratio.',
+      },
+      {
+        question: 'Why must the contact ratio CR exceed 1.4 in industrial gearboxes?',
+        answer: 'A contact ratio CR = 1.4 means that at least one pair of teeth is in contact at all times, with two pairs sharing load for 40% of the mesh cycle. Ratios below 1.2 cause abrupt handover shocks, noise, and accelerated surface pitting.',
+      },
+    ],
     parameters: [
       { id: 'moduleM', name: 'Gear Module m', symbol: 'm', min: 2, max: 10, step: 0.5, default: 4, unit: 'mm', description: 'Metric tooth size pitch module' },
       { id: 'teethPinion', name: 'Pinion Teeth z1', symbol: 'z_1', min: 14, max: 32, step: 1, default: 18, unit: '', description: 'Number of teeth on driving input pinion' },
@@ -647,6 +831,18 @@ export const FEATURED_INSTRUMENTATION_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'The standard ISA ideal parallel PID control equation in the time domain is: u(t) = K_p e(t) + (K_p / T_i) ∫₀^t e(τ) dτ + K_p T_d (de/dt). In the Laplace s-domain: U(s) = K_p [ 1 + 1/(T_i s) + T_d s / (1 + α T_d s) ] E(s), with derivative filter coefficient α ≈ 0.1. Integrator anti-windup clamping freezes the integral accumulation state whenever actuator physical saturation limits (0% or 100%) are breached, eliminating excessive overshoot.',
     validationTest: 'Ziegler-Nichols FOPDT benchmark: K_p = 2.4, T_i = 8.0 s, T_d = 0.5 s. Settling time t_s (2% band) = 14.2 s, transient overshoot = 18.4%, zero steady-state error (e_ss = 0.00%) attained within 18 seconds.',
     fieldInsights: 'In petrochemical refineries and nuclear power stations, pure derivative action is often disabled (PI mode only) on noisy level transmitters to prevent actuator stem hunting and valve packing fatigue. Filtered derivative is reserved for temperature loops with thermal lag.',
+    courseMapping: 'CS-300: Control Systems Engineering | IN-350: Process Dynamics & Control',
+    textbookReferences: 'Modern Control Engineering (Katsuhiko Ogata, 5th Ed., Ch. 8) | Feedback Control of Dynamic Systems (Franklin, Powell, Emami-Naeini, 8th Ed., Ch. 4)',
+    faqs: [
+      {
+        question: 'What is integrator anti-windup and why is it essential in industrial PID loops?',
+        answer: 'When a large setpoint step or sustained disturbance pushes the controller output against its physical actuator limit (e.g., 0% closed or 100% open valve), the error remains non-zero and the integral term continues accumulating (winding up). Anti-windup clamping freezes integration at the saturation boundary, preventing huge overshoot and long settling delays when returning to the controllable zone.',
+      },
+      {
+        question: 'What is the role of derivative action and why is it filtered in practical systems?',
+        answer: 'Derivative action K_p T_d (de/dt) provides anticipatory control by responding to the rate of error change, adding phase lead and damping oscillations. However, pure derivative amplifies high-frequency measurement noise. Industrial controllers apply a 1st-order low-pass filter (T_d s / (1 + α T_d s) with α ≈ 0.1) to suppress noise chatter on actuator stems.',
+      },
+    ],
     parameters: [
       { id: 'kp', name: 'Proportional Gain Kp', symbol: 'K_p', min: 0.2, max: 10, step: 0.1, default: 2.4, unit: '', description: 'Proportional reaction to current error' },
       { id: 'ti', name: 'Integral Reset Time Ti', symbol: 'T_i', min: 1, max: 30, step: 1, default: 8, unit: 's', description: 'Integral accumulation time (clears steady-state offset)' },
@@ -686,6 +882,18 @@ export const FEATURED_INSTRUMENTATION_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Under IEC 60534-2-1, volumetric liquid flow is sized via Q = C_v N₁ F_p √[ΔP / SG], where N₁ = 0.865 for metric units (m³/h, bar). Equal-percentage trim maintains an inherent characteristic where equal increments of stem travel produce equal percentage changes in flow coefficient: C_v(h) = C_v_max R^(h - 1), where rangeability R = 50. Cavitation index is defined as σ_c = (P₁ - P_v) / (P₁ - P₂); incipient cavitation occurs when σ_c < 1.5, and choked flashing occurs when ΔP exceeds ΔP_choked = F_L² (P₁ - F_F P_v).',
     validationTest: 'IEC 60534 benchmark: C_v_max = 50, travel h = 60%, P₁ = 6.0 bar, P₂ = 2.5 bar, ΔP = 3.5 bar. Effective C_v = 50 × 50^(0.60 - 1) = 10.51; volumetric flow Q = 10.51 × 0.865 × √(3.5) = 17.01 m³/h. Cavitation index σ_c = (6.0 - 0.23)/3.5 = 1.65 (Safe, non-cavitating).',
     fieldInsights: 'Operating control valves at < 10% travel causes rapid wire-drawing and seat erosion. For high ΔP applications (σ_c < 1.3), multi-stage anti-cavitation tortuous-path trim (e.g. Fisher Cavitrol / Masoneilan LincolnLog) is mandated to dissipate kinetic energy in stages.',
+    courseMapping: 'IN-301: Industrial Flow Control | CH-410: Process Plant Piping & Valving',
+    textbookReferences: 'Instrument Engineers\' Handbook, Vol. 2: Process Control and Optimization (Béla G. Lipták, 4th Ed., Section 6) | Control Valve Handbook (Fisher Controls, 5th Ed.)',
+    faqs: [
+      {
+        question: 'When should an Equal Percentage trim be selected over a Linear trim?',
+        answer: 'Equal percentage trim is selected when a significant portion of system pressure drop is distributed across pipeline friction rather than across the valve itself. As flow rate increases and line drop increases, the equal percentage characteristic linearizes the overall installed loop gain.',
+      },
+      {
+        question: 'How does cavitation differ from flashing in high-pressure control valves?',
+        answer: 'Both occur when vena contracta pressure drops below fluid vapor pressure P_v. If downstream pressure P₂ recovers above P_v, vapor bubbles collapse violently against metal walls (cavitation, causing pitting and acoustic noise). If P₂ remains below P_v, vapor persists as a two-phase mixture (flashing, causing high-velocity erosive wire-drawing).',
+      },
+    ],
     parameters: [
       { id: 'openingPct', name: 'Valve Travel Opening', symbol: 'x', min: 5, max: 100, step: 1, default: 60, unit: '%', description: 'Stem lift percentage from 0% (closed) to 100% (open)' },
       { id: 'inletPressure', name: 'Upstream Pressure P1', symbol: 'P_1', min: 2, max: 15, step: 0.5, default: 6.0, unit: 'bar', description: 'Inlet process fluid pressure' },
@@ -725,6 +933,18 @@ export const FEATURED_INSTRUMENTATION_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'The live-zero 4-20 mA standard maps physical process variable range [LRV, URV] linearly to loop current: I_loop = 4 mA + 16 mA × (PV - LRV)/(URV - LRV). Applying Kirchhoff’s Voltage Law around the 2-wire series loop: V_supply - I_loop R_wire - I_loop R_load - V_transmitter = 0. The transmitter terminal voltage V_transmitter = V_supply - I_loop (R_wire + R_load) must remain strictly above the transmitter minimum operating compliance voltage V_min (typically 11.5 VDC at 20 mA).',
     validationTest: 'IEC 60381-1 benchmark: PV = 6.5 bar on 0-10 bar range: theoretical I_loop = 4 + 16 × (6.5/10) = 14.40 mA. With V_s = 24 VDC, R_wire = 25 Ω, R_load = 250 Ω: total loop drop = 14.40 mA × 275 Ω = 3.96 V; terminal voltage V_term = 24 - 3.96 = 20.04 VDC > 11.5 VDC compliance threshold (PASSED).',
     fieldInsights: 'NAMUR NE 43 standardizes diagnostic failure states: current < 3.6 mA indicates sensor burnout or wire-break fail-low, while current > 21.0 mA signals sensor fail-high. Normal measuring span is 3.8 mA to 20.5 mA.',
+    courseMapping: 'IN-201: Industrial Instrumentation & Transducers | EE-320: Industrial Automation',
+    textbookReferences: 'Measurement and Instrumentation: Theory and Application (Morris & Langari, 3rd Ed., Ch. 12) | Industrial Automated Systems: Instrumentation and Motion Control (Terry Bartelt, Ch. 8)',
+    faqs: [
+      {
+        question: 'Why is 4 mA chosen as the zero reference instead of 0 mA (live zero)?',
+        answer: 'A live zero of 4 mA powers the internal electronics and microprocessor of a 2-wire smart transmitter directly from the loop wire. Furthermore, it unambiguously differentiates a true zero process measurement (4.0 mA) from an open-circuit wire break or sensor power failure (0.0 mA).',
+      },
+      {
+        question: 'What are the NAMUR NE 43 diagnostic trip limits in 4-20 mA instrumentation?',
+        answer: 'NAMUR NE 43 reserves the 3.8 mA to 20.5 mA band for active linear process measurement. A loop reading below 3.6 mA indicates sensor burnout downscale or severed cable loop; a reading above 21.0 mA indicates upscale sensor failure or saturation, triggering automated DCS safety interlocks.',
+      },
+    ],
     parameters: [
       { id: 'processPressure', name: 'Process Pressure', symbol: 'PV', min: 0, max: 10, step: 0.2, default: 6.5, unit: 'bar', description: 'Measured process variable (0 to 10 bar range)' },
       { id: 'wireResistance', name: 'Field Cable Resistance', symbol: 'R_wire', min: 0, max: 80, step: 5, default: 25, unit: 'Ω', description: 'Total round-trip lead wire resistance' },
@@ -764,6 +984,18 @@ export const FEATURED_INSTRUMENTATION_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Applying Bernoulli’s equation and continuity for incompressible fluid through pipe diameter D and orifice bore diameter d: p₁/ρ + v₁²/2 = p₂/ρ + v₂²/2. Continuity requires v₁ (π D²/4) = v₂ (π d²/4), giving v₁ = β² v₂ where β = d/D. Solving for theoretical flow and introducing discharge coefficient C_d to account for boundary layer friction and vena contracta contraction gives mass flow rate: q_m = [C_d / √(1 - β⁴)] ε (π d²/4) √(2 ρ ΔP). For liquid flows, expansibility factor ε = 1.000.',
     validationTest: 'ISO 5167 benchmark: D = 100 mm, d = 60 mm (β = 0.60), water density ρ = 1000 kg/m³, Q = 45 m³/h (12.5 kg/s). Stolz equation C_d = 0.605. Measured differential pressure ΔP = 186.4 mbar; permanent pressure loss ΔP_loss = ΔP (1 - β^1.9) = 186.4 × (1 - 0.378) = 115.9 mbar, matching ISO 5167 calibration data.',
     fieldInsights: 'ISO 5167 enforces strict installation requirements: beta ratio must lie between 0.10 ≤ β ≤ 0.75 (optimal 0.20 to 0.70). Upstream straight pipe run must be at least 20D to 44D (or equipped with a 19-tube bundle flow conditioner) to eliminate swirl before the orifice plate.',
+    courseMapping: 'ME-330: Fluid Mechanics | IN-320: Industrial Flow Metering',
+    textbookReferences: 'Flow Measurement Engineering Handbook (Richard W. Miller, 3rd Ed., Ch. 4-6) | ISO 5167-2: Measurement of Fluid Flow by Means of Pressure Differential Devices',
+    faqs: [
+      {
+        question: 'Why does flow rate vary with the square root of differential pressure ΔP?',
+        answer: 'From Bernoulli’s principle, fluid kinetic energy increases as pressure potential energy decreases through a constriction: ΔP = (1/2) ρ (v₂² - v₁²). Velocity and therefore volumetric flow Q are proportional to √(ΔP / ρ), requiring square root extraction in the differential pressure flow transmitter.',
+      },
+      {
+        question: 'Why is beta ratio β constrained between 0.20 and 0.70 in ISO 5167?',
+        answer: 'At β < 0.20, the restriction is extremely tight, producing severe permanent pressure loss and pipe wall wear. At β > 0.70, the measured pressure drop ΔP becomes very small and sensitive to upstream velocity profile distortion, increasing metering uncertainty.',
+      },
+    ],
     parameters: [
       { id: 'boreD', name: 'Orifice Bore Diameter d', symbol: 'd', min: 30, max: 80, step: 2, default: 60, unit: 'mm', description: 'Internal throat restriction diameter (pipe is 100mm)' },
       { id: 'flowRateQ', name: 'Volumetric Flow Rate', symbol: 'Q', min: 5, max: 80, step: 2.5, default: 45, unit: 'm³/h', description: 'Actual fluid flow rate through pipeline' },
@@ -806,6 +1038,18 @@ export const FEATURED_CHEMICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'By mass balance on reactant A: In - Out - Generation = Accumulation, yielding V (dC_A/dt) = F(C_A0 - C_A) - V k(T) C_A where k(T) = k₀ exp(-E_a / (R T)). The coupled thermal energy balance equates sensible heat accumulation to feed enthalpy inflow, reaction heat release (-ΔH_rxn) V r_A, and jacket heat removal Q_rem = U A (T - T_c). In steady state (d/dt = 0), intersection of heat generation S-curve Q_gen(T) with linear heat removal line Q_rem(T) reveals up to three Van Heerden steady states (lower stable, middle unstable, upper ignition).',
     validationTest: 'Fogler CSTR Benchmark: V = 100 L, F = 10 L/min, C_A0 = 1.0 mol/L, k₀ = 1.2e8 min⁻¹, E_a/R = 8000 K, (-ΔH) = 75 kJ/mol. At T_c = 295 K, the solver converges to steady conversion X_A = 86.4% and reactor temperature T = 346.2 K with numerical residue < 0.05%.',
     fieldInsights: 'In industrial batch and continuous polymerization reactors, coolant valve failure or impeller stalling causes rapid runaway where heat generation outpaces cooling capacity exponentially (dQ_gen/dT > dQ_rem/dT), leading to pressure relief venting or vessel rupture (Seveso Directive guidelines).',
+    courseMapping: 'CH-301: Chemical Reaction Engineering | CH-410: Process Dynamics & Control',
+    textbookReferences: 'Elements of Chemical Reaction Engineering (H. Scott Fogler, 5th Ed., Ch. 8) | Chemical Reaction Engineering (Octave Levenspiel, 3rd Ed., Ch. 9)',
+    faqs: [
+      {
+        question: 'What causes thermal runaway in an exothermic continuous stirred-tank reactor (CSTR)?',
+        answer: 'Thermal runaway occurs when the exponential Arrhenius rate of reaction heat generation dQ_gen/dT exceeds the linear cooling heat removal rate dQ_rem/dT = U·A. The reactor temperature climbs exponentially past the upper inflection point (ignition bifurcation) unless the feed is quenched or coolant flow is surged.',
+      },
+      {
+        question: 'What is the Van Heerden steady-state criterion for CSTR stability?',
+        answer: 'Van Heerden stability requires that the slope of the heat removal line be strictly greater than the slope of the heat generation curve at the operating steady-state intersection point: dQ_rem/dT > dQ_gen/dT. Intersections where generation slope exceeds removal slope represent inherently unstable saddle points.',
+      },
+    ],
     parameters: [
       { id: 'feedTemp', name: 'Feed Temperature T₀', symbol: 'T₀', min: 280, max: 350, step: 2, default: 300, unit: 'K', description: 'Inlet reactant stream temperature' },
       { id: 'coolantTemp', name: 'Jacket Coolant Temp T_c', symbol: 'T_c', min: 270, max: 330, step: 2, default: 295, unit: 'K', description: 'Coolant circulation temperature in outer jacket' },
@@ -845,6 +1089,18 @@ export const FEATURED_CHEMICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Under Constant Molar Overflow (CMO) assumptions, vapor V and liquid L flows remain invariant in each section. The rectifying mass balance yields y_{n+1} = (L/V) x_n + (D/V) x_D = (R/(R+1)) x_n + x_D / (R+1). The feed thermal condition q equates to enthalpy required to convert 1 mole of feed into saturated vapor divided by latent heat. The q-line intersects the VLE curve at the pinch point, yielding minimum reflux R_min = (x_D - y_q) / (y_q - x_q). Stepping between the VLE curve and operating lines gives theoretical equilibrium stages.',
     validationTest: 'Benzene-Toluene benchmark (AIChE): z_F = 0.45, relative volatility α = 2.4, target distillate x_D = 0.95, bottoms x_B = 0.05, bubble-point feed (q = 1.0). At reflux ratio R = 2.2 (R_min = 1.34), the solver yields exactly 12 theoretical stages including kettle reboiler, matching Perry’s Handbook data within 0.1 stages.',
     fieldInsights: 'Industrial distillation columns operate at an optimum economic reflux ratio R_opt ≈ 1.2 to 1.5 R_min to minimize the sum of annualized capital expenditure (tray count) and utility operating costs (reboiler steam and condenser cooling water). Trays operating with 70% Murphree efficiency require N_actual = N_theor / 0.70.',
+    courseMapping: 'CH-350: Separation Process Principles | CH-420: Unit Operations in Chemical Engineering',
+    textbookReferences: 'Separation Process Principles (Seader, Henley & Roper, 4th Ed., Ch. 7) | Mass-Transfer Operations (Robert E. Treybal, 3rd Ed., Ch. 9)',
+    faqs: [
+      {
+        question: 'How does changing the reflux ratio R alter the number of theoretical stages in a distillation column?',
+        answer: 'Increasing the reflux ratio R shifts the rectifying operating line closer to the 45-degree diagonal, widening the gap between operating line and equilibrium curve. This reduces the number of theoretical trays required. At total reflux (R -> infinity), stage count reaches its absolute theoretical minimum (Fenske equation).',
+      },
+      {
+        question: 'What does the feed condition thermal parameter q physically represent?',
+        answer: 'The parameter q represents the fraction of liquid in the feed or enthalpy required to vaporize one mole of feed divided by latent heat. A saturated liquid feed corresponds to q = 1.0 (vertical q-line), saturated vapor corresponds to q = 0.0 (horizontal q-line), while subcooled liquid gives q > 1.0 and superheated vapor gives q < 0.0.',
+      },
+    ],
     parameters: [
       { id: 'refluxRatio', name: 'Reflux Ratio R', symbol: 'R', min: 0.8, max: 8.0, step: 0.1, default: 2.2, unit: '', description: 'Ratio of liquid returned to column vs distillate withdrawn (L/D)' },
       { id: 'feedComposition', name: 'Feed Mole Fraction zF', symbol: 'z_F', min: 0.15, max: 0.75, step: 0.02, default: 0.45, unit: '', description: 'Molar concentration of more volatile component in feed stream' },
@@ -884,6 +1140,18 @@ export const FEATURED_CHEMICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'From differential energy conservation along the exchanger: dQ = -C_h dT_h = C_c dT_c = U (T_h - T_c) dA. Integrating across surface area A yields Q = U A F LMTD, where LMTD = (ΔT₁ - ΔT₂) / ln(ΔT₁ / ΔT₂). The dimensionless thermal effectiveness is ε = Q / Q_max = Q / [C_min (T_{h,in} - T_{c,in})]. For counterflow configurations: ε = [1 - exp(-NTU(1 - C_r))] / [1 - C_r exp(-NTU(1 - C_r))], where heat capacity ratio C_r = C_min / C_max and NTU = UA / C_min.',
     validationTest: 'TEMA Class R benchmark: Hot inlet T_{h,in} = 140°C, flow m_h = 6.5 kg/s (C_h = 27.2 kW/K); Cold inlet T_{c,in} = 25°C, flow m_c = 10.0 kg/s (C_c = 41.8 kW/K). Heat transfer area A = 35 m², U = 850 W/(m²·K). Calculated effectiveness ε = 57.8%, heat duty Q = 1809 kW, T_{h,out} = 73.5°C, T_{c,out} = 68.3°C, agreeing with TEMA data sheet within 0.15%.',
     fieldInsights: 'TEMA fouling resistance allowances (R_f = 0.0002 to 0.0005 m²·K/W) degrade overall heat transfer coefficient U by up to 35% over operational life. Baffle pitch is maintained between 20% and 100% of shell inside diameter to prevent fluid stagnation dead zones and flow-induced tube resonance.',
+    courseMapping: 'ME-430: Heat Transfer | CH-320: Heat Transfer & Thermal Unit Operations',
+    textbookReferences: 'Fundamentals of Heat and Mass Transfer (Incropera, DeWitt, Bergman & Lavine, 8th Ed., Ch. 11) | Process Heat Transfer (Donald Q. Kern, Ch. 7)',
+    faqs: [
+      {
+        question: 'When should the ε-NTU method be chosen over the Logarithmic Mean Temperature Difference (LMTD) method?',
+        answer: 'The LMTD method is ideal for heat exchanger design sizing when all four terminal stream temperatures are known or specified. The ε-NTU (Effectiveness-Number of Transfer Units) method is preferred for rating and performance simulation when only inlet temperatures and fluid mass flow rates are known, avoiding tedious iterative trial-and-error.',
+      },
+      {
+        question: 'Why do segmented shell baffles improve heat transfer in shell-and-tube exchangers?',
+        answer: 'Segmented baffles force shell-side fluid to flow perpendicularly across the tube bundle in crossflow rather than parallel flow, dramatically increasing local turbulence and Nusselt number. Baffles also physically support tubes to prevent flow-induced vibration fatigue.',
+      },
+    ],
     parameters: [
       { id: 'hotInletTemp', name: 'Hot Stream Inlet Temp', symbol: 'T_{h,in}', min: 80, max: 220, step: 5, default: 140, unit: '°C', description: 'Inlet process temperature of the hot side fluid' },
       { id: 'coldInletTemp', name: 'Cold Stream Inlet Temp', symbol: 'T_{c,in}', min: 10, max: 60, step: 2, default: 25, unit: '°C', description: 'Inlet temperature of cooling water or cold fluid' },
@@ -923,6 +1191,18 @@ export const FEATURED_CHEMICAL_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Whitman’s two-film theory balances steady interfacial solute flux: N_A = k_y (y - y_i) = k_x (x_i - x) = K_{OG} (y - y^*). In a differential packed slice dz with specific surface area a_v, the solute transferred is G_m dy = K_{OG} a_v (y - y^*) S dz. Integrating over inlet y₁ and outlet y₂ yields total bed height Z = [G_m / (K_{OG} a_v S)] ∫ dy / (y - y^*) = HTU_{OG} × NTU_{OG}. Flooding velocity is calculated via the Sherwood-Eckert correlation: (u_G² a_p / g ε³) (ρ_G / ρ_L) μ_L^{0.2} = f[(L/G)√(ρ_G / ρ_L)].',
     validationTest: 'EPA MACT Acid Gas Absorber benchmark: Gas rate G = 18 kmol/h, inlet pollutant y_in = 0.08 (8%), target outlet y_out = 0.004 (95% scrubbing). Solvent ratio L/G = 2.8, Henry constant H = 1.2. Log-mean driving force gives NTU_{OG} = 4.25. For 25mm Pall rings (HTU_{OG} = 0.65 m), required packed depth Z = 2.76 m. Hydrodynamic loading is at 62% of Sherwood flooding limit (stable non-flooding regime).',
     fieldInsights: 'Industrial scrubbers operate at 60–75% of flood velocity. Exceeding 85% causes liquid hold-up to surge dramatically, blocking vapor channels and triggering massive liquid entrainment, differential pressure surges (ΔP > 2 mbar/m), and severe breakdown of emission compliance.',
+    courseMapping: 'CH-360: Mass Transfer Operations | EN-410: Air Pollution Control Engineering',
+    textbookReferences: 'Mass-Transfer Operations (Robert E. Treybal, 3rd Ed., Ch. 6 & 8) | Transport Processes and Separation Process Principles (Christie John Geankoplis, 4th Ed., Ch. 10)',
+    faqs: [
+      {
+        question: 'What is the physical meaning of HTU (Height of a Transfer Unit) and NTU (Number of Transfer Units)?',
+        answer: 'NTU (Number of Transfer Units) quantifies the overall difficulty of the mass transfer separation based on the log-mean solute driving force between bulk gas and liquid phases. HTU (Height of a Transfer Unit) represents the physical packing efficiency and mass transfer coefficient of the specific packing type. The total required bed height is their product: Z = HTU · NTU.',
+      },
+      {
+        question: 'What happens when a packed absorption tower approaches the Sherwood flooding limit?',
+        answer: 'As upward vapor velocity increases, upward drag balances and eventually exceeds the downward gravitational drainage of liquid. Liquid pools on the packing, pressure drop spikes non-linearly (exceeding 2 mbar/m), liquid entrains into the overhead gas outlet, and interphase mass transfer performance degrades drastically.',
+      },
+    ],
     parameters: [
       { id: 'gasFlow', name: 'Inlet Gas Flow Rate', symbol: 'G_m', min: 5, max: 40, step: 1, default: 18, unit: 'kmol/h', description: 'Molar flow rate of gas feed stream' },
       { id: 'liquidGasRatio', name: 'Solvent Liquid/Gas Ratio', symbol: 'L/G', min: 1.0, max: 6.0, step: 0.2, default: 2.8, unit: '', description: 'Molar ratio of descending liquid solvent to ascending gas' },
@@ -965,6 +1245,18 @@ export const FEATURED_SEMICONDUCTOR_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'From Poisson’s equation d²V/dx² = -ρ/ε_s, integrating across the abrupt space charge layer with boundary conditions yields depletion width W = √[ (2 ε_s / q) (1/N_A + 1/N_D) (V_bi - V_a) ], where built-in potential is V_bi = (k_B T / q) ln(N_A N_D / n_i²). Applying law of the junction for minority carrier injection gives excess concentrations Δn_p = n_p0 (exp(qV_a/k_B T) - 1). Integrating diffusion flux yields the classic Shockley diode equation: I = I_s [exp(q V_a / (n k_B T)) - 1].',
     validationTest: 'Silicon 300K benchmark: N_A = 10¹⁶ cm⁻³, N_D = 10¹⁶ cm⁻³, n_i = 1.5e10 cm⁻³, ε_s = 11.7 ε₀. Built-in potential V_bi = (0.0259) ln(10³² / 2.25e20) = 0.695 V. At zero bias (V_a = 0), equilibrium depletion width W₀ = 0.428 µm. Under forward bias V_a = +0.50 V, W = 0.226 µm. Numerical solver matches exact analytical values within 0.02%.',
     fieldInsights: 'Under high reverse bias (|V_a| > V_BR), impact ionization triggers avalanche multiplication or quantum mechanical band-to-band tunneling (Zener breakdown). In power electronic MOSFET body diodes and solar PV cells, maximizing carrier diffusion length L_diff is critical to prevent recombination loss.',
+    courseMapping: 'EE-310: Microelectronics & Semiconductor Devices | PH-301: Solid-State Physics',
+    textbookReferences: 'Physics of Semiconductor Devices (S.M. Sze & Kwok K. Ng, 3rd Ed., Ch. 2) | Solid State Electronic Devices (Streetman & Banerjee, 7th Ed., Ch. 5)',
+    faqs: [
+      {
+        question: 'Why does the depletion region narrow under forward bias and widen under reverse bias?',
+        answer: 'Under forward bias, an applied positive potential on the P-side opposes and reduces the internal built-in electric field, lowering the potential barrier and allowing majority carriers to compress the space-charge width. Under reverse bias, the external voltage reinforces the built-in field, sweeping mobile carriers further away from the metallurgical junction and widening the depletion width W.',
+      },
+      {
+        question: 'What is the physical origin of the built-in potential barrier V_bi?',
+        answer: 'When p-type and n-type semiconductor regions join, intense carrier concentration gradients cause holes to diffuse from p to n and electrons from n to p. This leaves behind uncompensated, ionized fixed donor ions (+q) on the n-side and acceptor ions (-q) on the p-side, establishing an internal electrostatic drift field that exactly balances carrier diffusion at thermodynamic equilibrium.',
+      },
+    ],
     parameters: [
       { id: 'biasVoltage', name: 'Applied Bias Voltage V_a', symbol: 'V_a', min: -4.0, max: 0.85, step: 0.05, default: 0.60, unit: 'V', description: 'External voltage across P-N terminal (negative for reverse bias)' },
       { id: 'acceptorDoping', name: 'P-Side Doping Log(N_A)', symbol: 'log(N_A)', min: 14, max: 18, step: 0.5, default: 16, unit: 'cm⁻³', description: 'Boron acceptor impurity concentration (log10)' },
@@ -1004,6 +1296,18 @@ export const FEATURED_SEMICONDUCTOR_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'During clamped inductive turn-on: gate voltage charges C_gs to threshold V_th; current then ramps at di/dt = (V_drive - V_th) / (L_s + R_g C_iss / g_fs). Once I_d reaches load current I_L, drain voltage collapses through the Miller plateau where V_gs is clamped at V_plat = V_th + I_L / g_fs, forcing gate drive current through C_gd: dv/dt = -(V_drive - V_plat) / (R_g C_gd). Turn-on energy loss is E_on = ∫ v_ds(t) i_d(t) dt. Stray inductance L_stray produces voltage overshoot V_pk = V_dc + L_stray (di/dt) during turn-off.',
     validationTest: '1200V / 40A SiC MOSFET benchmark: V_dc = 600 V, I_L = 35 A, R_g = 5 Ω, L_stray = 15 nH. Miller plateau V_plat = 5.2 V. Slew rates: dv/dt = 48 V/ns, di/dt = 2.4 A/ns. Turn-on loss E_on = 0.42 mJ, turn-off loss E_off = 0.18 mJ. Voltage overshoot during turn-off is 636 V (< 1200V rating). Solver matches experimental oscilloscope DPT data within ±2%.',
     fieldInsights: 'High dv/dt (> 50 V/ns) in SiC inverters risks motor winding insulation breakdown (inter-turn dielectric stress according to IEC 60034-18-41) and injects common-mode bearing currents. Active gate drivers or small ferrite beads are deployed to optimize the tradeoff between E_sw loss and EMI emissions.',
+    courseMapping: 'EE-460: Power Electronics & Converter Design | PH-410: Wide-Bandgap Semiconductor Devices',
+    textbookReferences: 'Fundamentals of Power Semiconductor Devices (B. Jayant Baliga, 2nd Ed., Ch. 6 & 8) | Power Electronics: Converters, Applications, and Design (Mohan, Undeland & Robbins, 3rd Ed., Ch. 20-22)',
+    faqs: [
+      {
+        question: 'Why do Silicon Carbide (SiC) MOSFETs exhibit dramatically faster switching speeds than Silicon IGBTs?',
+        answer: 'SiC is a wide-bandgap unipolar majority-carrier device that lacks minority carrier storage delay and tail current during turn-off, unlike bipolar Silicon IGBTs. In addition, SiC has an electric breakdown field nearly 10x higher than Silicon, allowing a 10x thinner drift layer with significantly lower internal gate capacitances (C_iss, C_rss).',
+      },
+      {
+        question: 'How do stray loop inductance and ultra-high dv/dt interact during SiC turn-off?',
+        answer: 'During high-speed turn-off, rapid di/dt (often > 3 A/ns) through stray busbar/PCB loop inductance L_stray induces a severe inductive voltage spike V_pk = V_dc + L_stray · (di/dt). If this overshoot exceeds device breakdown voltage (e.g. 1200V), destructive avalanche breakdown occurs. In addition, high dv/dt generates displacement currents through Miller capacitance C_gd that can trigger spurious gate turn-on.',
+      },
+    ],
     parameters: [
       { id: 'busVoltage', name: 'DC Bus Voltage V_dc', symbol: 'V_{dc}', min: 200, max: 1000, step: 25, default: 600, unit: 'V', description: 'High-voltage DC power supply voltage' },
       { id: 'loadCurrent', name: 'Switched Load Current I_L', symbol: 'I_L', min: 5, max: 100, step: 5, default: 35, unit: 'A', description: 'Inductive test choke current' },
@@ -1043,6 +1347,18 @@ export const FEATURED_SEMICONDUCTOR_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Power dissipation combines conduction loss P_cond = V_{CE,sat}(T_j) I_C D and switching loss P_sw = (E_on + E_off) f_sw. By electro-thermal analogy, heat flux corresponds to current and temperature difference to voltage. The multi-layer packaging (Die → Solder → Al₂O₃/AlN DBC → Baseplate → TIM → Heatsink) is represented by 4 RC poles with time constants τ_i = R_i C_i ranging from milliseconds (die level) to tens of seconds (heatsink). Steady junction temperature is T_j = T_a + P_tot (R_{th(j-c)} + R_{th(c-s)} + R_{th(s-a)}).',
     validationTest: '1200V / 150A IGBT module benchmark: I_C = 90 A, V_{CE,sat} = 1.75 V, D = 0.55, f_sw = 12 kHz, E_on + E_off = 11 mJ. Total power loss P_tot = (1.75 × 90 × 0.55) + (0.011 × 12000) = 86.6 W + 132.0 W = 218.6 W. With R_{th(j-c)} = 0.18 K/W, R_{th(c-s)} = 0.08 K/W, R_{th(s-a)} = 0.22 K/W (Total R_th = 0.48 K/W) and T_a = 40°C: steady-state T_j = 40 + (218.6 × 0.48) = 144.9°C < 175°C max rating. Thermal margin verified.',
     fieldInsights: 'Thermal cycling fatigue (ΔT_j > 60 K per power cycle) is the primary degradation mechanism causing bond-wire lift-off and solder layer delamination in industrial motor drives and wind turbine converters. Keeping T_j < 125°C quadruples power cycling lifetime.',
+    courseMapping: 'EE-462: Power Electronics Thermal Design & Packaging | ME-420: Electronics Cooling',
+    textbookReferences: 'Power Electronics: Devices, Circuits and Industrial Applications (Ned Mohan, Ch. 24) | Semiconductor Device Thermal Monitoring and Other Challenges (JEDEC JESD51 standards manual)',
+    faqs: [
+      {
+        question: 'What is the difference between a Foster thermal network and a Cauer thermal network?',
+        answer: 'A Foster thermal network is a mathematical sum of uncoupled parallel RC branches fitted directly to measured cooling curves, convenient for simulation but whose internal nodes do not correspond to physical package layers. A Cauer (ladder) network represents true one-dimensional physical thermal resistance and heat capacity of each layer (Silicon die -> Solder -> DBC ceramic substrate -> Baseplate -> TIM -> Heatsink).',
+      },
+      {
+        question: 'Why is junction temperature ripple ΔT_j the primary driver of power module lifetime fatigue?',
+        answer: 'Each material layer in a power module has a different Coefficient of Thermal Expansion (CTE: Silicon ~3 ppm/K, Copper ~17 ppm/K, Aluminum wire ~23 ppm/K). Cyclic temperature swings ΔT_j during machine acceleration/deceleration induce cyclic mechanical shear stress at solder and bond-wire interfaces, eventually leading to bond-wire heel cracking, lift-off, and solder delamination (Coffin-Manson low-cycle fatigue law).',
+      },
+    ],
     parameters: [
       { id: 'switchingFreq', name: 'PWM Switching Freq f_sw', symbol: 'f_{sw}', min: 1, max: 30, step: 1, default: 12, unit: 'kHz', description: 'Carrier modulation frequency determining switching loss' },
       { id: 'collectorCurrent', name: 'Collector Current I_C', symbol: 'I_C', min: 20, max: 180, step: 5, default: 90, unit: 'A', description: 'RMS load current conducted during ON period' },
@@ -1082,6 +1398,18 @@ export const FEATURED_SEMICONDUCTOR_SIMULATORS: SimulatorItem[] = [
     analyticalProof: 'Applying Gauss’s law across the gate stack: ε_ox E_ox = ε_s E_s. Gate voltage partitions as V_gs = V_fb + φ_s + V_ox where oxide voltage drop is V_ox = Q_semi / C_ox. When surface potential reaches strong inversion φ_s = 2 φ_F = 2 (k_B T / q) ln(N_A / n_i), threshold voltage is established: V_th = V_fb + 2 φ_F + √(2 ε_s q N_A (2 φ_F)) / C_ox. For V_ds < V_ds,sat = V_gs - V_th, gradual channel integration yields quadratic current. For V_ds ≥ V_ds,sat, channel pinches off at the drain boundary, entering saturation current plateau I_{D,sat} = (1/2) μ C_ox (W/L) (V_gs - V_th)².',
     validationTest: 'BSIM4 benchmark: t_ox = 3.2 nm (C_ox = 1.08 µF/cm²), p-substrate N_A = 10¹⁷ cm⁻³, channel W/L = 10 µm / 0.5 µm, μ = 380 cm²/(V·s). Flatband V_fb = -0.85 V, 2 φ_F = 0.84 V. Threshold voltage V_th = 0.48 V. At V_gs = 1.8 V (gate overdrive = 1.32 V), linear conduction at V_ds = 0.2 V yields theoretical I_D = 1.02 mA; saturation at V_ds = 1.5 V yields I_{D,sat} = 3.58 mA, matching BSIM4 SPICE simulation within 0.05%.',
     fieldInsights: 'In nanoscale sub-28nm planar and FinFET nodes, short-channel effects (Drain-Induced Barrier Lowering - DIBL, carrier velocity saturation, and quantum mechanical threshold voltage shift) degrade subthreshold swing (SS > 60 mV/dec). High-k dielectric (HfO₂) and multi-gate FinFET/GAA architectures are mandated to preserve gate electrostatic control.',
+    courseMapping: 'EE-330: Integrated Circuit Devices | PH-320: Physics of Advanced Nanostructures',
+    textbookReferences: 'Physics of Semiconductor Devices (S.M. Sze & Kwok K. Ng, 3rd Ed., Ch. 6) | BSIM4 and MOSFET Modeling for IC Simulation (Weidong Liu, Chenming Hu et al., World Scientific)',
+    faqs: [
+      {
+        question: 'What constitutes the threshold condition (V_th) for strong inversion in an n-channel MOSFET?',
+        answer: 'Strong inversion begins when the surface electrostatic potential φ_s bends downward by twice the bulk Fermi potential: φ_s = 2 φ_B = 2 (k_B T / q) ln(N_A / n_i). At this surface potential, the density of mobile electrons at the semiconductor-oxide interface equals the background acceptor doping concentration N_A, forming a conducting conductive 2D electron gas inversion layer.',
+      },
+      {
+        question: 'What physical mechanism causes channel pinch-off in MOSFET saturation?',
+        answer: 'As drain-to-source voltage V_ds increases, the local voltage across the gate oxide near the drain terminal decreases: V_ox(x=L) = V_gs - V(x) - V_fb. When V_ds reaches V_ds,sat = V_gs - V_th, the local surface potential at the drain drops below 2 φ_B, pinching off the mobile inversion charge layer (Q_inv -> 0). Electrons are then swept across the drain space-charge region by the high lateral electric field, producing saturation current.',
+      },
+    ],
     parameters: [
       { id: 'gateVoltage', name: 'Gate Voltage V_gs', symbol: 'V_{gs}', min: -0.5, max: 3.5, step: 0.1, default: 1.8, unit: 'V', description: 'Potential applied to polysilicon/metal gate terminal' },
       { id: 'drainVoltage', name: 'Drain Voltage V_ds', symbol: 'V_{ds}', min: 0.0, max: 3.5, step: 0.1, default: 1.2, unit: 'V', description: 'Potential applied to drain terminal relative to source' },

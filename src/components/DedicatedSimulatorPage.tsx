@@ -30,7 +30,12 @@ import {
   Crosshair,
   Compass,
   FlaskConical,
-  X
+  X,
+  Code,
+  GraduationCap,
+  ExternalLink,
+  Copy,
+  Check
 } from 'lucide-react';
 import { SimulatorItem, DisciplineId } from '../types';
 import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
@@ -48,9 +53,10 @@ import { WhyItHappenedCard } from './WhyItHappenedCard';
 
 interface DedicatedSimulatorPageProps {
   simulator: SimulatorItem;
-  onBackToDepartment: (deptId: DisciplineId) => void;
-  onBackToHome: () => void;
-  onSelectSimulator: (sim: SimulatorItem) => void;
+  onBackToDepartment?: (deptId: DisciplineId) => void;
+  onBackToHome?: () => void;
+  onSelectSimulator?: (sim: SimulatorItem) => void;
+  isEmbed?: boolean;
 }
 
 export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
@@ -58,6 +64,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   onBackToDepartment,
   onBackToHome,
   onSelectSimulator,
+  isEmbed = false,
 }) => {
   // Initialize parameters
   const [params, setParams] = useState<Record<string, number>>(() => {
@@ -72,12 +79,15 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const [simSpeed, setSimSpeed] = useState<number>(1.0);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'telemetry' | 'derivation' | 'standards' | 'insights' | 'experiments'>('telemetry');
+  const [activeTab, setActiveTab] = useState<'telemetry' | 'derivation' | 'standards' | 'insights' | 'curriculum' | 'experiments'>('telemetry');
   const [snapshotToast, setSnapshotToast] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [peerDropdownOpen, setPeerDropdownOpen] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [showExperimentsModal, setShowExperimentsModal] = useState<boolean>(false);
+  const [showEmbedModal, setShowEmbedModal] = useState<boolean>(false);
+  const [embedCopied, setEmbedCopied] = useState<boolean>(false);
+  const [embedHeight, setEmbedHeight] = useState<string>('650');
   const [selectedExperiment, setSelectedExperiment] = useState<GuidedExperiment | null>(null);
   const [probeCoord, setProbeCoord] = useState<{ x: number; y: number } | null>(null);
   const [shareMenuOpen, setShareMenuOpen] = useState<boolean>(false);
@@ -1537,64 +1547,103 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
       {/* 1. Sleek, Compact Navigation & Action Header (h-12 / ~48px) */}
       <header className="h-12 px-3 sm:px-5 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0 z-30 shadow-md">
         {/* Left: Breadcrumbs & Title */}
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400 min-w-0">
-          <button
-            onClick={onBackToHome}
-            className="hover:text-cyan-400 transition-colors shrink-0 hidden xs:inline"
-            title="Return to home page"
-          >
-            Home
-          </button>
-          <span className="text-slate-600 shrink-0 hidden xs:inline">/</span>
-          <button
-            onClick={() => onBackToDepartment(simulator.discipline)}
-            className="hover:text-cyan-400 transition-colors flex items-center gap-1 font-bold text-slate-300 shrink-0"
-            title={`Return to ${simulator.disciplineName}`}
-          >
-            <ArrowLeft className="w-3 h-3" />
-            <span className="hidden sm:inline">{simulator.disciplineName}</span>
-            <span className="sm:hidden">{simulator.badge}</span>
-          </button>
-          <span className="text-slate-600 shrink-0">/</span>
-
-          {/* Current Simulator Title with Peer Switcher Popover */}
-          <div className="relative shrink min-w-0">
-            <button
-              onClick={() => setPeerDropdownOpen(!peerDropdownOpen)}
-              className="flex items-center gap-1.5 text-cyan-300 font-bold hover:text-cyan-200 transition-colors bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800 text-xs truncate"
-              title="Switch to another simulator in this department"
+        {isEmbed ? (
+          <div className="flex items-center gap-2 min-w-0">
+            <a
+              href="https://livesimulators.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 font-mono font-bold text-xs text-white hover:text-cyan-300 transition-colors shrink-0"
+              title="Visit LiveSimulators.com"
             >
-              <h1 className="truncate text-xs font-bold text-cyan-300 m-0 p-0 inline leading-none">
-                {simulator.title}
-              </h1>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            </button>
-
-            {/* Peer Switcher Dropdown */}
-            {peerDropdownOpen && (
-              <div className="absolute left-0 top-full mt-1 w-72 sm:w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
-                <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider px-2 py-1 border-b border-slate-800 mb-1">
-                  Switch Simulator ({simulator.disciplineName}):
-                </div>
-                <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
-                  {peerSimulators.map((peer) => (
-                    <button
-                      key={peer.id}
-                      onClick={() => onSelectSimulator(peer)}
-                      className="w-full text-left p-2 rounded-xl hover:bg-slate-800 transition-colors flex items-start gap-2"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-white truncate">{peer.title}</div>
-                        <div className="text-[10px] font-mono text-slate-400">{peer.badge} • {peer.difficulty}</div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-400 shrink-0 mt-1" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              <span className="bg-gradient-to-r from-cyan-400 to-sky-300 bg-clip-text text-transparent font-extrabold">
+                LiveSimulators
+              </span>
+            </a>
+            <span className="text-slate-700">|</span>
+            <h1 className="truncate text-xs font-bold text-slate-200 m-0 p-0 leading-none">
+              {simulator.title}
+            </h1>
+            <a
+              href={`https://livesimulators.com/simulator/${simulator.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-[10px] font-mono font-bold transition-all shrink-0 ml-1"
+              title="Open full interactive lab on LiveSimulators.com in a new tab"
+            >
+              <span>Full Lab</span>
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 min-w-0">
+            {onBackToHome && (
+              <>
+                <button
+                  onClick={onBackToHome}
+                  className="hover:text-cyan-400 transition-colors shrink-0 hidden xs:inline"
+                  title="Return to home page"
+                >
+                  Home
+                </button>
+                <span className="text-slate-600 shrink-0 hidden xs:inline">/</span>
+              </>
+            )}
+            {onBackToDepartment && (
+              <>
+                <button
+                  onClick={() => onBackToDepartment(simulator.discipline)}
+                  className="hover:text-cyan-400 transition-colors flex items-center gap-1 font-bold text-slate-300 shrink-0"
+                  title={`Return to ${simulator.disciplineName}`}
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  <span className="hidden sm:inline">{simulator.disciplineName}</span>
+                  <span className="sm:hidden">{simulator.badge}</span>
+                </button>
+                <span className="text-slate-600 shrink-0">/</span>
+              </>
+            )}
+
+            {/* Current Simulator Title with Peer Switcher Popover */}
+            <div className="relative shrink min-w-0">
+              <button
+                onClick={() => setPeerDropdownOpen(!peerDropdownOpen)}
+                className="flex items-center gap-1.5 text-cyan-300 font-bold hover:text-cyan-200 transition-colors bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800 text-xs truncate"
+                title="Switch to another simulator in this department"
+              >
+                <h1 className="truncate text-xs font-bold text-cyan-300 m-0 p-0 inline leading-none">
+                  {simulator.title}
+                </h1>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </button>
+
+              {/* Peer Switcher Dropdown */}
+              {peerDropdownOpen && onSelectSimulator && (
+                <div className="absolute left-0 top-full mt-1 w-72 sm:w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
+                  <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider px-2 py-1 border-b border-slate-800 mb-1">
+                    Switch Simulator ({simulator.disciplineName}):
+                  </div>
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
+                    {peerSimulators.map((peer) => (
+                      <button
+                        key={peer.id}
+                        onClick={() => onSelectSimulator(peer)}
+                        className="w-full text-left p-2 rounded-xl hover:bg-slate-800 transition-colors flex items-start gap-2"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-white truncate">{peer.title}</div>
+                          <div className="text-[10px] font-mono text-slate-400">{peer.badge} • {peer.difficulty}</div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-400 shrink-0 mt-1" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Right: Laboratory Controls Toolbar */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -1704,6 +1753,16 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-cyan-400" /> : <Maximize2 className="w-3.5 h-3.5 text-slate-400" />}
           </button>
 
+          {/* LMS Embed Modal Button */}
+          <button
+            onClick={() => setShowEmbedModal(true)}
+            className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 text-xs text-purple-300 hover:text-white transition-all flex items-center gap-1"
+            title="Embed this interactive simulator in Canvas, Moodle, Blackboard, or LMS"
+          >
+            <Code className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden lg:inline">Embed in LMS</span>
+          </button>
+
           {/* Share with Multi-Network Menu */}
           <div className="relative">
             <button
@@ -1719,9 +1778,19 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
 
             {shareMenuOpen && (
               <div 
-                className="absolute right-0 top-full mt-1.5 w-44 rounded-xl bg-slate-900/95 border border-slate-700 shadow-2xl p-1 z-50 font-sans text-xs animate-in fade-in zoom-in-95 duration-150"
+                className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900/95 border border-slate-700 shadow-2xl p-1 z-50 font-sans text-xs animate-in fade-in zoom-in-95 duration-150"
                 onClick={(e) => e.stopPropagation()}
               >
+                <button
+                  onClick={() => {
+                    setShowEmbedModal(true);
+                    setShareMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-purple-950/50 hover:text-purple-300 transition-colors text-left"
+                >
+                  <span>Embed in LMS (iFrame)</span>
+                  <Code className="w-3.5 h-3.5 text-purple-400" />
+                </button>
                 <button
                   onClick={() => {
                     handleCopyLink();
@@ -2060,6 +2129,18 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                 </button>
 
                 <button
+                  onClick={() => setActiveTab('curriculum')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === 'curriculum'
+                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Curriculum & FAQs</span>
+                </button>
+
+                <button
                   onClick={() => setActiveTab('experiments')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === 'experiments'
@@ -2161,12 +2242,12 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                             Standard: {simulator.standardReference || simulator.badge}
                           </div>
                           <div className="text-[11px] text-emerald-300/80 mt-0.5">
-                            Authority: {simulator.standardBody || 'ISO / IEC / IEEE / AISC Standards Committee'}
+                            Published By (Reference): {simulator.standardBody || 'ISO / IEC / IEEE / AISC'}
                           </div>
                         </div>
                       </div>
                       <span className="px-2 py-0.5 rounded-md bg-emerald-900/60 border border-emerald-700/60 text-[10px] font-mono font-bold text-emerald-300 uppercase shrink-0">
-                        100% Certified
+                        Reference Model
                       </span>
                     </div>
 
@@ -2191,6 +2272,97 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         </p>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* 4. Field Rules & Failure Modes */}
+                {activeTab === 'insights' && (
+                  <div className="space-y-2.5 text-xs">
+                    <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-800/50 space-y-1.5">
+                      <div className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span>Industrial Field Engineering Rules & Failure Modes:</span>
+                      </div>
+                      <p className="text-slate-200 text-xs leading-relaxed">
+                        {simulator.fieldInsights || 'Standard industrial design practices mandate minimum 1.5x to 2.0x safety margins over steady-state operating envelopes.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. University Curriculum Mapping, Standard Textbooks & FAQs */}
+                {activeTab === 'curriculum' && (
+                  <div className="space-y-3 text-xs">
+                    {/* Course Mapping & Textbook References Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      <div className="p-3 rounded-xl bg-slate-950 border border-purple-900/40 space-y-1.5">
+                        <div className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <GraduationCap className="w-3.5 h-3.5" />
+                          <span>University Course Alignment:</span>
+                        </div>
+                        <p className="text-slate-200 text-xs leading-relaxed font-mono">
+                          {simulator.courseMapping || 'ENG-101 / General Engineering Fundamentals & Virtual Laboratory Core'}
+                        </p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-950 border border-cyan-900/40 space-y-1.5">
+                        <div className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>Standard Textbook References:</span>
+                        </div>
+                        <p className="text-slate-200 text-xs leading-relaxed">
+                          {simulator.textbookReferences || 'First-Principles Engineering Curriculum Standard References'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Embedded in LMS CTA Card */}
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-950/30 via-slate-950 to-slate-950 border border-purple-800/40 flex items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <Code className="w-3.5 h-3.5 text-purple-400" />
+                          <span>Embed in Canvas, Moodle, Blackboard or Notion</span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Generate an iframe embed snippet for virtual laboratory assignments and syllabus handouts.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowEmbedModal(true)}
+                        className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors shrink-0 shadow-sm"
+                      >
+                        Get Embed Code
+                      </button>
+                    </div>
+
+                    {/* Frequently Asked Technical Questions (FAQs) */}
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                        Technical & Theoretical FAQs:
+                      </div>
+                      <div className="space-y-2">
+                        {((simulator.faqs && simulator.faqs.length > 0) ? simulator.faqs : [
+                          {
+                            question: `What is the physical principle underlying the ${simulator.title}?`,
+                            answer: `The simulation numerically models ${simulator.physicalLaw} governed by ${simulator.governingEquation}. Dynamic 60 FPS integration visualizes real-time transient and steady-state responses as parameters vary.`
+                          },
+                          {
+                            question: `How is numerical accuracy verified against theoretical benchmarks?`,
+                            answer: `${simulator.validationTest || 'All computational routines are tested against exact analytical first-principles solutions to ensure numerical errors remain below 0.2% across normal parameter domains.'}`
+                          }
+                        ]).map((faq, idx) => (
+                          <div key={idx} className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                            <div className="font-bold text-slate-200 text-xs flex items-start gap-2">
+                              <span className="text-purple-400 font-mono font-bold text-[11px]">Q{idx + 1}:</span>
+                              <span>{faq.question}</span>
+                            </div>
+                            <p className="text-slate-400 text-xs pl-5 leading-relaxed">
+                              {faq.answer}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -2292,7 +2464,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                     </span>
                   </h3>
                   <p className="text-xs text-slate-400 font-mono">
-                    Approved Engineering Standards-Compliant Physical Investigations
+                    Standard-Referenced Physical Investigations (Educational Use Only)
                   </p>
                 </div>
               </div>
@@ -2396,6 +2568,145 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LMS & Web Embed Code Modal */}
+      {showEmbedModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          onClick={() => setShowEmbedModal(false)}
+        >
+          <div 
+            className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/40">
+                  <Code className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Embed in LMS or Course Website</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Live 60 FPS interactive physics widget for Canvas, Moodle, Blackboard, Notion, or HTML
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowEmbedModal(false)}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 space-y-4">
+              {/* Dimensions Customizer */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                <div className="font-mono text-slate-300">
+                  Target Simulator: <span className="text-cyan-400 font-bold">{simulator.title}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">Height:</span>
+                  <select
+                    value={embedHeight}
+                    onChange={(e) => setEmbedHeight(e.target.value)}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-mono text-xs focus:border-purple-500 focus:outline-none"
+                  >
+                    <option value="550">550 px (Compact)</option>
+                    <option value="650">650 px (Standard)</option>
+                    <option value="750">750 px (Expanded)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Code Snippet Box */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold uppercase text-slate-400">
+                    HTML Embed Code (Copy &amp; Paste):
+                  </span>
+                  <button
+                    onClick={() => {
+                      const snippet = `<iframe src="https://livesimulators.com/embed/${simulator.id}" width="100%" height="${embedHeight}" style="border:1px solid #1e293b; border-radius:12px; max-width:100%;" allow="fullscreen" loading="lazy"></iframe>`;
+                      navigator.clipboard.writeText(snippet);
+                      setEmbedCopied(true);
+                      setTimeout(() => setEmbedCopied(false), 2500);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all flex items-center gap-1.5 ${
+                      embedCopied
+                        ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30'
+                        : 'bg-purple-600 hover:bg-purple-500 text-white'
+                    }`}
+                  >
+                    {embedCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{embedCopied ? 'Copied to Clipboard!' : 'Copy Embed Code'}</span>
+                  </button>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] text-purple-300 break-all select-all leading-relaxed">
+                  {`<iframe src="https://livesimulators.com/embed/${simulator.id}" width="100%" height="${embedHeight}" style="border:1px solid #1e293b; border-radius:12px; max-width:100%;" allow="fullscreen" loading="lazy"></iframe>`}
+                </div>
+              </div>
+
+              {/* LMS Quick Instructions */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+                  <div className="font-bold text-white flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                    <span>Canvas LMS</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Edit page &gt; Click <strong>Insert &gt; Embed</strong> or switch to HTML view (`&lt;/&gt;`) and paste.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+                  <div className="font-bold text-white flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span>Moodle LMS</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Add an Activity &gt; <strong>Page or Label</strong> &gt; Toggle HTML toolbar &gt; Paste iframe code.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
+                  <div className="font-bold text-white flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                    <span>Blackboard / Web</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Add Content &gt; <strong>Web Link / Embed HTML</strong> &gt; Paste and check 'Open in frame'.
+                  </p>
+                </div>
+              </div>
+
+              {/* Live Preview Button */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                <a
+                  href={`/embed/${simulator.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                >
+                  <span>Preview standalone embed window</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <button
+                  onClick={() => setShowEmbedModal(false)}
+                  className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>

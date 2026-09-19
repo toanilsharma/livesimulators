@@ -123,7 +123,7 @@ const MicroSimulatorCanvas: React.FC<{
           ctx.stroke();
         });
 
-        // Approved Standard R-Y-B-N Badge
+        // Standard R-Y-B-N Phase Identification Badge
         ctx.font = 'bold 9px "IBM Plex Mono", monospace';
         ctx.fillStyle = '#ef4444';
         ctx.fillText('R', w - 42, 16);

@@ -581,16 +581,16 @@ export const Footer: React.FC<FooterProps> = ({
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shrink-0">
-                  IEEE • IEC • ASME
+                  IEEE • IEC • ASME Refs
                 </span>
               </div>
 
               <p className="text-xs text-slate-300/90 leading-relaxed">
-                Free engineering calculators for Electrical, Mechanical, and Instrumentation disciplines referencing approved international standards (IEEE, IEC, ASME, API, ISA)—covering cable sizing, substation grounding, pressure vessels, pipe hydraulics, and control valve sizing (<span className="font-mono text-slate-200">Cv</span>).
+                Free engineering calculators for Electrical, Mechanical, and Instrumentation disciplines based on publicly documented industry methodologies (referenced from IEEE, IEC, ASME, API, ISA for technical reference only)—covering cable sizing, substation grounding, pressure vessels, pipe hydraulics, and control valve sizing (<span className="font-mono text-slate-200">Cv</span>).
               </p>
 
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-800/60">
-                <span className="text-emerald-400/80">Approved International Standards</span>
+                <span className="text-emerald-400/80">Referenced Industry Standards</span>
                 <span className="text-emerald-400 font-medium group-hover:underline flex items-center gap-1">
                   Visit portal ↗
                 </span>
@@ -640,12 +640,15 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
 
-        {/* Small Educational-Purpose Statement (Subtle, Not Visually Dominant) */}
-        <div className="mt-10 pt-8 border-t border-slate-900 text-[11px] text-slate-500 font-sans leading-relaxed max-w-4xl">
+        {/* Small Educational-Purpose Statement & Non-Affiliation Trademark Notice */}
+        <div className="mt-10 pt-8 border-t border-slate-900 text-[11px] text-slate-500 font-sans leading-relaxed max-w-5xl space-y-2">
           <p>
             LiveSimulators provides interactive engineering learning experiences and conceptual visualizations. 
             Simulations are intended for education and exploration; users should consult applicable standards, engineering 
             documentation, and qualified professionals for real-world design, safety, or operational decisions.
+          </p>
+          <p className="text-[10px] text-slate-500">
+            <strong>Non-Affiliation & Standards Reference Notice:</strong> All product names, trademarks, and standard designations (including IEEE, IEC, ASME, API, ISO, ISA, NFPA, and ASTM) belong to their respective proprietary owners. Mention of any standard, code, or organization is strictly for academic cross-referencing, educational identification, and computational modeling context only, and does not constitute or imply any endorsement, sponsorship, affiliation, certification, or approval by any standards organization.
           </p>
         </div>
 

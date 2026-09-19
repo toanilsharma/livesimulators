@@ -120,16 +120,16 @@ export const DisclaimerPage: React.FC<DisclaimerPageProps> = ({
           <section className="space-y-3">
             <h3 className="font-display text-lg font-bold text-white flex items-center gap-2">
               <FileText className="w-4 h-4 text-emerald-400" />
-              3. Standards Citations & Third-Party Trademarks
+              3. Standards Citations, Third-Party Trademarks & Non-Affiliation
             </h3>
             <p>
-              References to industry standards bodies such as IEEE, ASME, AISC, IEC, ISO, or ASTM are provided strictly for 
-              academic citation, educational cross-referencing, and pedagogical context.
+              References to industry standards bodies and technical designations—including but not limited to IEEE, ASME, AISC, IEC, ISO, API, ISA, NFPA, ASTM, ANSI, DIN, BS, or IS—are provided strictly for academic citation, educational cross-referencing, and technical identification of published engineering formulations.
             </p>
             <p>
-              LiveSimulators is an independent educational platform. Mention of standards does not imply endorsement, 
-              sponsorship, or certification by any formal governing body. Users seeking official compliance verification must 
-              acquire authoritative copies of the applicable published standards from the respective organizations.
+              LiveSimulators, its companion portals (including DesignCalculators.co.in and ReliabilityTools.co.in), and founder Anil Sharma are wholly independent educational entities. No simulator, calculation suite, software tool, or laboratory module on this website is endorsed, sponsored, affiliated with, certified by, or approved by any national or international standards development organization, professional society, or accreditation agency.
+            </p>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              All trademarks, service marks, registered names, standard numbers, and trade dress remain the exclusive property of their respective trademark holders. Mention of these designations does not imply any official relationship, license, partnership, or endorsement. Users seeking authoritative compliance verification must obtain official copies of published standards directly from the respective standards-issuing organizations.
             </p>
           </section>
 

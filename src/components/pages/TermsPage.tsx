@@ -101,7 +101,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({
           <section className="space-y-3">
             <h3 className="font-display text-lg font-bold text-white flex items-center gap-2">
               <Copyright className="w-4 h-4 text-emerald-400" />
-              3. Intellectual Property Rights
+              3. Intellectual Property & Standards Trademarks
             </h3>
             <p>
               The platform's distinctive user interface, custom canvas rendering algorithms, animated differential solver 
@@ -112,6 +112,9 @@ export const TermsPage: React.FC<TermsPageProps> = ({
               The underlying fundamental mathematical equations and physics laws (e.g. Kirchhoff's Voltage Law, Navier-Stokes, 
               Hooke's Law, Mohr's Circle, Sallen-Key transfer functions) belong to the shared scientific heritage of humanity 
               and reside in the public domain.
+            </p>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              <strong>Third-Party Trademarks & Non-Affiliation:</strong> All standard designations and acronyms (including but not limited to IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI, NEC, DIN, BS, and IS) referenced on LiveSimulators or linked companion portals are the trademarks of their respective owners. Neither LiveSimulators nor its companion tools are approved, endorsed, certified, or sponsored by, or affiliated with, any standards organization. All citations are made strictly for educational reference and descriptive identification under nominative fair use.
             </p>
           </section>
 

@@ -49,7 +49,7 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   '/about': {
     path: '/about',
     title: 'About Us - LiveSimulators | The Numerical Pedagogy Revolution',
-    description: 'Learn about LiveSimulators mission, our 4th-Order Runge-Kutta (RK4) computational kernel, standards adherence (IEEE, ASME), and founder Anil Sharma.',
+    description: 'Learn about LiveSimulators mission, our 4th-Order Runge-Kutta (RK4) computational kernel, standards referencing (IEEE, ASME), and founder Anil Sharma.',
     keywords: ['about livesimulators', 'numerical pedagogy', 'engineering education', 'Anil Sharma founder', 'RK4 simulation engine'],
     ogType: 'article',
     changefreq: 'weekly',
@@ -492,6 +492,59 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         url: canonicalUrl,
       };
 
+      const courseSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Course',
+        '@id': `${canonicalUrl}#course`,
+        name: `${sim.title} - Virtual Laboratory Module`,
+        description: sim.description,
+        courseCode: sim.courseMapping ? sim.courseMapping.split(',')[0].trim() : `${dept?.code || 'ENG-100'}`,
+        provider: {
+          '@id': `${SITE_URL}/#organization`,
+        },
+        educationalCredentialAwarded: 'Open Academic Access',
+        isAccessibleForFree: true,
+        hasCourseInstance: {
+          '@type': 'CourseInstance',
+          courseMode: 'online',
+          courseWorkload: 'PT30M',
+          instructor: {
+            '@type': 'Person',
+            name: 'Anil Sharma',
+          },
+        },
+      };
+
+      const faqList = (sim.faqs && sim.faqs.length > 0)
+        ? sim.faqs
+        : [
+            {
+              question: `What physical formulation governs the ${sim.title}?`,
+              answer: `The ${sim.title} is governed by ${sim.physicalLaw}, evaluated via ${sim.equationDescription}: ${sim.governingEquation}.`,
+            },
+            {
+              question: `How is the ${sim.title} utilized in engineering curricula?`,
+              answer: `Students and professors use this interactive model in ${sim.courseMapping || (dept ? dept.name : 'Engineering')} coursework to observe real-time dynamic response, measure key output metrics, and verify theoretical textbook derivations without physical hardware constraints.`,
+            },
+            {
+              question: `Can educators embed the ${sim.title} into university LMS platforms like Canvas or Moodle?`,
+              answer: `Yes, LiveSimulators supports standard iframe embeds (<iframe src="https://livesimulators.com/embed/${sim.id}" width="100%" height="600"></iframe>) for direct integration into Canvas, Moodle, Blackboard, and laboratory worksheets.`,
+            },
+          ];
+
+      const faqSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqList.map((f) => ({
+          '@type': 'Question',
+          name: f.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: f.answer,
+          },
+        })),
+      };
+
       return {
         title: `${sim.title} - Interactive Engineering Simulator | LiveSimulators`,
         description: cleanDesc,
@@ -502,10 +555,11 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           sim.title,
           sim.disciplineName,
           sim.physicalLaw,
+          ...(sim.courseMapping ? sim.courseMapping.split(',').map((c) => c.trim()) : []),
           ...sim.tags,
           'interactive simulator',
           'first-principles solver',
-          'IEEE standards',
+          'virtual engineering lab',
         ],
         jsonLd: [
           ORGANIZATION_SCHEMA,
@@ -513,6 +567,24 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           breadcrumbSchema,
           learningResourceSchema,
           techArticleSchema,
+          courseSchema,
+          faqSchema,
+        ],
+      };
+    }
+
+    case 'embed': {
+      const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || ALL_AVAILABLE_SIMULATORS[0];
+      return {
+        title: `${sim.title} (Interactive Embed) | LiveSimulators`,
+        description: `Interactive embed for ${sim.title}. First-principles engineering simulation for laboratory coursework.`,
+        canonicalUrl: `${SITE_URL}/simulator/${sim.id}`,
+        ogType: 'website',
+        ogImage: defaultOgImage,
+        keywords: [sim.title, 'interactive embed', 'virtual lab embed', 'engineering simulator'],
+        jsonLd: [
+          ORGANIZATION_SCHEMA,
+          WEBSITE_SCHEMA,
         ],
       };
     }
@@ -585,7 +657,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
 
       return {
         title: `${lab.name} - Interactive Industrial Engineering Lab | LiveSimulators`,
-        description: `${lab.name}: ${lab.tagline} Compliant with ${lab.standardBadge}. Includes ${lab.modules} interactive modules for ${lab.sectors.join(', ')}.`,
+        description: `${lab.name}: ${lab.tagline} Referencing ${lab.standardBadge} methodologies. Includes ${lab.modules} interactive modules for ${lab.sectors.join(', ')}.`,
         canonicalUrl,
         ogType: 'website',
         ogImage: labOgImage,

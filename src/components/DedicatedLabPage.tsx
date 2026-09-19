@@ -229,7 +229,7 @@ export const DedicatedLabPage: React.FC<DedicatedLabPageProps> = ({ labId, onBac
               <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-3 text-xs text-slate-400 font-sans">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
-                  <strong className="text-slate-200">Industrial Standards Rigor:</strong> Mathematical formulations, boundary conditions, and device curves execute client-side using deterministic physics equations calibrated against published standards ({lab.standardBadge}).
+                  <strong className="text-slate-200">Engineering Reference Context:</strong> Mathematical formulations, boundary conditions, and device curves execute client-side using deterministic physics equations referencing published industry standard literature ({lab.standardBadge}) for educational exploration. No endorsement or formal affiliation is implied.
                 </div>
               </div>
             </div>
