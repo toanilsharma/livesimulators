@@ -22,6 +22,8 @@ import {
   FEATURED_MECHANICAL_SIMULATORS,
   FEATURED_CIVIL_SIMULATORS,
   FEATURED_INSTRUMENTATION_SIMULATORS,
+  FEATURED_CHEMICAL_SIMULATORS,
+  FEATURED_SEMICONDUCTOR_SIMULATORS,
 } from '../data/simulators';
 
 interface HomeDepartmentsHubProps {
@@ -140,25 +142,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       buttonClass: 'bg-violet-500 hover:bg-violet-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.25)]',
       simCardHover: 'hover:border-violet-500/60 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] group-hover:text-violet-300',
       subCategoryText: 'text-violet-400',
-      simulators: [],
-      fallbackCards: [
-        {
-          id: 'cstr-reactor',
-          subCategory: 'Reactor Dynamics',
-          title: 'CSTR Continuous Stirred Tank Reactor',
-          badge: 'AIChE / Arrhenius',
-          difficulty: 'Intermediate',
-          tagline: 'Non-isothermal reaction mass balance, residence time distribution & conversion curves.',
-        },
-        {
-          id: 'binary-distillation',
-          subCategory: 'Separation Engineering',
-          title: 'Binary Distillation Column & Stages',
-          badge: 'McCabe-Thiele',
-          difficulty: 'Advanced',
-          tagline: 'Vapor-liquid equilibrium (VLE), reflux ratio, stripping section & theoretical stages.',
-        },
-      ],
+      simulators: FEATURED_CHEMICAL_SIMULATORS,
     },
     {
       id: 'physics',
@@ -174,25 +158,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       buttonClass: 'bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.25)]',
       simCardHover: 'hover:border-sky-500/60 hover:shadow-[0_0_20px_rgba(56,189,248,0.15)] group-hover:text-sky-300',
       subCategoryText: 'text-sky-400',
-      simulators: [],
-      fallbackCards: [
-        {
-          id: 'pn-junction',
-          subCategory: 'Solid-State Physics',
-          title: 'P-N Junction Energy Band Diagram',
-          badge: 'IEEE EDS / Shockley',
-          difficulty: 'Fundamentals',
-          tagline: 'Built-in potential barrier, Fermi levels & space-charge depletion layer diffusion.',
-        },
-        {
-          id: 'mosfet-channel',
-          subCategory: 'Quantum Devices',
-          title: 'MOSFET Inversion Channel & Gate Bias',
-          badge: 'BSIM / Poisson',
-          difficulty: 'Intermediate',
-          tagline: 'Gate oxide capacitance, surface potential band bending & 2D inversion electron sheet.',
-        },
-      ],
+      simulators: FEATURED_SEMICONDUCTOR_SIMULATORS,
     },
   ];
 
@@ -240,6 +206,22 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
         return 'Earthquake Damping';
       case 'mohr_circle':
         return '2D Stress Tensor';
+      case 'cstr':
+        return 'CSTR Chemical Reactor';
+      case 'distillation_column':
+        return 'McCabe-Thiele VLE';
+      case 'heat_exchanger':
+        return 'TEMA Heat Exchanger';
+      case 'gas_absorption':
+        return 'Packed Gas Scrubber';
+      case 'pn_junction':
+        return 'P-N Diode Physics';
+      case 'sic_switching':
+        return 'SiC Power Switching';
+      case 'igbt_thermal':
+        return 'IGBT Thermal Model';
+      case 'mosfet_channel':
+        return 'BSIM4 MOSFET Channel';
       default:
         return sim.badge || 'Engineering Lab';
     }

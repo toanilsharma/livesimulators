@@ -41,6 +41,8 @@ import { renderFourBar, renderHarmonicOscillator, renderSpurGear, renderRankineC
 import { renderRlcCircuit, renderThreePhase, renderBuckBoost, renderSallenKey, renderTransmissionLine } from './electrical/renderers';
 import { renderBeamBending, renderTrussAnalysis, renderSeismicIsolation, renderMohrCircle } from './civil/renderers';
 import { renderCurrentLoop, renderControlValve, renderOrificeFlow, renderPidLoop, renderRtd } from './instrumentation/renderers';
+import { renderDistillationColumn, renderHeatExchanger, renderGasAbsorption } from './process/renderers';
+import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel } from './semiconductor/renderers';
 import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare } from '../utils/analytics';
 import { WhyItHappenedCard } from './WhyItHappenedCard';
 
@@ -618,6 +620,157 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     metrics.push({ label: 'Depletion Width W', value: wUm.toFixed(3), unit: 'µm', description: 'Space charge barrier thickness' });
     metrics.push({ label: 'Effective Barrier Height', value: netBarrier.toFixed(2), unit: 'eV', description: 'Conduction band electron barrier' });
     metrics.push({ label: 'Peak Junction E-Field', value: eMaxKvc.toFixed(1), unit: 'kV/cm', description: 'Maximum electrostatic gradient at junction' });
+  } else if (simulator.type === 'distillation_column') {
+    const R = params['refluxRatio'] || 2.2;
+    const zF = params['feedComposition'] || 0.45;
+    const alpha = params['relativeVolatility'] || 2.4;
+    const q = params['feedCondition'] || 1.0;
+    const xD = 0.95;
+    const xB = 0.05;
+    const vleY = (x: number) => (alpha * x) / (1 + (alpha - 1) * x);
+    let xq = zF;
+    let yq = vleY(zF);
+    if (Math.abs(q - 1.0) >= 0.01) {
+      for (let testX = 0.05; testX <= 0.95; testX += 0.01) {
+        const qY = (q / (q - 1)) * testX - zF / (q - 1);
+        if (Math.abs(qY - vleY(testX)) < 0.03) {
+          xq = testX;
+          yq = vleY(testX);
+          break;
+        }
+      }
+    }
+    const rMin = Math.max(0.2, (xD - yq) / Math.max(0.01, yq - xq));
+    // Estimate theoretical stages
+    let curX = xD;
+    let curY = xD;
+    let stageCount = 0;
+    for (let s = 0; s < 30 && curX > xB; s++) {
+      stageCount++;
+      const nextX = Math.max(0.01, curY / (alpha - (alpha - 1) * curY));
+      let nextY = curY;
+      if (nextX >= xq) {
+        nextY = (R / (R + 1)) * nextX + xD / (R + 1);
+      } else {
+        const slopeStrip = (yq - xB) / Math.max(0.001, xq - xB);
+        nextY = xB + slopeStrip * (nextX - xB);
+      }
+      curX = nextX;
+      curY = nextY;
+    }
+    const qReboiler = 125 * (R + 1) * 0.85;
+
+    metrics.push({ label: 'Theoretical Stages N', value: stageCount.toString(), unit: 'trays', description: 'McCabe-Thiele equilibrium stages including reboiler' });
+    metrics.push({ label: 'Min Reflux Ratio R_min', value: rMin.toFixed(2), unit: '', description: 'Pinch boundary infinite-tray reflux ratio' });
+    metrics.push({ label: 'Distillate Purity xD', value: (xD * 100).toFixed(1), unit: '%', description: 'Overhead light key molar purity' });
+    metrics.push({ label: 'Reboiler Heat Duty', value: qReboiler.toFixed(1), unit: 'kW', description: 'Thermal vapor boil-up duty required' });
+  } else if (simulator.type === 'heat_exchanger') {
+    const ThIn = params['hotInletTemp'] || 140;
+    const TcIn = params['coldInletTemp'] || 25;
+    const mh = params['hotFlowRate'] || 6.5;
+    const mc = params['coldFlowRate'] || 10.0;
+    const Ch = mh * 4.18;
+    const Cc = mc * 4.18;
+    const Cmin = Math.min(Ch, Cc);
+    const Cmax = Math.max(Ch, Cc);
+    const Cr = Cmin / Cmax;
+    const UA = 28.0;
+    const NTU = UA / Cmin;
+    const expVal = Math.exp(-NTU * (1 - Cr));
+    const eff = Cr === 1.0 ? NTU / (1 + NTU) : (1 - expVal) / (1 - Cr * expVal);
+    const Q_kW = eff * Cmin * (ThIn - TcIn);
+    const ThOut = ThIn - Q_kW / Ch;
+    const TcOut = TcIn + Q_kW / Cc;
+
+    metrics.push({ label: 'Heat Duty Q', value: (Q_kW / 1000).toFixed(2), unit: 'MW', description: 'Total thermal energy transferred across tube bundle' });
+    metrics.push({ label: 'Effectiveness ε', value: (eff * 100).toFixed(1), unit: '%', description: 'Ratio of actual heat transfer to theoretical maximum' });
+    metrics.push({ label: 'Hot Outlet Th,out', value: ThOut.toFixed(1), unit: '°C', description: 'Process fluid temperature exiting tubes' });
+    metrics.push({ label: 'Cold Outlet Tc,out', value: TcOut.toFixed(1), unit: '°C', description: 'Cooling fluid temperature exiting shell nozzle' });
+  } else if (simulator.type === 'gas_absorption') {
+    const G = params['gasFlow'] || 18;
+    const LG = params['liquidGasRatio'] || 2.8;
+    const yIn = (params['inletGasConc'] || 8.0) / 100;
+    const H = params['henryConstant'] || 1.2;
+    const A = LG / H;
+    const eff = Math.min(0.995, Math.max(0.4, (A - Math.pow(1 / A, 3)) / (A - Math.pow(1 / A, 4))));
+    const yOut = yIn * (1 - eff);
+    const NTU = Math.max(1.2, Math.log((yIn - 0) / Math.max(0.0001, yOut - 0)) * (A / Math.max(0.1, A - 1)));
+    const HTU = 0.65;
+    const packedHeightZ = NTU * HTU;
+    const floodRatio = Math.min(1.2, (G / 38) * Math.sqrt(LG / 2.5) * 0.72);
+
+    metrics.push({ label: 'Removal Efficiency η', value: (eff * 100).toFixed(1), unit: '%', description: 'Fraction of pollutant gas removed by solvent' });
+    metrics.push({ label: 'Packed Bed Depth Z', value: packedHeightZ.toFixed(2), unit: 'm', description: 'Required depth of structured/random packing' });
+    metrics.push({ label: 'Transfer Units NTU_OG', value: NTU.toFixed(2), unit: '', description: 'Dimensionless mass transfer difficulty' });
+    metrics.push({ label: 'Flooding Limit Fraction', value: (floodRatio * 100).toFixed(0), unit: '%', description: 'Sherwood hydrodynamic flooding ratio', status: floodRatio >= 0.85 ? 'alert' : floodRatio >= 0.7 ? 'warning' : 'normal' });
+  } else if (simulator.type === 'sic_switching') {
+    const Vdc = params['busVoltage'] || 600;
+    const IL = params['loadCurrent'] || 35;
+    const Rg = params['gateResistance'] || 5;
+    const Ls = params['strayInductance'] || 15;
+    const Cgd = 45e-12;
+    const Vplat = 5.2;
+    const Vdrive = 18.0;
+    const dvdt_Vns = Math.min(95, ((Vdrive - Vplat) / (Rg * Cgd)) * 1e-9 * 0.28);
+    const didt_Ans = Math.min(8.0, (Vdrive - 3.5) / (Rg * 1.5));
+    const Vpeak = Vdc + Ls * didt_Ans;
+    const Eon_mJ = 0.5 * Vdc * IL * (35 / dvdt_Vns) * 1e-6 * 1000;
+    const Eoff_mJ = 0.5 * Vdc * IL * (25 / dvdt_Vns) * 1e-6 * 1000;
+
+    metrics.push({ label: 'Turn-On Loss E_on', value: Eon_mJ.toFixed(2), unit: 'mJ', description: 'Energy dissipated during switch-on interval' });
+    metrics.push({ label: 'Turn-Off Loss E_off', value: Eoff_mJ.toFixed(2), unit: 'mJ', description: 'Energy dissipated during switch-off interval' });
+    metrics.push({ label: 'Peak Slew Rate dv/dt', value: dvdt_Vns.toFixed(0), unit: 'V/ns', description: 'Drain voltage rate of fall/rise during transition' });
+    metrics.push({ label: 'Peak Voltage Overshoot', value: Vpeak.toFixed(0), unit: 'V', description: 'Maximum inductive inductive drain spike (Vdc + Ls*di/dt)' });
+  } else if (simulator.type === 'igbt_thermal') {
+    const fsw = params['switchingFreq'] || 12;
+    const Ic = params['collectorCurrent'] || 90;
+    const D = params['dutyCycle'] || 0.55;
+    const Rsa = params['heatsinkRth'] || 0.22;
+    const Vce = 1.75;
+    const Pcond = Vce * Ic * D;
+    const Psw = (0.011 * (Ic / 90)) * (fsw * 1000);
+    const Ptot = Pcond + Psw;
+    const Rjc = 0.18;
+    const Rcs = 0.08;
+    const Ta = 40.0;
+    const Ts = Ta + Ptot * Rsa;
+    const Tc = Ts + Ptot * Rcs;
+    const Tj = Tc + Ptot * Rjc;
+    const margin = 175 - Tj;
+
+    metrics.push({ label: 'Junction Temp Tj', value: Tj.toFixed(1), unit: '°C', description: 'Peak internal silicon active junction temperature', status: Tj > 175 ? 'alert' : Tj > 145 ? 'warning' : 'normal' });
+    metrics.push({ label: 'Total Power Loss Ptot', value: Ptot.toFixed(0), unit: 'W', description: 'Combined conduction and switching loss heat generation' });
+    metrics.push({ label: 'Case Temp Tc', value: Tc.toFixed(1), unit: '°C', description: 'Module copper baseplate contact temperature' });
+    metrics.push({ label: 'SOA Safety Margin', value: margin.toFixed(1), unit: '°C', description: 'Headroom below 175°C maximum rating' });
+  } else if (simulator.type === 'mosfet_channel') {
+    const Vgs = params['gateVoltage'] !== undefined ? params['gateVoltage'] : 1.8;
+    const Vds = Math.max(0, params['drainVoltage'] !== undefined ? params['drainVoltage'] : 1.2);
+    const tox = params['oxideThickness'] || 3.2;
+    const logNa = params['substrateDoping'] || 17;
+    const phiF = 0.0259 * Math.log(Math.pow(10, logNa) / 1.5e10);
+    const Cox = (3.9 * 8.854e-14) / (tox * 1e-7);
+    const Vfb = -0.85;
+    const gamma = Math.sqrt(2 * 11.7 * 8.854e-14 * 1.602e-19 * Math.pow(10, logNa)) / Cox;
+    const Vth = Vfb + 2 * phiF + gamma * Math.sqrt(2 * phiF);
+    const Voverdrive = Vgs - Vth;
+    const isCutoff = Voverdrive <= 0;
+    const Vds_sat = Math.max(0.01, Voverdrive);
+    const isSaturation = !isCutoff && Vds >= Vds_sat;
+    let Id_mA = 0;
+    if (!isCutoff) {
+      const beta = (380 * Cox * (10 / 0.5)) * 1e3;
+      if (!isSaturation) {
+        Id_mA = beta * (Voverdrive * Vds - (Vds * Vds) / 2);
+      } else {
+        Id_mA = 0.5 * beta * Math.pow(Voverdrive, 2);
+      }
+    }
+    const Qinv = isCutoff ? 0 : Cox * Voverdrive * 1e6;
+
+    metrics.push({ label: 'Drain Current ID', value: Id_mA.toFixed(2), unit: 'mA', description: 'Total carrier drift current through channel' });
+    metrics.push({ label: 'Threshold Voltage Vth', value: Vth.toFixed(2), unit: 'V', description: 'Gate voltage required for strong surface inversion' });
+    metrics.push({ label: 'Inversion Charge Qinv', value: Qinv.toFixed(2), unit: 'µC/cm²', description: 'Mobile 2D electron sheet density under oxide' });
+    metrics.push({ label: 'Channel State', value: isCutoff ? 'Cutoff' : isSaturation ? 'Pinch-Off Saturation' : 'Linear Triode', unit: '', description: 'Operating regime along channel' });
   } else {
     simulator.parameters.slice(0, 4).forEach((p) => {
       metrics.push({ label: p.name, value: (params[p.id] || p.default).toString(), unit: p.unit, description: p.description });
@@ -693,6 +846,18 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
           physicsAudio.updateTone('buck_boost', 240, 0.2);
         } else if (simulator.type === 'transmission_line') {
           physicsAudio.updateTone('transmission_line', 440, 0.2);
+        } else if (simulator.type === 'sic_switching') {
+          physicsAudio.updateTone('sic_switching', 600, 0.2);
+        } else if (simulator.type === 'heat_exchanger') {
+          physicsAudio.updateTone('heat_exchanger', 180, 0.15);
+        } else if (simulator.type === 'distillation_column') {
+          physicsAudio.updateTone('distillation_column', 220, 0.18);
+        } else if (simulator.type === 'gas_absorption') {
+          physicsAudio.updateTone('gas_absorption', 160, 0.15);
+        } else if (simulator.type === 'igbt_thermal') {
+          physicsAudio.updateTone('igbt_thermal', (params['switchingFreq'] || 12) * 25, 0.25);
+        } else if (simulator.type === 'mosfet_channel') {
+          physicsAudio.updateTone('mosfet_channel', 320, 0.2);
         } else {
           physicsAudio.updateTone('ambient', 120, 0.15);
         }
@@ -1236,6 +1401,48 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
         ctx.font = '11px "IBM Plex Mono", monospace';
         ctx.fillStyle = '#38bdf8';
         ctx.fillText(`P-N JUNCTION ENERGY BAND BENDING (V_a = ${Va >= 0 ? '+' : ''}${Va.toFixed(2)} V)`, 30, 24);
+      } else if (simulator.type === 'distillation_column') {
+        renderDistillationColumn(rc, {
+          refluxRatio: params['refluxRatio'] || 2.2,
+          feedComposition: params['feedComposition'] || 0.45,
+          relativeVolatility: params['relativeVolatility'] || 2.4,
+          feedCondition: params['feedCondition'] !== undefined ? params['feedCondition'] : 1.0,
+        });
+      } else if (simulator.type === 'heat_exchanger') {
+        renderHeatExchanger(rc, {
+          hotInletTemp: params['hotInletTemp'] || 140,
+          coldInletTemp: params['coldInletTemp'] || 25,
+          hotFlowRate: params['hotFlowRate'] || 6.5,
+          coldFlowRate: params['coldFlowRate'] || 10.0,
+        });
+      } else if (simulator.type === 'gas_absorption') {
+        renderGasAbsorption(rc, {
+          gasFlow: params['gasFlow'] || 18,
+          liquidGasRatio: params['liquidGasRatio'] || 2.8,
+          inletGasConc: params['inletGasConc'] || 8.0,
+          henryConstant: params['henryConstant'] || 1.2,
+        });
+      } else if (simulator.type === 'sic_switching') {
+        renderSicSwitching(rc, {
+          busVoltage: params['busVoltage'] || 600,
+          loadCurrent: params['loadCurrent'] || 35,
+          gateResistance: params['gateResistance'] || 5,
+          strayInductance: params['strayInductance'] || 15,
+        });
+      } else if (simulator.type === 'igbt_thermal') {
+        renderIgbtThermal(rc, {
+          switchingFreq: params['switchingFreq'] || 12,
+          collectorCurrent: params['collectorCurrent'] || 90,
+          dutyCycle: params['dutyCycle'] || 0.55,
+          heatsinkRth: params['heatsinkRth'] || 0.22,
+        });
+      } else if (simulator.type === 'mosfet_channel') {
+        renderMosfetChannel(rc, {
+          gateVoltage: params['gateVoltage'] !== undefined ? params['gateVoltage'] : 1.8,
+          drainVoltage: params['drainVoltage'] !== undefined ? params['drainVoltage'] : 1.2,
+          oxideThickness: params['oxideThickness'] || 3.2,
+          substrateDoping: params['substrateDoping'] || 17,
+        });
       } else {
         const midY = h * 0.5;
         ctx.strokeStyle = '#06b6d4';

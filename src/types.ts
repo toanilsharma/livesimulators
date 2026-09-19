@@ -26,7 +26,13 @@ export type SimulatorType =
   | 'current_loop'
   | 'orifice_meter'
   | 'cstr'
-  | 'pn_junction';
+  | 'distillation_column'
+  | 'heat_exchanger'
+  | 'gas_absorption'
+  | 'pn_junction'
+  | 'sic_switching'
+  | 'igbt_thermal'
+  | 'mosfet_channel';
 
 export interface ParameterDef {
   id: string;

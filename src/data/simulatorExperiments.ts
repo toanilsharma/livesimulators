@@ -155,6 +155,93 @@ export const SIMULATOR_EXPERIMENTS: Record<string, GuidedExperiment[]> = {
       governingLaw: 'u(t) = K_p\\left(e(t) + \\frac{1}{T_i}\\int_0^t e(\\tau)d\\tau + T_d\\frac{de(t)}{dt}\\right)',
       parameters: { kp: 2.4, ti: 8.0, td: 0.5, setpoint: 65 }
     }
+  ],
+
+  // 6. Binary Distillation Column
+  distillation_column: [
+    {
+      id: 'dist-reflux-pinch',
+      title: '1. Minimum Reflux Ratio & Pinch Point',
+      goal: 'Observe the pinch point where operating line touches VLE curve and stage count approaches infinity.',
+      description: 'Lower reflux ratio R towards R_min. At the pinch boundary, separation requires an infinite number of equilibrium stages.',
+      expectedObservation: 'McCabe-Thiele staircase steps become infinitely crowded near the feed line intersection.',
+      governingLaw: 'R_{min} = \\frac{x_D - y_q}{y_q - x_q}',
+      parameters: { refluxRatio: 1.45, feedComposition: 0.40, relativeVolatility: 2.2, feedCondition: 0.95 }
+    },
+    {
+      id: 'dist-high-purity',
+      title: '2. High Purity Separation',
+      goal: 'Achieve >98% overhead distillate purity by increasing reflux.',
+      description: 'Increase reflux ratio to R = 4.0. The rectifying operating line rotates closer to the 45° diagonal line, opening up driving force for rapid enrichment.',
+      expectedObservation: 'Top distillate purity reaches 98.5% with fewer theoretical stages required.',
+      governingLaw: 'y_{n+1} = \\frac{R}{R+1}x_n + \\frac{x_D}{R+1}',
+      parameters: { refluxRatio: 4.0, feedComposition: 0.50, relativeVolatility: 2.8, feedCondition: 1.0 }
+    }
+  ],
+
+  // 7. Shell-and-Tube Heat Exchanger
+  heat_exchanger: [
+    {
+      id: 'hx-countercurrent-lmtd',
+      title: '1. Countercurrent Thermal Gradient & LMTD',
+      goal: 'Maximize log-mean temperature difference and verify outlet temperatures.',
+      description: 'In pure counterflow, the cold fluid outlet temperature can exceed the hot fluid outlet temperature, maximizing thermal thermodynamic efficiency.',
+      expectedObservation: 'Hot fluid cools from 140°C down to 73°C while cold fluid heats from 25°C up to 68°C.',
+      governingLaw: '\\text{LMTD} = \\frac{(T_{h,in} - T_{c,out}) - (T_{h,out} - T_{c,in})}{\\ln((T_{h,in} - T_{c,out}) / (T_{h,out} - T_{c,in}))}',
+      parameters: { hotInletTemp: 140, coldInletTemp: 25, hotFlowRate: 6.5, coldFlowRate: 10.0 }
+    }
+  ],
+
+  // 8. Packed Gas Absorption Column
+  gas_absorption: [
+    {
+      id: 'abs-flooding-limit',
+      title: '1. Sherwood Hydrodynamic Flooding Boundary',
+      goal: 'Identify the liquid holdup threshold and gas velocity where column flooding occurs.',
+      description: 'Increase gas flow velocity and liquid-to-gas ratio L/G towards the Sherwood flooding boundary.',
+      expectedObservation: 'Flooding ratio bar enters the red alert zone (>85%), demonstrating liquid accumulation in packing voids.',
+      governingLaw: '\\frac{u_G^2 a_p}{g \\epsilon^3}\\left(\\frac{\\rho_G}{\\rho_L}\\right)\\mu_L^{0.2} = f\\left[\\frac{L}{G}\\sqrt{\\frac{\\rho_G}{\\rho_L}}\\right]',
+      parameters: { gasFlow: 32, liquidGasRatio: 4.5, inletGasConc: 10.0, henryConstant: 1.5 }
+    }
+  ],
+
+  // 9. SiC MOSFET Switching
+  sic_switching: [
+    {
+      id: 'sic-ultra-fast-slew',
+      title: '1. Ultra-High dv/dt & Inductive Voltage Ringing',
+      goal: 'Observe high-speed switching transients with dv/dt > 50 V/ns and stray inductance overshoot.',
+      description: 'Lower external gate resistance R_g to 2.5Ω. Miller plateau transition accelerates dramatically, exciting parasitic loop resonance.',
+      expectedObservation: 'Scope shows extremely sharp voltage fall time with ringing overshoot peaking above DC bus voltage.',
+      governingLaw: '\\left(\\frac{dv}{dt}\\right)_{max} = \\frac{V_{gs} - V_{plat}}{R_g C_{gd}}, \\quad V_{pk} = V_{dc} + L_s\\frac{di}{dt}',
+      parameters: { busVoltage: 600, loadCurrent: 35, gateResistance: 3, strayInductance: 20 }
+    }
+  ],
+
+  // 10. IGBT Thermal Foster Model
+  igbt_thermal: [
+    {
+      id: 'igbt-thermal-runaway',
+      title: '1. Junction Temperature Ripple & Heatsink Sizing',
+      goal: 'Verify maximum junction temperature stays within the 175°C Safe Operating Area.',
+      description: 'Simulate heavy converter current and high PWM carrier frequency to observe multi-layer heat accumulation through the DBC substrate.',
+      expectedObservation: 'Silicon die temperature reaches 145°C with 8°C thermal switching ripple.',
+      governingLaw: 'T_j = T_a + P_{tot}(R_{th,jc} + R_{th,cs} + R_{th,sa})',
+      parameters: { switchingFreq: 12, collectorCurrent: 90, dutyCycle: 0.55, heatsinkRth: 0.22 }
+    }
+  ],
+
+  // 11. MOSFET Inversion Channel
+  mosfet_channel: [
+    {
+      id: 'mosfet-pinch-off',
+      title: '1. Channel Pinch-Off & Velocity Saturation',
+      goal: 'Observe 2D electron sheet tapering and transition from linear to saturation regime.',
+      description: 'Increase drain voltage V_ds above saturation voltage V_ds,sat = V_gs - V_th. The mobile electron inversion layer pinches off at the drain edge.',
+      expectedObservation: 'Drain current saturates into a flat horizontal plateau on the I_D - V_DS characteristic plot.',
+      governingLaw: 'V_{ds,sat} = V_{gs} - V_{th}, \\quad I_{D,sat} = \\frac{1}{2}\\mu C_{ox}\\frac{W}{L}(V_{gs} - V_{th})^2',
+      parameters: { gateVoltage: 1.8, drainVoltage: 2.0, oxideThickness: 3.2, substrateDoping: 17 }
+    }
   ]
 };
 
@@ -222,6 +309,44 @@ export function getDynamicPhysicsExplanation(simulatorType: string, params: Reco
       const rpm = params['inputRpm'] || 600;
       const ratio = z2 / z1;
       return `AGMA Involute Mesh: Speed reduction ratio 1:${ratio.toFixed(2)}. Input shaft rotating at ${rpm} RPM produces ${ (rpm / ratio).toFixed(0) } RPM at the output shaft with corresponding proportional torque amplification.`;
+    }
+
+    case 'distillation_column': {
+      const R = params['refluxRatio'] || 2.2;
+      const zF = params['feedComposition'] || 0.45;
+      const alpha = params['relativeVolatility'] || 2.4;
+      return `McCabe-Thiele VLE: Operating at reflux ratio R = ${R.toFixed(1)} with relative volatility α = ${alpha.toFixed(1)}. Rectifying and stripping operating lines step through theoretical equilibrium trays to purify feed (${(zF*100).toFixed(0)}% light key) into high-purity overhead distillate.`;
+    }
+
+    case 'heat_exchanger': {
+      const ThIn = params['hotInletTemp'] || 140;
+      const TcIn = params['coldInletTemp'] || 25;
+      return `TEMA 1-2 Exchanger: Hot process fluid enters at ${ThIn}°C against coolant at ${TcIn}°C. Segmental baffles direct fluid across the multi-pass tube bundle, sustaining a high log-mean temperature difference (LMTD) and thermal effectiveness.`;
+    }
+
+    case 'gas_absorption': {
+      const L_G = params['liquidGasRatio'] || 2.8;
+      const yIn = params['inletGasConc'] || 8.0;
+      return `Packed Scrubber Mass Transfer: Operating at solvent liquid-to-gas ratio L/G = ${L_G.toFixed(1)}. Ascending gas (${yIn}% inlet solute) contacts descending solvent film across packing surface, governed by Whitman two-film driving force and Sherwood flooding margins.`;
+    }
+
+    case 'sic_switching': {
+      const Vdc = params['busVoltage'] || 600;
+      const IL = params['loadCurrent'] || 35;
+      const Rg = params['gateResistance'] || 5;
+      return `Wide-Bandgap SiC Dynamics: Clamped inductive switching at ${Vdc}V / ${IL}A with gate resistance ${Rg}Ω. Slew rate dv/dt is governed by gate driver charging through non-linear Miller capacitance C_gd, with inductive voltage overshoot L_s · (di/dt).`;
+    }
+
+    case 'igbt_thermal': {
+      const fsw = params['switchingFreq'] || 12;
+      const Ic = params['collectorCurrent'] || 90;
+      return `Foster Thermal Network: Operating at ${fsw} kHz carrier frequency conducting ${Ic}A RMS. Conduction and switching losses generate heat flux cascading through Die, DBC ceramic substrate, and copper baseplate to heatsink, establishing dynamic junction temperature Tj.`;
+    }
+
+    case 'mosfet_channel': {
+      const Vgs = params['gateVoltage'] || 1.8;
+      const Vds = params['drainVoltage'] || 1.2;
+      return `BSIM4 Inversion Channel: Gate bias Vgs = ${Vgs.toFixed(1)}V bends semiconductor surface potential φs into strong inversion, accumulating a 2D electron gas sheet. Drain bias Vds = ${Vds.toFixed(1)}V drives drift current with channel pinch-off towards the drain.`;
     }
 
     default:

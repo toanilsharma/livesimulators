@@ -266,6 +266,261 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
         }
         ctx.stroke();
 
+      } else if (simulator.type === 'sic_switching') {
+        const vBus = params['vBus'] || 800;
+        const iLoad = params['iLoad'] || 40;
+        const rg = params['rg'] || 5;
+        const ringingDamp = Math.max(0.05, 1 / (rg * 0.4));
+        const period = 70;
+
+        // Channel A: Drain-to-Source Voltage V_ds (Cyan)
+        if (scopeChannelA) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#06b6d4';
+          ctx.lineWidth = 2.5;
+          for (let x = 0; x < w; x++) {
+            const phase = (x + t * 50) % period;
+            const frac = phase / period;
+            let val = 0;
+            if (frac < 0.4) {
+              val = 1.0; // OFF state V_ds = V_bus
+            } else if (frac < 0.48) {
+              const ramp = (frac - 0.4) / 0.08;
+              val = 1.0 - ramp + Math.sin(ramp * 18) * 0.25 * Math.exp(-ramp * ringingDamp * 6);
+            } else if (frac < 0.85) {
+              val = 0.02; // ON state V_ds(on)
+            } else {
+              const ramp = (frac - 0.85) / 0.15;
+              val = ramp * 1.25 * Math.exp(-ramp * ringingDamp * 3) + ramp * 1.0;
+            }
+            const y = midY + h * 0.35 - Math.max(0, Math.min(1.4, val)) * (h * 0.65);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // Channel B: Drain Current I_d (Amber)
+        if (scopeChannelB) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          for (let x = 0; x < w; x++) {
+            const phase = (x + t * 50) % period;
+            const frac = phase / period;
+            let val = 0;
+            if (frac < 0.38) {
+              val = 0; // OFF
+            } else if (frac < 0.48) {
+              const ramp = (frac - 0.38) / 0.10;
+              val = ramp * 1.35 * Math.exp(-ramp * ringingDamp * 4) + ramp * 0.85; // overshoot
+            } else if (frac < 0.85) {
+              val = 1.0; // constant I_load
+            } else {
+              const ramp = (frac - 0.85) / 0.10;
+              val = Math.max(0, 1.0 - ramp * 1.1);
+            }
+            const y = midY + h * 0.35 - Math.max(0, Math.min(1.5, val)) * (h * 0.55);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+      } else if (simulator.type === 'igbt_thermal') {
+        // Channel A: Transient Junction Temperature Tj(t) (Rose/Red)
+        const TjMax = params['tJunctionMax'] || 175;
+        const Ploss = params['powerLoss'] || 450;
+        const rth = (params['rthJc'] || 0.08) * 1.4;
+
+        if (scopeChannelA) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 2.5;
+          for (let x = 0; x < w; x++) {
+            const normalizedT = (x / w) * 5;
+            // 4-stage Foster thermal ladder response
+            const zth = (1 - Math.exp(-normalizedT / 0.05)) * 0.2 +
+                        (1 - Math.exp(-normalizedT / 0.35)) * 0.35 +
+                        (1 - Math.exp(-normalizedT / 1.5)) * 0.45;
+            const temp = 25 + (Ploss * rth) * zth;
+            const y = h - 30 - (temp / TjMax) * (h * 0.7);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // Channel B: Pulsed Power Loss P_loss (Amber)
+        if (scopeChannelB) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 1.8;
+          for (let x = 0; x < w; x++) {
+            const pulse = (Math.sin((x / w) * 6 * Math.PI - t * 2) > 0.1) ? 0.8 : 0.15;
+            const y = h - 30 - pulse * (h * 0.5);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+      } else if (simulator.type === 'mosfet_channel') {
+        const vgs = params['vgs'] || 3.3;
+        const vth = params['vth'] || 0.7;
+        const vds = params['vds'] || 2.5;
+        const vov = Math.max(0, vgs - vth);
+        const isPinchOff = vds >= vov;
+
+        // Channel A: Inversion Charge Qi(x) along channel length (Emerald)
+        if (scopeChannelA) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2.5;
+          for (let x = 0; x < w; x++) {
+            const xNorm = x / w;
+            let charge = 1.0 - (isPinchOff ? (xNorm * 1.0) : (xNorm * (vds / Math.max(0.1, vov))));
+            charge = Math.max(0.02, charge);
+            const y = midY + h * 0.3 - charge * (h * 0.55);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // Channel B: Surface Potential psi_s(x) along channel (Cyan)
+        if (scopeChannelB) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#06b6d4';
+          ctx.lineWidth = 2;
+          for (let x = 0; x < w; x++) {
+            const xNorm = x / w;
+            const pot = Math.min(vds, vov * Math.sqrt(xNorm));
+            const y = midY + h * 0.3 - (pot / 3.5) * (h * 0.55);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+      } else if (simulator.type === 'distillation_column') {
+        const alpha = params['relativeVolatility'] || 2.4;
+        // Draw McCabe-Thiele VLE curve & equilibrium stages
+        if (scopeChannelA) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2.5;
+          for (let x = 0; x < w; x++) {
+            const xMole = x / w;
+            const yEquil = (alpha * xMole) / (1 + (alpha - 1) * xMole);
+            const y = h - 30 - yEquil * (h * 0.7);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+
+          // 45 degree line (slate dashed)
+          ctx.beginPath();
+          ctx.setLineDash([4, 4]);
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 1.5;
+          ctx.moveTo(0, h - 30);
+          ctx.lineTo(w, h - 30 - 1.0 * (h * 0.7));
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Channel B: Dynamic concentration waves through trays
+        if (scopeChannelB) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          for (let x = 0; x < w; x++) {
+            const wave = 0.5 + 0.35 * Math.sin((x / w) * 3 * Math.PI - t * 1.5);
+            const y = h - 30 - wave * (h * 0.7);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+      } else if (simulator.type === 'heat_exchanger') {
+        const flowConfig = params['flowArrangement'] ?? 1; // 1 = Counter, 0 = Parallel
+        const Thi = params['tHotIn'] || 135;
+        const Tho = params['tHotOut'] || 82;
+        const Tci = params['tColdIn'] || 25;
+        const Tco = params['tColdOut'] || 68;
+
+        // Channel A: Hot fluid temperature profile along length L
+        if (scopeChannelA) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#ef4444'; // Red for Hot
+          ctx.lineWidth = 2.5;
+          for (let x = 0; x < w; x++) {
+            const frac = x / w;
+            const Th = Thi - (Thi - Tho) * (1 - Math.exp(-2.2 * frac)) / (1 - Math.exp(-2.2));
+            const y = h - 30 - (Th / 150) * (h * 0.7);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // Channel B: Cold fluid temperature profile along length L
+        if (scopeChannelB) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#06b6d4'; // Cyan for Cold
+          ctx.lineWidth = 2.5;
+          for (let x = 0; x < w; x++) {
+            const frac = x / w;
+            let Tc = 0;
+            if (flowConfig === 1) {
+              // Counter-current: rises from inlet at far right or left
+              Tc = Tco - (Tco - Tci) * frac;
+            } else {
+              // Parallel: rises from inlet at left
+              Tc = Tci + (Tco - Tci) * (1 - Math.exp(-2.0 * frac)) / (1 - Math.exp(-2.0));
+            }
+            const y = h - 30 - (Tc / 150) * (h * 0.7);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+      } else if (simulator.type === 'gas_absorption') {
+        const Qin = params['gasInletY'] || 0.06;
+        const L_over_G = params['liquidGasRatio'] || 1.8;
+        // Channel A: Gas mole ratio profile Y(z) along tower height (Amber)
+        if (scopeChannelA) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2.5;
+          for (let x = 0; x < w; x++) {
+            const zNorm = x / w;
+            const yRatio = Qin * Math.exp(-2.8 * zNorm);
+            const y = h - 30 - (yRatio / 0.08) * (h * 0.7);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // Channel B: Liquid mole ratio profile X(z) along tower height (Emerald)
+        if (scopeChannelB) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2;
+          for (let x = 0; x < w; x++) {
+            const zNorm = x / w;
+            const xRatio = (Qin / L_over_G) * (1 - Math.exp(-2.8 * (1 - zNorm)));
+            const y = h - 30 - (xRatio / 0.08) * (h * 0.7);
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
       } else {
         // Generic wave response
         ctx.beginPath();
@@ -290,6 +545,54 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
         ctx.fillText('PHASE B: 230V∠-240°', 300, 22);
         ctx.fillStyle = '#94a3b8';
         ctx.fillText(`STD: IEC 60446 / IEEE 141 (R-Y-B-N)`, w - 250, 22);
+      } else if (simulator.type === 'sic_switching') {
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillText('CH1 (V_ds): 200V/DIV', 16, 24);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText('CH2 (I_d): 10A/DIV', 165, 24);
+        ctx.fillStyle = '#10b981';
+        ctx.fillText('JEDEC JESD24-11 DPT', w - 170, 24);
+      } else if (simulator.type === 'igbt_thermal') {
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillText('CH1 (T_j): 25°C/DIV', 16, 24);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText('CH2 (P_loss): 100W/DIV', 165, 24);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('IEC 60747-15 FOSTER', w - 170, 24);
+      } else if (simulator.type === 'mosfet_channel') {
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#10b981';
+        ctx.fillText('CH1 (Q_inv): C_ox(V_ov)/DIV', 16, 24);
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillText('CH2 (psi_s): 0.5V/DIV', 210, 24);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('BSIM4 / IEEE EDS', w - 150, 24);
+      } else if (simulator.type === 'distillation_column') {
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('CH1 (VLE y*): 0.2 mol/DIV', 16, 24);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText('CH2 (x_tray): 0.2 mol/DIV', 195, 24);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('AIChE McCABE-THIELE', w - 165, 24);
+      } else if (simulator.type === 'heat_exchanger') {
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText('CH1 (T_hot): 25°C/DIV', 16, 24);
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillText('CH2 (T_cold): 25°C/DIV', 180, 24);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('TEMA CLASS R / API 660', w - 180, 24);
+      } else if (simulator.type === 'gas_absorption') {
+        ctx.font = '11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText('CH1 (Y_gas): 0.01 mol/DIV', 16, 24);
+        ctx.fillStyle = '#10b981';
+        ctx.fillText('CH2 (X_liq): 0.01 mol/DIV', 195, 24);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('TWO-FILM / SHERWOOD', w - 170, 24);
       } else {
         ctx.font = '11px "IBM Plex Mono", monospace';
         ctx.fillStyle = '#06b6d4';
