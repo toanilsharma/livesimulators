@@ -613,12 +613,13 @@ async function runPrerender() {
       );
     }
 
-    // 6. Inject Pre-rendered Semantic HTML directly inside <div id="root">
-    // Ensures strictly ONE canonical <h1> tag per page with zero duplicate H1 warnings.
-    // When React loads, ReactDOM.createRoot cleanly replaces this initial HTML shell.
+    // 6. Inject Pre-rendered Semantic HTML for search crawlers inside <noscript>
+    // Keeping <div id="root"></div> clean prevents the browser from flashing raw fallback HTML
+    // to real users when opening livesimulators.com, while main.tsx removes #seo-fallback on hydration
+    // to maintain strictly 1 canonical <h1> for headless crawlers.
     html = html.replace(
       /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
-      `<div id="root">\n${contentHtml}\n    </div>`
+      `<div id="root"></div>\n    <noscript id="seo-fallback">\n${contentHtml}\n    </noscript>`
     );
 
     // 7. Output directory and file
@@ -649,7 +650,7 @@ async function runPrerender() {
   notFoundHtml = setMetaTag(notFoundHtml, 'name', 'twitter:image', notFoundMeta.ogImage);
   notFoundHtml = notFoundHtml.replace(
     /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
-    `<div id="root">\n${notFoundContent}\n    </div>`
+    `<div id="root"></div>\n    <noscript id="seo-fallback">\n${notFoundContent}\n    </noscript>`
   );
   fs.writeFileSync(path.join(distDir, '404.html'), notFoundHtml, 'utf8');
 
