@@ -39,10 +39,10 @@
 - [MOSFET Inversion Channel, Band Bending & 2D Electron Gas](https://livesimulators.com/simulator/mosfet-channel): Solve surface potential band bending, visualize 2D electron sheet accumulation, and observe channel pinch-off. Physical law: Poisson-Boltzmann Electrostatics & Fermi-Dirac Statistics (BSIM4). Governing formulation: `\phi_s = \frac{q N_A W_{dep}^2}{2\epsilon_s}, \quad Q_{inv} = -C_{ox}(V_{gs} - V_{th}), \quad I_D = \mu C_{ox} \frac{W}{L}\left[(V_{gs} - V_{th})V_{ds} - \frac{V_{ds}^2}{2}\right]`. Level: Intermediate.
 
 ## Industrial Engineering Labs Workbench
-- [Power Electronics Lab](https://livesimulators.com/lab/power-electronics-lab): High-frequency switching converters, resonant inverters, and PWM gate driver dynamics.. Discipline: electrical | 16 Interactive Modules | Reference: IEEE 1547 / IEC 62040-3.
-- [Power Systems Lab](https://livesimulators.com/lab/power-systems-lab): Transmission line power flow, transient swing stability, and symmetrical fault analysis.. Discipline: electrical | 14 Interactive Modules | Reference: IEEE 141 / NERC PRC-002.
-- [SafeOps UPS](https://livesimulators.com/lab/safeops-ups): Double-conversion topology, static bypass transitions, and battery string impedance.. Discipline: instrumentation | 12 Interactive Modules | Reference: IEC 62040-3 / Uptime Tier IV.
-- [ElectroLive Electrical Safety](https://livesimulators.com/lab/electrolive-electrical-safety): Arc flash incident energy, NFPA 70E boundary calculations, and touch/step potential.. Discipline: electrical | 10 Interactive Modules | Reference: NFPA 70E / IEEE 1584 / OSHA.
+- [Power Electronics Lab](https://livesimulators.com/lab/power-electronics-lab): High-frequency switching converters, resonant inverters, and PWM gate driver dynamics.. Discipline: electrical | 8 Interactive Modules | Reference: IEEE 1547 / IEC 62040-3.
+- [Power Systems Lab](https://livesimulators.com/lab/power-systems-lab): Transmission line power flow, transient swing stability, and symmetrical fault analysis.. Discipline: electrical | 25 Interactive Modules | Reference: IEEE 141 / NERC PRC-002.
+- [SafeOps UPS](https://livesimulators.com/lab/safeops-ups): Double-conversion topology, static bypass transitions, and battery string impedance.. Discipline: instrumentation | 2 Interactive Modules | Reference: IEC 62040-3 / Uptime Tier IV.
+- [ElectroLive Electrical Safety](https://livesimulators.com/lab/electrolive-electrical-safety): Arc flash incident energy, NFPA 70E boundary calculations, and touch/step potential.. Discipline: electrical | 9 Interactive Modules | Reference: NFPA 70E / IEEE 1584 / OSHA.
 
 ## Companion Engineering Portals
 - [DesignCalculators.co.in](https://designcalculators.co.in): Free multi-disciplinary engineering calculators (Electrical, Mechanical, Instrumentation) referencing published standards (IEEE, IEC, ASME, API, ISA).

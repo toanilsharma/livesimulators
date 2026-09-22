@@ -228,12 +228,12 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
   };
 
   return (
-    <section id="engineering-departments" className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <section id="departments-hub" className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs font-mono font-semibold uppercase tracking-wider text-cyan-300 mb-4 shadow-sm">
-          <ShieldCheck className="w-4 h-4 text-cyan-400" />
-          <span>SIMULATION DIRECTORY BY DEPARTMENT</span>
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-xs font-mono font-semibold uppercase tracking-wider text-blue-300 mb-4 shadow-sm">
+          <ShieldCheck className="w-4 h-4 text-blue-400" />
+          <span>STAGE 1 • ACADEMIC FUNDAMENTALS & UNIVERSITY LABS</span>
         </div>
         
         <h2 className="text-2xl sm:text-4xl lg:text-5xl font-display font-extrabold text-white tracking-tight leading-tight">
@@ -241,7 +241,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
         </h2>
         
         <p className="mt-3 text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
-          Organized systematically row-by-row. Select a department to explore or click any sub-category simulator below to launch its real-time 60 FPS physics workbench immediately.
+          Curriculum-aligned textbook simulators for students and educators. Explore real-time interactive differential equations, circuit transients, mechanism kinematics, and control loops.
         </p>
 
         {/* Systematic Department Filter Pills */}

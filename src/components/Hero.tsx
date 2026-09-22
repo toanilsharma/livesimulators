@@ -2114,6 +2114,50 @@ export const Hero: React.FC<HeroProps> = ({
               transient dynamics, and real-time control directly in your browser.
             </p>
 
+            {/* Dual-Track Quick Stage Action Strip */}
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <button
+                onClick={() => {
+                  const el = document.getElementById('industrial-labs');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="flex-1 flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-cyan-500/15 to-blue-500/15 border border-amber-500/60 hover:border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)] text-left group transition-all"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-300">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-mono text-amber-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <span>Working Engineers</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    </div>
+                    <div className="text-xs font-bold text-white group-hover:text-amber-200">Industrial Suites Pro (IEEE)</div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
+                onClick={() => {
+                  const el = document.getElementById('departments-hub');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="flex-1 flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 text-left group transition-all"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">Students & Faculty</div>
+                    <div className="text-xs font-bold text-white group-hover:text-cyan-200">30+ Academic Fundamentals</div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+
             {/* Department Navigation Hub */}
             <div className="space-y-2.5 pt-1">
               <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">

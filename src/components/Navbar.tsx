@@ -156,11 +156,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <button
               onClick={() => setLabsDropdownOpen(!labsDropdownOpen)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-cyan-300 hover:bg-slate-800/50 rounded-md transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/40 hover:border-cyan-400 rounded-lg transition-all shadow-[0_0_12px_rgba(6,182,212,0.15)]"
               id="nav-labs-dropdown-btn"
               aria-expanded={labsDropdownOpen}
             >
-              <span>Labs</span>
+              <FlaskConical className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Industrial Labs</span>
+              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 border border-amber-500/50 text-[10px] font-mono text-amber-300 font-black tracking-wider">
+                PRO
+              </span>
               <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${labsDropdownOpen ? 'rotate-180 text-cyan-400' : ''}`} />
             </button>
 
@@ -353,9 +357,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Industrial Labs in Mobile Menu */}
           <div className="pt-2 pb-1">
-            <div className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider px-3 pb-1 flex items-center gap-1.5">
-              <FlaskConical className="w-3 h-3" />
-              <span>Industrial Labs</span>
+            <div className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider px-3 pb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <FlaskConical className="w-3 h-3" />
+                <span>Industrial Labs Pro</span>
+              </span>
+              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 border border-amber-500/50 text-[9px] font-mono text-amber-300 font-black">
+                PRO SUITES
+              </span>
             </div>
             <div className="space-y-1">
               {LABS.map((lab) => (

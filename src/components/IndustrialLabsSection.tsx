@@ -12,12 +12,22 @@ import {
   Sparkles,
   Server,
   Activity,
-  Award
+  Award,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { LABS, trackLabLaunch } from '../config/labs';
 import { navigateTo } from '../utils/routes';
 
 export const IndustrialLabsSection: React.FC = () => {
+  const handleScroll = (containerId: string, direction: 'left' | 'right') => {
+    const el = document.getElementById(containerId);
+    if (el) {
+      const scrollAmount = direction === 'left' ? -280 : 280;
+      el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
     <section
       id="industrial-labs"
@@ -34,7 +44,7 @@ export const IndustrialLabsSection: React.FC = () => {
         <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-amber-500/15 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold uppercase tracking-wider mb-4 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>ENTERPRISE PRO SUITES • MISSION-CRITICAL SIMULATORS</span>
+            <span>STAGE 2 • ENTERPRISE PRO SUITES • MISSION-CRITICAL SIMULATORS</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
           </div>
 
@@ -43,7 +53,7 @@ export const IndustrialLabsSection: React.FC = () => {
           </h2>
 
           <p className="mt-4 text-slate-300 text-sm sm:text-lg leading-relaxed font-sans max-w-3xl mx-auto">
-            Heavy-duty, multi-module simulation platforms built for global industrial deployment. 
+            High-accuracy, multi-module computational platforms built for practicing engineers, utilities, and EPC consultants. 
             Calibrated to international compliance codes (IEEE, IEC, NFPA, NERC) for zero-risk hardware testing, 
             fault mitigation, and operator certification.
           </p>
@@ -183,14 +193,81 @@ export const IndustrialLabsSection: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Core Capabilities Checklist */}
-                  <div className="mt-4 space-y-1.5">
-                    {lab.capabilities.map((cap, cIdx) => (
-                      <div key={cIdx} className="flex items-start gap-2 text-xs text-slate-300">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <span className="leading-snug">{cap}</span>
+                  {/* Interactive Side-Scroller for Modules */}
+                  <div className="mt-5 pt-3.5 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono text-cyan-300 font-bold uppercase tracking-wider">
+                        <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Included Modules ({lab.modules}):</span>
                       </div>
-                    ))}
+                      
+                      {/* Left & Right Scroller Navigation Buttons */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleScroll(`scroller-${lab.id}`, 'left');
+                          }}
+                          aria-label="Scroll modules left"
+                          className="p-1 rounded-md bg-slate-950 border border-slate-800 hover:border-cyan-500/60 text-slate-400 hover:text-white transition-colors"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleScroll(`scroller-${lab.id}`, 'right');
+                          }}
+                          aria-label="Scroll modules right"
+                          className="p-1 rounded-md bg-slate-950 border border-slate-800 hover:border-cyan-500/60 text-slate-400 hover:text-white transition-colors"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Horizontal Side-Scroller Container */}
+                    <div 
+                      id={`scroller-${lab.id}`}
+                      className="flex gap-2.5 overflow-x-auto pb-2 pt-0.5 scroll-smooth scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-950/50"
+                      style={{ scrollbarWidth: 'thin' }}
+                    >
+                      {lab.moduleList?.map((mod, mIdx) => (
+                        <div
+                          key={mod.id}
+                          onClick={() => {
+                            trackLabLaunch(lab.id, `module_card_${mod.id}`);
+                            navigateTo(lab.url);
+                          }}
+                          className="shrink-0 w-60 p-3 rounded-xl bg-slate-950/90 hover:bg-slate-800/90 border border-slate-800 hover:border-cyan-500/60 transition-all cursor-pointer group/mod shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] flex flex-col justify-between"
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span 
+                                className="px-1.5 py-0.5 rounded font-mono text-[9px] font-extrabold uppercase tracking-wider"
+                                style={{ backgroundColor: `${lab.accent}20`, color: lab.accent }}
+                              >
+                                Module {String(mIdx + 1).padStart(2, '0')}
+                              </span>
+                              <ArrowRight className="w-3 h-3 text-slate-600 group-hover/mod:text-cyan-300 group-hover/mod:translate-x-1 transition-all" />
+                            </div>
+                            <div className="text-xs font-bold text-white group-hover/mod:text-cyan-300 transition-colors line-clamp-1">
+                              {mod.name}
+                            </div>
+                            <div className="text-[10.5px] text-slate-400 line-clamp-2 font-sans mt-1 leading-snug">
+                              {mod.tag}
+                            </div>
+                          </div>
+
+                          <div className="mt-2.5 pt-1.5 border-t border-slate-900 flex items-center justify-between text-[9px] font-mono text-cyan-400">
+                            <span>Interactive Lab</span>
+                            <span className="text-slate-500 group-hover/mod:text-cyan-400">Launch Module →</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -201,33 +278,41 @@ export const IndustrialLabsSection: React.FC = () => {
                     <span>Industrial Code Calibrated</span>
                   </div>
 
-                  <a
-                    href={lab.url}
-                    target={lab.external ? '_blank' : undefined}
-                    rel={lab.external ? 'noopener noreferrer' : undefined}
-                    onClick={(e) => {
-                      if (!lab.external) {
+                  <div className="flex items-center gap-2">
+                    {/* Standalone CNAME / Netlify External Portal */}
+                    {lab.standaloneUrl && (
+                      <a
+                        href={lab.standaloneUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackLabLaunch(lab.id, 'standalone_external_btn')}
+                        title="Open direct standalone portal in full browser window (ideal for multi-monitor CAD setups)"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-mono font-bold bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 transition-all hover:border-slate-500"
+                      >
+                        <span>Standalone</span>
+                        <ExternalLink className="w-3 h-3 text-slate-400" />
+                      </a>
+                    )}
+
+                    {/* Main In-App Workbench Launch */}
+                    <a
+                      href={lab.url}
+                      onClick={(e) => {
                         e.preventDefault();
                         trackLabLaunch(lab.id, 'home_card');
                         navigateTo(lab.url);
-                      } else {
-                        trackLabLaunch(lab.id, 'home_card');
-                      }
-                    }}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-display font-extrabold transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-95"
-                    style={{
-                      backgroundColor: lab.accent,
-                      color: '#030712',
-                      boxShadow: `0 0 20px ${lab.accent}40`,
-                    }}
-                  >
-                    <span>Launch Pro Lab</span>
-                    {lab.external ? (
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    ) : (
+                      }}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-display font-extrabold transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-95 shrink-0"
+                      style={{
+                        backgroundColor: lab.accent,
+                        color: '#030712',
+                        boxShadow: `0 0 20px ${lab.accent}40`,
+                      }}
+                    >
+                      <span>Launch Pro Lab</span>
                       <ArrowRight className="w-3.5 h-3.5" />
-                    )}
-                  </a>
+                    </a>
+                  </div>
                 </div>
 
               </div>

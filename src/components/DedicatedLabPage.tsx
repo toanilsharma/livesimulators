@@ -14,7 +14,9 @@ import {
   Info,
   Cpu,
   Zap,
-  Activity
+  Activity,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { LABS, LabItem } from '../config/labs';
 import { navigateTo } from '../utils/routes';
@@ -90,6 +92,20 @@ export const DedicatedLabPage: React.FC<DedicatedLabPageProps> = ({ labId, onBac
               )}
             </button>
 
+            {/* Direct Standalone CNAME External Launch */}
+            {(lab.standaloneUrl || lab.embedUrl) && (
+              <a
+                href={lab.standaloneUrl || lab.embedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Launch standalone CAD portal in new window"
+                className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-mono text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden sm:inline">Standalone</span>
+              </a>
+            )}
+
             {/* Fullscreen Toggle */}
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
@@ -110,6 +126,78 @@ export const DedicatedLabPage: React.FC<DedicatedLabPageProps> = ({ labId, onBac
             </button>
           </div>
         </div>
+
+        {/* Modules Quick-Access Side Scroller Bar */}
+        {!isFullscreen && (
+          <div className="p-3 rounded-2xl bg-[#090e1a]/95 border border-slate-800 shadow-md">
+            <div className="flex items-center justify-between gap-2 mb-2 px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+                  {lab.name} Modules ({lab.modules}):
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono hidden md:inline">
+                  Select module inside the workbench toolbar or browse below
+                </span>
+              </div>
+
+              {/* Scroll Arrows */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('dedicated-lab-module-scroller');
+                    if (el) el.scrollBy({ left: -260, behavior: 'smooth' });
+                  }}
+                  aria-label="Scroll modules left"
+                  className="p-1 rounded-md bg-slate-900 border border-slate-700 text-slate-400 hover:text-white transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('dedicated-lab-module-scroller');
+                    if (el) el.scrollBy({ left: 260, behavior: 'smooth' });
+                  }}
+                  aria-label="Scroll modules right"
+                  className="p-1 rounded-md bg-slate-900 border border-slate-700 text-slate-400 hover:text-white transition-colors"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Horizontal Module Chips */}
+            <div
+              id="dedicated-lab-module-scroller"
+              className="flex gap-2 overflow-x-auto pb-1 scroll-smooth scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-950"
+              style={{ scrollbarWidth: 'thin' }}
+            >
+              {lab.moduleList?.map((mod, idx) => (
+                <div
+                  key={mod.id}
+                  className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 transition-all text-xs font-medium text-slate-300 select-none group/chip"
+                >
+                  <span
+                    className="px-1.5 py-0.5 rounded font-mono text-[9px] font-bold"
+                    style={{ backgroundColor: `${lab.accent}25`, color: lab.accent }}
+                  >
+                    #{String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-white group-hover/chip:text-cyan-300 transition-colors">
+                      {mod.name}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-sans max-w-[200px] truncate">
+                      {mod.tag}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Interactive Lab Engine Frame */}
         <div className={`relative w-full rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl ${isFullscreen ? 'flex-1 rounded-none border-none' : 'h-[76vh] md:h-[82vh]'}`}>

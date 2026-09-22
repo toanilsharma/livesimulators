@@ -10,6 +10,7 @@ import { HowItWorks } from './components/HowItWorks';
 import { AudiencePillars } from './components/AudiencePillars';
 import { TrustPrinciples } from './components/TrustPrinciples';
 import { IndustrialLabsSection } from './components/IndustrialLabsSection';
+import { PersonaStageSelector } from './components/PersonaStageSelector';
 import { Footer } from './components/Footer';
 import { SearchModal } from './components/SearchModal';
 import { CookieBanner } from './components/CookieBanner';
@@ -132,12 +133,15 @@ export default function App() {
   };
 
   const handleExploreForAudience = (persona: AudiencePersona) => {
-    if (persona === 'educators') {
-      handleSelectDepartment('mechanical');
-    } else if (persona === 'engineers') {
-      handleSelectDepartment('civil');
+    if (persona === 'engineers') {
+      const el = document.getElementById('industrial-labs');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else if (persona === 'educators') {
+      const el = document.getElementById('departments-hub');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     } else {
-      handleSelectDepartment('electrical');
+      const el = document.getElementById('departments-hub');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -173,20 +177,25 @@ export default function App() {
       {/* 2. Routing Views */}
       {route.view === 'home' && (
         <main className="flex-1 w-full max-w-full overflow-x-hidden">
-          {/* Hero with Dedicated Department Buttons */}
+          {/* Hero with Dedicated Department Buttons & Quick Stage CTAs */}
           <Hero
             onSelectDepartment={handleSelectDepartment}
             onLaunchSimulator={handleLaunchSimulator}
           />
 
-          {/* Dedicated Engineering Departments Hub */}
+          {/* Interactive Profile & Stage Selector (Students vs Working Engineers vs Faculty) */}
+          <PersonaStageSelector
+            onSelectStage={(stage) => handleExploreForAudience(stage)}
+          />
+
+          {/* STAGE 2: Mission-Critical Industrial Simulation Suites (IEEE / IEC / NFPA Calibrated) */}
+          <IndustrialLabsSection />
+
+          {/* STAGE 1: Dedicated Engineering Departments Hub (Academic Fundamentals & University Labs) */}
           <HomeDepartmentsHub
             onSelectDepartment={handleSelectDepartment}
             onLaunchSimulator={handleLaunchSimulator}
           />
-
-          {/* Full-Scale Industrial Simulation Suites */}
-          <IndustrialLabsSection />
 
           {/* Educational & Trust Pillars */}
           <WhyInteractive />
