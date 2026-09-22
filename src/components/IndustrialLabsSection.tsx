@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ExternalLink,
   ArrowRight,
@@ -14,12 +14,16 @@ import {
   Activity,
   Award,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Camera
 } from 'lucide-react';
 import { LABS, trackLabLaunch } from '../config/labs';
 import { navigateTo } from '../utils/routes';
+import { IndustrialLabAnimatedSLD } from './IndustrialLabAnimatedSLD';
 
 export const IndustrialLabsSection: React.FC = () => {
+  const [viewModes, setViewModes] = useState<Record<string, 'sld' | 'photo'>>({});
+
   const handleScroll = (containerId: string, direction: 'left' | 'right') => {
     const el = document.getElementById(containerId);
     if (el) {
@@ -128,20 +132,64 @@ export const IndustrialLabsSection: React.FC = () => {
                 </span>
               </div>
 
-              {/* Lab Screenshot Container with Technical HUD */}
+              {/* Lab Media Container: Dynamic Animated SLD or Photo Toggle */}
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-950 border-b border-slate-800/80">
-                <img
-                  src={lab.shot}
-                  alt={`${lab.name} - Interactive Engineering Simulation Lab`}
-                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                />
                 
-                {/* Visual Depth Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-90" />
+                {/* View Mode Toggle Pill (Top Left) */}
+                <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1 p-0.5 rounded-lg bg-slate-950/90 border border-slate-700/80 backdrop-blur-md shadow-lg">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setViewModes((prev) => ({ ...prev, [lab.id]: 'sld' }));
+                    }}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-all ${
+                      (viewModes[lab.id] || 'sld') === 'sld'
+                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/60 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Zap className="w-3 h-3 text-cyan-400" />
+                    <span>LIVE SLD</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setViewModes((prev) => ({ ...prev, [lab.id]: 'photo' }));
+                    }}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-all ${
+                      viewModes[lab.id] === 'photo'
+                        ? 'bg-slate-800 text-white border border-slate-600 shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Camera className="w-3 h-3 text-slate-400" />
+                    <span>PHOTO</span>
+                  </button>
+                </div>
+
+                {/* Render Animated SLD (Default) or Photo */}
+                {(viewModes[lab.id] || 'sld') === 'sld' ? (
+                  <div className="w-full h-full relative cursor-crosshair">
+                    <IndustrialLabAnimatedSLD labId={lab.id} accentColor={lab.accent} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60 pointer-events-none" />
+                  </div>
+                ) : (
+                  <div className="w-full h-full relative">
+                    <img
+                      src={lab.shot}
+                      alt={`${lab.name} - Interactive Engineering Simulation Lab`}
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-90" />
+                  </div>
+                )}
 
                 {/* Overlaid Technical Badge Strip */}
-                <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between pointer-events-none">
+                <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between pointer-events-none z-10">
                   <span 
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-bold uppercase tracking-wider backdrop-blur-md border shadow-md"
                     style={{ 
