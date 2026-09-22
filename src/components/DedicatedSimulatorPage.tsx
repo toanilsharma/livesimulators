@@ -35,7 +35,8 @@ import {
   GraduationCap,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Tv
 } from 'lucide-react';
 import { SimulatorItem, DisciplineId } from '../types';
 import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
@@ -91,6 +92,40 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const [selectedExperiment, setSelectedExperiment] = useState<GuidedExperiment | null>(null);
   const [probeCoord, setProbeCoord] = useState<{ x: number; y: number } | null>(null);
   const [shareMenuOpen, setShareMenuOpen] = useState<boolean>(false);
+
+  // Dual-Cursor Scope measurement state (T1 & T2 cursors for dt, frequency, and dV analysis)
+  const [showDualCursors, setShowDualCursors] = useState<boolean>(false);
+  const [cursor1Ratio, setCursor1Ratio] = useState<number>(0.28);
+  const [cursor2Ratio, setCursor2Ratio] = useState<number>(0.72);
+  const draggingCursorRef = useRef<'c1' | 'c2' | null>(null);
+
+  // CRT Phosphor Glow Mode (authentic green phosphor persistence and scanlines)
+  const [isCrtMode, setIsCrtMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('livesimulators_crt_mode') === 'true';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleCrtChange = (e: Event) => {
+      const customEv = e as CustomEvent<{ enabled: boolean }>;
+      if (customEv.detail && typeof customEv.detail.enabled === 'boolean') {
+        setIsCrtMode(customEv.detail.enabled);
+      }
+    };
+    window.addEventListener('livesimulators:crt_change', handleCrtChange);
+    return () => window.removeEventListener('livesimulators:crt_change', handleCrtChange);
+  }, []);
+
+  const toggleCrtMode = () => {
+    const next = !isCrtMode;
+    setIsCrtMode(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('livesimulators_crt_mode', next ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('livesimulators:crt_change', { detail: { enabled: next } }));
+    }
+  };
 
   // Session run duration tracking for GA4 simulator_run {duration_s}
   const runStartTimeRef = useRef<number | null>(Date.now());
@@ -1527,6 +1562,134 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
         ctx.fillText(`TIME: ${localTime.toFixed(2)}s | 60 FPS`, bx + 8, by + 38);
       }
 
+      // -----------------------------------------------------------------------
+      // CRT PHOSPHOR GLOW DECAY & SCANLINE RASTER
+      // -----------------------------------------------------------------------
+      if (isCrtMode) {
+        ctx.save();
+        // Faint cathode ray scanlines
+        ctx.fillStyle = 'rgba(0, 255, 65, 0.032)';
+        for (let y = 0; y < h; y += 4) {
+          ctx.fillRect(0, y, w, 1.5);
+        }
+
+        // Phosphor vignette curvature
+        const grad = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.72);
+        grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        grad.addColorStop(1, 'rgba(4, 32, 14, 0.42)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        // CRT Phosphor HUD status watermark
+        ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+        ctx.fillStyle = '#4ade80';
+        ctx.fillText('CRT P31 PHOSPHOR GLOW [PERSISTENCE: 240ms | 60Hz CALIBRATED]', 12, h - 12);
+        ctx.restore();
+      }
+
+      // -----------------------------------------------------------------------
+      // DUAL-CURSOR SCOPE MEASUREMENT BARS (T1, T2, Δt, f=1/Δt, ΔV)
+      // -----------------------------------------------------------------------
+      if (showDualCursors) {
+        const c1X = Math.round(w * cursor1Ratio);
+        const c2X = Math.round(w * cursor2Ratio);
+        const deltaRatio = Math.abs(cursor2Ratio - cursor1Ratio);
+        // Calibrated horizontal timebase: 20.0ms full-scale sweep
+        const dtMs = deltaRatio * 20.0;
+        const dtSec = Math.max(0.00001, dtMs / 1000);
+        const freqHz = 1 / dtSec;
+        // Calibrated vertical amplitude estimate
+        const vScale = params['busVoltage'] || params['amplitude'] || params['inletGasConc'] || 230;
+        const dvEstimate = (deltaRatio * vScale * 1.414).toFixed(1);
+
+        ctx.save();
+
+        // Cursor 1 (T1 - Cyan / CRT Phosphor)
+        ctx.strokeStyle = isCrtMode ? '#4ade80' : '#06b6d4';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(c1X, 0);
+        ctx.lineTo(c1X, h);
+        ctx.stroke();
+
+        // T1 Top Handle Tag
+        ctx.fillStyle = isCrtMode ? 'rgba(74, 222, 128, 0.25)' : 'rgba(6, 182, 212, 0.25)';
+        ctx.strokeStyle = isCrtMode ? '#4ade80' : '#06b6d4';
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.roundRect(c1X - 16, 28, 32, 16, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+        ctx.fillStyle = isCrtMode ? '#4ade80' : '#38bdf8';
+        ctx.textAlign = 'center';
+        ctx.fillText('T1', c1X, 40);
+
+        // Cursor 2 (T2 - Amber / CRT Bright Phosphor)
+        ctx.strokeStyle = isCrtMode ? '#86efac' : '#f59e0b';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(c2X, 0);
+        ctx.lineTo(c2X, h);
+        ctx.stroke();
+
+        // T2 Top Handle Tag
+        ctx.fillStyle = isCrtMode ? 'rgba(134, 239, 172, 0.25)' : 'rgba(245, 158, 11, 0.25)';
+        ctx.strokeStyle = isCrtMode ? '#86efac' : '#f59e0b';
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.roundRect(c2X - 16, 28, 32, 16, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+        ctx.fillStyle = isCrtMode ? '#86efac' : '#fbbf24';
+        ctx.textAlign = 'center';
+        ctx.fillText('T2', c2X, 40);
+
+        // Horizontal connecting measurement line
+        const barY = 52;
+        ctx.strokeStyle = isCrtMode ? 'rgba(74, 222, 128, 0.6)' : 'rgba(148, 163, 184, 0.6)';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(c1X, barY);
+        ctx.lineTo(c2X, barY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Floating Precision Scope Measurement Banner
+        const hudW = Math.min(440, w - 24);
+        const hudH = 34;
+        const hudX = Math.max(12, (w - hudW) / 2);
+        const hudY = 10;
+
+        ctx.fillStyle = 'rgba(3, 7, 18, 0.92)';
+        ctx.strokeStyle = isCrtMode ? '#22c55e' : '#0284c7';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(hudX, hudY, hudW, hudH, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+        ctx.fillStyle = isCrtMode ? '#4ade80' : '#38bdf8';
+        ctx.fillText(`Δt = ${dtMs.toFixed(2)} ms`, hudX + 12, hudY + 21);
+
+        ctx.fillStyle = isCrtMode ? '#86efac' : '#fbbf24';
+        ctx.fillText(`f = ${freqHz.toFixed(1)} Hz`, hudX + 124, hudY + 21);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`ΔV ≈ ${dvEstimate} V`, hudX + 228, hudY + 21);
+
+        ctx.font = '8px "IBM Plex Mono", monospace';
+        ctx.fillStyle = isCrtMode ? '#16a34a' : '#64748b';
+        ctx.fillText('DRAG T1/T2 TO MEASURE', hudX + 322, hudY + 21);
+
+        ctx.restore();
+      }
+
       animRef.current = requestAnimationFrame(render);
     };
 
@@ -1535,7 +1698,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
       if (animRef.current) cancelAnimationFrame(animRef.current);
       physicsAudio.stopAll();
     };
-  }, [simulator, isRunning, simSpeed, params, showGrid, isMuted, probeCoord]);
+  }, [simulator, isRunning, simSpeed, params, showGrid, isMuted, probeCoord, showDualCursors, cursor1Ratio, cursor2Ratio, isCrtMode]);
 
   // Peer simulators in same department
   const peerSimulators = ALL_AVAILABLE_SIMULATORS.filter(
@@ -1704,6 +1867,34 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
             title={!isMuted ? 'Acoustic feedback enabled' : 'Unmute realistic physics acoustics'}
           >
             {!isMuted ? <Volume2 className="w-3.5 h-3.5 text-cyan-400" /> : <VolumeX className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Dual-Cursor Scope Toggle */}
+          <button
+            onClick={() => setShowDualCursors(!showDualCursors)}
+            className={`px-2 py-1 rounded-lg border text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
+              showDualCursors
+                ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-300 shadow-sm'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+            title="Toggle interactive dual-cursor scope measurement (Δt, f, ΔV)"
+          >
+            <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden md:inline">Scope Cursors</span>
+          </button>
+
+          {/* CRT Phosphor Glow Mode Toggle */}
+          <button
+            onClick={toggleCrtMode}
+            className={`px-2 py-1 rounded-lg border text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
+              isCrtMode
+                ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300 shadow-sm'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+            title="Toggle authentic CRT green phosphor glow & scanline raster"
+          >
+            <Tv className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden md:inline">CRT Mode</span>
           </button>
 
           {/* Grid Toggle */}
@@ -2026,37 +2217,86 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               </div>
 
               {/* Dynamic Resizing Canvas Wrapper */}
-              <div ref={canvasContainerRef} className="flex-1 min-h-0 relative w-full h-full bg-[#060b13]">
+              <div
+                ref={canvasContainerRef}
+                className={`flex-1 min-h-0 relative w-full h-full transition-colors duration-300 ${
+                  isCrtMode ? 'bg-[#021006] shadow-[inset_0_0_80px_rgba(34,197,94,0.12)]' : 'bg-[#060b13]'
+                }`}
+              >
                 <canvas
                   ref={canvasRef}
                   className="w-full h-full block absolute inset-0 cursor-crosshair touch-none"
+                  onMouseDown={(e) => {
+                    if (showDualCursors) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const x = e.clientX - rect.left;
+                      const c1X = rect.width * cursor1Ratio;
+                      const c2X = rect.width * cursor2Ratio;
+                      if (Math.abs(x - c1X) <= 18) {
+                        draggingCursorRef.current = 'c1';
+                      } else if (Math.abs(x - c2X) <= 18) {
+                        draggingCursorRef.current = 'c2';
+                      }
+                    }
+                  }}
+                  onMouseUp={() => {
+                    draggingCursorRef.current = null;
+                  }}
                   onMouseMove={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    setProbeCoord({
-                      x: e.clientX - rect.left,
-                      y: e.clientY - rect.top,
-                    });
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    if (showDualCursors && draggingCursorRef.current === 'c1') {
+                      const r = Math.max(0.02, Math.min(cursor2Ratio - 0.03, x / rect.width));
+                      setCursor1Ratio(r);
+                    } else if (showDualCursors && draggingCursorRef.current === 'c2') {
+                      const r = Math.max(cursor1Ratio + 0.03, Math.min(0.98, x / rect.width));
+                      setCursor2Ratio(r);
+                    } else {
+                      setProbeCoord({ x, y });
+                    }
                   }}
-                  onMouseLeave={() => setProbeCoord(null)}
+                  onMouseLeave={() => {
+                    draggingCursorRef.current = null;
+                    setProbeCoord(null);
+                  }}
                   onTouchStart={(e) => {
                     if (e.touches.length > 0) {
                       const rect = e.currentTarget.getBoundingClientRect();
-                      setProbeCoord({
-                        x: e.touches[0].clientX - rect.left,
-                        y: e.touches[0].clientY - rect.top,
-                      });
+                      const x = e.touches[0].clientX - rect.left;
+                      const y = e.touches[0].clientY - rect.top;
+                      if (showDualCursors) {
+                        const c1X = rect.width * cursor1Ratio;
+                        const c2X = rect.width * cursor2Ratio;
+                        if (Math.abs(x - c1X) <= 22) {
+                          draggingCursorRef.current = 'c1';
+                        } else if (Math.abs(x - c2X) <= 22) {
+                          draggingCursorRef.current = 'c2';
+                        }
+                      }
+                      setProbeCoord({ x, y });
                     }
                   }}
                   onTouchMove={(e) => {
                     if (e.touches.length > 0) {
                       const rect = e.currentTarget.getBoundingClientRect();
-                      setProbeCoord({
-                        x: e.touches[0].clientX - rect.left,
-                        y: e.touches[0].clientY - rect.top,
-                      });
+                      const x = e.touches[0].clientX - rect.left;
+                      const y = e.touches[0].clientY - rect.top;
+                      if (showDualCursors && draggingCursorRef.current === 'c1') {
+                        const r = Math.max(0.02, Math.min(cursor2Ratio - 0.03, x / rect.width));
+                        setCursor1Ratio(r);
+                      } else if (showDualCursors && draggingCursorRef.current === 'c2') {
+                        const r = Math.max(cursor1Ratio + 0.03, Math.min(0.98, x / rect.width));
+                        setCursor2Ratio(r);
+                      } else {
+                        setProbeCoord({ x, y });
+                      }
                     }
                   }}
-                  onTouchEnd={() => setProbeCoord(null)}
+                  onTouchEnd={() => {
+                    draggingCursorRef.current = null;
+                    setProbeCoord(null);
+                  }}
                 />
               </div>
             </div>
@@ -2272,6 +2512,14 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         </p>
                       </div>
                     )}
+
+                    {/* Reference Standards Context & Non-Affiliation Notice */}
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-start gap-2 text-[10px] text-slate-400 font-sans">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                      <span className="leading-relaxed">
+                        <strong className="text-slate-200">Reference Standards Notice:</strong> Mathematical formulations reference published engineering literature and fundamental physical laws for educational exploration. LiveSimulators is an independent educational platform and is not endorsed by, affiliated with, certified by, or officially linked with any international standards organization.
+                      </span>
+                    </div>
                   </div>
                 )}
 

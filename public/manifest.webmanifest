@@ -1,0 +1,19 @@
+{
+  "name": "LiveSimulators - Interactive Engineering Simulations",
+  "short_name": "LiveSimulators",
+  "description": "High-accuracy, multi-module computational platforms and engineering virtual laboratories.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050811",
+  "theme_color": "#050811",
+  "orientation": "any",
+  "categories": ["education", "engineering", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/og-default.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

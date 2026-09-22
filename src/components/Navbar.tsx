@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Activity, 
   Search, 
@@ -9,10 +9,13 @@ import {
   ChevronRight,
   ChevronDown,
   ExternalLink,
-  FlaskConical
+  FlaskConical,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { LABS, trackLabLaunch } from '../config/labs';
 import { navigateTo } from '../utils/routes';
+import { soundEngine } from '../utils/audio';
 
 interface NavbarProps {
   onOpenSearch: () => void;
@@ -33,6 +36,26 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [labsDropdownOpen, setLabsDropdownOpen] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(() => soundEngine.getMuted());
+
+  useEffect(() => {
+    const handleAudioChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ isMuted: boolean }>;
+      if (customEvent.detail) {
+        setIsAudioMuted(customEvent.detail.isMuted);
+      }
+    };
+    window.addEventListener('livesimulators:audio_change', handleAudioChange);
+    return () => window.removeEventListener('livesimulators:audio_change', handleAudioChange);
+  }, []);
+
+  const handleToggleAudio = () => {
+    const nextMuted = soundEngine.toggleMute();
+    setIsAudioMuted(nextMuted);
+    if (!nextMuted) {
+      soundEngine.playRelayClick();
+    }
+  };
 
   const handleGoHome = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
@@ -243,9 +266,31 @@ export const Navbar: React.FC<NavbarProps> = ({
           </a>
         </nav>
 
-        {/* Right Side: Quick Search & Primary Navigation CTA */}
+        {/* Right Side: Quick Search, Audio FX Toggle & Primary Navigation CTA */}
         <div className="flex items-center gap-2 sm:gap-3">
           
+          {/* Audio Synthesizer Toggle */}
+          <button
+            onClick={handleToggleAudio}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all text-xs font-mono group ${
+              isAudioMuted
+                ? 'border-slate-800 bg-slate-900/60 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                : 'border-cyan-500/50 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+            }`}
+            title={isAudioMuted ? 'Unmute physics sound effects' : 'Mute physics sound effects'}
+            aria-label={isAudioMuted ? 'Unmute audio' : 'Mute audio'}
+            id="nav-audio-toggle-btn"
+          >
+            {isAudioMuted ? (
+              <VolumeX className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-400" />
+            ) : (
+              <Volume2 className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            )}
+            <span className="hidden md:inline text-[11px] font-bold">
+              {isAudioMuted ? 'FX OFF' : 'FX ON'}
+            </span>
+          </button>
+
           {/* Quick Search Button */}
           <button
             onClick={onOpenSearch}

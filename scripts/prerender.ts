@@ -706,7 +706,7 @@ ${sitemapEntries}
   console.log('🤖 Generated llms.txt & llms-full.txt for AI Search & LLM Discovery');
 
   // Copy static assets from public to dist
-  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt'];
+  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt', 'manifest.webmanifest', 'sw.js'];
   for (const asset of assetsToCopy) {
     const srcFile = path.join(publicDir, asset);
     if (fs.existsSync(srcFile)) {

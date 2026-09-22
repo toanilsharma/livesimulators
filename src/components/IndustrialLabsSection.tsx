@@ -15,14 +15,64 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
-  Camera
+  Camera,
+  AlertTriangle
 } from 'lucide-react';
 import { LABS, trackLabLaunch } from '../config/labs';
 import { navigateTo } from '../utils/routes';
 import { IndustrialLabAnimatedSLD } from './IndustrialLabAnimatedSLD';
+import { soundEngine } from '../utils/audio';
+
+const FAULT_CONFIG: Record<string, { trigger: string; reset: string; icon: string }> = {
+  'safeops-ups': {
+    trigger: 'Simulate Grid Loss',
+    reset: 'Grid Restored (Reset)',
+    icon: '⚡',
+  },
+  'power-systems-lab': {
+    trigger: 'Inject 3Φ Bus Fault',
+    reset: 'Clear & Reset CB-52',
+    icon: '💥',
+  },
+  'power-electronics-lab': {
+    trigger: 'Trigger Shoot-Through',
+    reset: 'Reset Gate Drives',
+    icon: '⚠️',
+  },
+  'electrolive-safety': {
+    trigger: 'Simulate Enclosure Leakage',
+    reset: 'Reset ELCB (Safe)',
+    icon: '🛡️',
+  },
+};
 
 export const IndustrialLabsSection: React.FC = () => {
   const [viewModes, setViewModes] = useState<Record<string, 'sld' | 'photo'>>({});
+  const [faultStates, setFaultStates] = useState<Record<string, boolean>>({});
+
+  const handleToggleFault = (labId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const willBeFault = !faultStates[labId];
+    setFaultStates((prev) => ({ ...prev, [labId]: willBeFault }));
+
+    if (willBeFault) {
+      if (labId === 'power-systems-lab') {
+        soundEngine.playArcFlash(0.4);
+        setTimeout(() => soundEngine.playBreakerTrip(0.45), 90);
+      } else if (labId === 'safeops-ups') {
+        soundEngine.playAlarmChirp(0.35);
+        setTimeout(() => soundEngine.playRelayClick(0.3), 120);
+      } else if (labId === 'power-electronics-lab') {
+        soundEngine.playRelayClick(0.3);
+        soundEngine.playAlarmChirp(0.35);
+      } else {
+        soundEngine.playArcFlash(0.35);
+        setTimeout(() => soundEngine.playBreakerTrip(0.4), 100);
+      }
+    } else {
+      soundEngine.playRelayClick(0.35);
+    }
+  };
 
   const handleScroll = (containerId: string, direction: 'left' | 'right') => {
     const el = document.getElementById(containerId);
@@ -135,8 +185,8 @@ export const IndustrialLabsSection: React.FC = () => {
               {/* Lab Media Container: Dynamic Animated SLD or Photo Toggle */}
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-950 border-b border-slate-800/80">
                 
-                {/* View Mode Toggle Pill (Top Left) */}
-                <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1 p-0.5 rounded-lg bg-slate-950/90 border border-slate-700/80 backdrop-blur-md shadow-lg">
+                {/* View Mode Toggle Pill & Interactive Fault Trigger (Top Left) */}
+                <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1.5 p-0.5 rounded-lg bg-slate-950/90 border border-slate-700/80 backdrop-blur-md shadow-lg">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -168,12 +218,33 @@ export const IndustrialLabsSection: React.FC = () => {
                     <Camera className="w-3 h-3 text-slate-400" />
                     <span>PHOTO</span>
                   </button>
+
+                  {/* Interactive Card Fault Injector Button (When in SLD mode) */}
+                  {(viewModes[lab.id] || 'sld') === 'sld' && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleFault(lab.id, e)}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-all shadow-sm ${
+                        faultStates[lab.id]
+                          ? 'bg-rose-600 text-white border border-rose-400 animate-pulse shadow-[0_0_12px_rgba(225,29,72,0.6)]'
+                          : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 hover:border-amber-400'
+                      }`}
+                      title={faultStates[lab.id] ? 'Click to reset back to normal' : 'Click to inject a live physics fault with realistic audio'}
+                    >
+                      <span>{faultStates[lab.id] ? '↺' : FAULT_CONFIG[lab.id]?.icon || '⚡'}</span>
+                      <span className="font-semibold">{faultStates[lab.id] ? 'RESET' : FAULT_CONFIG[lab.id]?.trigger || 'FAULT'}</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Render Animated SLD (Default) or Photo */}
                 {(viewModes[lab.id] || 'sld') === 'sld' ? (
                   <div className="w-full h-full relative cursor-crosshair">
-                    <IndustrialLabAnimatedSLD labId={lab.id} accentColor={lab.accent} />
+                    <IndustrialLabAnimatedSLD 
+                      labId={lab.id} 
+                      accentColor={lab.accent} 
+                      isFaultActive={!!faultStates[lab.id]} 
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60 pointer-events-none" />
                   </div>
                 ) : (
