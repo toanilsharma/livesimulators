@@ -1,11 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import katex from 'katex';
 import { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } from '../src/data/simulators';
 import { LABS } from '../src/config/labs';
 import { AppRoute, DisciplineId, SimulatorItem } from '../src/types';
 import { getSeoMetadata } from '../src/utils/seo';
 import { routeToPath, SITE_URL } from '../src/utils/routes';
+import { getEngineeringTheory } from '../src/utils/engineeringTheory';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -246,6 +248,7 @@ function renderContentForRoute(route: AppRoute): string {
     case 'simulator': {
       const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || ALL_AVAILABLE_SIMULATORS[0];
       const dept = DISCIPLINES.find((d) => d.id === sim.discipline);
+      const theory = getEngineeringTheory(sim);
 
       const paramsHtml = sim.parameters.map(
         (p) => `
@@ -258,8 +261,73 @@ function renderContentForRoute(route: AppRoute): string {
       `
       ).join('');
 
+      // Formulate Accessible KaTeX / MathML Equations
+      const equationsHtml = theory.governingEquations.map((eq) => {
+        let katexHtml = '';
+        try {
+          katexHtml = katex.renderToString(eq.latex, { displayMode: true, throwOnError: false });
+        } catch {
+          katexHtml = `<div style="font-family:monospace; color:#38bdf8;">${escapeHtml(eq.latex)}</div>`;
+        }
+
+        const varListHtml = eq.variables && eq.variables.length > 0
+          ? `
+          <div style="margin-top:0.75rem; font-size:0.8rem; font-family:monospace; color:#94a3b8;">
+            <div style="font-weight:bold; color:#cbd5e1; margin-bottom:0.25rem;">Variable Definitions:</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:0.4rem;">
+              ${eq.variables.map(v => `<div style="padding:0.35rem 0.5rem; background:#0f172a; border-radius:0.25rem; border:1px solid #1e293b;"><strong style="color:#38bdf8;">${escapeHtml(v.symbol)}</strong>: ${escapeHtml(v.name)} ${v.unit ? `[${escapeHtml(v.unit)}]` : ''} — <span style="color:#64748b;">${escapeHtml(v.description)}</span></div>`).join('')}
+            </div>
+          </div>`
+          : '';
+
+        return `
+        <div style="margin-bottom:1.25rem; padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem;">
+          <h3 style="font-size:1rem; font-weight:bold; color:#38bdf8; font-family:monospace; margin-bottom:0.5rem;">${escapeHtml(eq.title)}</h3>
+          <div style="margin:0.75rem 0; overflow-x:auto;">${katexHtml}</div>
+          <p style="color:#cbd5e1; font-size:0.875rem; line-height:1.6; margin-bottom:0.5rem;">${escapeHtml(eq.description)}</p>
+          ${varListHtml}
+        </div>
+        `;
+      }).join('');
+
+      // Assumptions & Limitations HTML
+      const assumptionsHtml = theory.assumptions.map(a => `<li style="margin-bottom:0.5rem;"><strong style="color:#fbbf24;">•</strong> ${escapeHtml(a)}</li>`).join('');
+      const limitationsHtml = theory.limitations.map(l => `<li style="margin-bottom:0.5rem;"><strong style="color:#f43f5e;">•</strong> ${escapeHtml(l)}</li>`).join('');
+
+      // Step-by-Step Calculator Example HTML
+      const givenInputsHtml = theory.stepByStepExample.givenInputs.map(inp => `
+        <div style="padding:0.5rem; background:#0f172a; border:1px solid #1e293b; border-radius:0.375rem; font-family:monospace; font-size:0.8rem;">
+          <div style="color:#94a3b8; font-size:0.75rem;">${escapeHtml(inp.parameter)}</div>
+          <div style="color:#38bdf8; font-weight:bold;">${escapeHtml(inp.symbol)} = ${escapeHtml(inp.value)}</div>
+        </div>
+      `).join('');
+
+      const stepsHtml = theory.stepByStepExample.steps.map(st => {
+        let stepKatex = '';
+        try {
+          stepKatex = katex.renderToString(st.formulaLatex, { displayMode: true, throwOnError: false });
+        } catch {
+          stepKatex = `<div style="font-family:monospace; color:#38bdf8;">${escapeHtml(st.formulaLatex)}</div>`;
+        }
+        return `
+        <div style="margin-bottom:1rem; padding:1rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.5rem;">
+            <h4 style="font-size:0.95rem; font-weight:bold; color:#10b981; font-family:monospace; margin:0;">Step ${st.stepNumber}: ${escapeHtml(st.stepTitle)}</h4>
+            <span style="font-size:0.75rem; font-family:monospace; color:#64748b; background:#0f172a; padding:0.2rem 0.5rem; border-radius:0.25rem;">Step ${st.stepNumber} of ${theory.stepByStepExample.steps.length}</span>
+          </div>
+          <div style="margin:0.5rem 0; overflow-x:auto;">${stepKatex}</div>
+          <div style="padding:0.6rem; background:#070d19; border-radius:0.375rem; font-family:monospace; font-size:0.8rem; color:#cbd5e1; margin-bottom:0.5rem;">
+            <div style="color:#64748b; font-size:0.7rem; text-transform:uppercase;">Numerical Substitution:</div>
+            <div style="color:#f8fafc; margin:0.25rem 0;">${escapeHtml(st.substitution)}</div>
+            <div style="color:#34d399; font-weight:bold;">Result: ${escapeHtml(st.stepResult)}</div>
+          </div>
+          <p style="font-size:0.8rem; color:#94a3b8; line-height:1.5; margin:0;">${escapeHtml(st.explanation)}</p>
+        </div>
+        `;
+      }).join('');
+
       return `
-      <article style="max-width:72rem; margin:0 auto; padding:2rem 1.5rem 4rem;">
+      <article class="engineering-theory-formulas" itemscope itemtype="https://schema.org/TechArticle" style="max-width:72rem; margin:0 auto; padding:2rem 1.5rem 4rem;">
         <nav style="font-family:monospace; font-size:0.8rem; color:#64748b; margin-bottom:1.5rem;">
           <a href="/" style="color:#38bdf8; text-decoration:none;">Home</a> / 
           <a href="/department/${dept ? dept.id : 'electrical'}" style="color:#38bdf8; text-decoration:none;">${escapeHtml(dept ? dept.name : sim.disciplineName)}</a> / 
@@ -278,109 +346,161 @@ function renderContentForRoute(route: AppRoute): string {
         </header>
 
         <!-- Interactive 60 FPS Physics Canvas Stage (Initial Payload Dimensions prevent CLS) -->
-        <div class="simulator-canvas-stage" style="width:100%; aspect-ratio:16/9; max-height:540px; background:#060b13; border:1px solid #1e293b; border-radius:1rem; position:relative; overflow:hidden; margin-bottom:2rem;">
+        <div class="simulator-canvas-stage" style="width:100%; aspect-ratio:16/9; max-height:540px; background:#060b13; border:1px solid #1e293b; border-radius:1rem; position:relative; overflow:hidden; margin-bottom:2.5rem;">
           <canvas width="1200" height="675" style="width:100%; height:100%; aspect-ratio:16/9; display:block; background:#060b13;"></canvas>
           <div style="position:absolute; bottom:1rem; left:1rem; font-family:monospace; font-size:0.75rem; color:#38bdf8; background:rgba(3,7,18,0.85); padding:0.35rem 0.75rem; border-radius:0.375rem; border:1px solid #1e293b;">
             FLOAT64 NUMERICAL RK4 SOLVER ACTIVE • 60 FPS CANVAS
           </div>
         </div>
 
-        <!-- Governing Physical Law & Equations (Native HTML <details> & <summary> for SEO & LLM discovery) -->
-        <details open style="margin-bottom:2rem; padding:1.25rem; background:#0f172a; border:1px solid #1e293b; border-radius:1rem;">
-          <summary style="font-size:1.25rem; font-weight:bold; color:#38bdf8; cursor:pointer; margin-bottom:0.75rem; user-select:none;">
-            📐 Governing Physical Law &amp; Mathematical Formulation
+        <!-- REUSABLE ENGINEERING THEORY, GOVERNING FORMULAS & STEP-BY-STEP CALCULATOR GUIDE -->
+        <details open class="theory-formulas-accordion" style="margin-bottom:2.5rem; padding:1.5rem; background:#070d19; border:1px solid #0284c7; border-radius:1rem; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);">
+          <summary style="font-size:1.35rem; font-weight:900; color:#38bdf8; cursor:pointer; margin-bottom:1.25rem; user-select:none; font-family:monospace;">
+            📘 Engineering Theory, Governing Formulas &amp; Step-by-Step Calculation Guide
           </summary>
-          <div style="font-family:monospace; font-size:1.15rem; color:#38bdf8; margin:0.75rem 0; padding:0.75rem; background:#030712; border-radius:0.5rem; border:1px solid #1e293b;">${escapeHtml(sim.governingEquation)}</div>
-          <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.6; margin-bottom:0.75rem;">${escapeHtml(sim.equationDescription)}</p>
-          <div style="font-size:0.8rem; color:#94a3b8; font-family:monospace;">Physical Law: <strong>${escapeHtml(sim.physicalLaw)}</strong> | Reference: <strong>${escapeHtml(sim.standardReference || 'IEEE / ASME Standard Reference')}</strong></div>
-        </details>
 
-        <!-- Engineering Theory & Analytical Proof (Native HTML <details> & <summary>) -->
-        <details open style="margin-bottom:2rem; padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:1rem;">
-          <summary style="font-size:1.25rem; font-weight:bold; color:#f8fafc; cursor:pointer; margin-bottom:0.75rem; user-select:none;">
-            🔬 Engineering Theory &amp; Analytical Derivation
-          </summary>
-          <p style="color:#cbd5e1; font-size:0.95rem; line-height:1.7; margin-bottom:1rem;">${escapeHtml(sim.description)}</p>
-          ${sim.analyticalProof ? `
-          <div style="margin-bottom:1rem; padding:1rem; background:#0f172a; border-radius:0.5rem; border:1px solid #1e293b;">
-            <div style="font-size:0.85rem; font-weight:bold; color:#38bdf8; margin-bottom:0.5rem; font-family:monospace;">ANALYTICAL PROOF &amp; FIRST-PRINCIPLES DERIVATION:</div>
-            <p style="color:#cbd5e1; font-size:0.875rem; line-height:1.6;">${escapeHtml(sim.analyticalProof)}</p>
-          </div>` : ''}
-          ${sim.validationTest ? `
-          <div style="margin-bottom:1rem; padding:1rem; background:#0f172a; border-radius:0.5rem; border:1px solid #1e293b;">
-            <div style="font-size:0.85rem; font-weight:bold; color:#10b981; margin-bottom:0.5rem; font-family:monospace;">NUMERICAL VALIDATION BENCHMARK (ERROR &lt; 0.2%):</div>
-            <p style="color:#cbd5e1; font-size:0.875rem; line-height:1.6; font-family:monospace;">${escapeHtml(sim.validationTest)}</p>
-          </div>` : ''}
-          ${sim.fieldInsights ? `
-          <div style="padding:1rem; background:#0f172a; border-radius:0.5rem; border:1px solid #1e293b;">
-            <div style="font-size:0.85rem; font-weight:bold; color:#f59e0b; margin-bottom:0.5rem; font-family:monospace;">INDUSTRIAL FIELD ENGINEERING RULES &amp; FAILURE MODES:</div>
-            <p style="color:#cbd5e1; font-size:0.875rem; line-height:1.6;">${escapeHtml(sim.fieldInsights)}</p>
-          </div>` : ''}
-        </details>
+          <div style="margin-top:1.5rem; space-y:2rem;">
+            <!-- 1. Governing Equations & MathML / KaTeX Mathematical Formulation -->
+            <section style="margin-bottom:2rem;">
+              <h2 style="font-size:1.35rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:1rem; border-bottom:1px solid #1e293b; padding-bottom:0.5rem;">
+                <span style="color:#38bdf8;">1.</span> Governing Equations &amp; Mathematical Formulation
+              </h2>
+              ${equationsHtml}
 
-        <!-- Referenced Engineering Standards & Verification (Native HTML <details> & <summary>) -->
-        <details open style="margin-bottom:2rem; padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:1rem;">
-          <summary style="font-size:1.25rem; font-weight:bold; color:#10b981; cursor:pointer; margin-bottom:0.75rem; user-select:none;">
-            📜 Referenced Engineering Standards &amp; Verification
-          </summary>
-          <div style="padding:1rem; background:#064e3b20; border:1px solid #04785760; border-radius:0.5rem; margin-bottom:1rem;">
-            <div style="font-size:0.9rem; font-weight:bold; color:#34d399; font-family:monospace;">
-              STANDARD: ${escapeHtml(sim.standardReference || sim.badge)}
-            </div>
-            <div style="font-size:0.8rem; color:#94a3b8; margin-top:0.25rem;">
-              Referenced Body: ${escapeHtml(sim.standardBody || 'ISO / IEC / IEEE / AISC Literature')}
-            </div>
+              ${sim.analyticalProof ? `
+              <div style="margin-top:1rem; padding:1rem; background:#0f172a; border-radius:0.5rem; border:1px solid #1e293b;">
+                <div style="font-size:0.85rem; font-weight:bold; color:#38bdf8; margin-bottom:0.5rem; font-family:monospace;">ANALYTICAL PROOF &amp; FIRST-PRINCIPLES DERIVATION:</div>
+                <p style="color:#cbd5e1; font-size:0.875rem; line-height:1.6; margin:0;">${escapeHtml(sim.analyticalProof)}</p>
+              </div>` : ''}
+            </section>
+
+            <!-- 2. Engineering Assumptions & Operational Limitations -->
+            <section style="margin-bottom:2rem;">
+              <h2 style="font-size:1.35rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:1rem; border-bottom:1px solid #1e293b; padding-bottom:0.5rem;">
+                <span style="color:#fbbf24;">2.</span> Engineering Assumptions &amp; Operational Limitations
+              </h2>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1rem;">
+                <div style="padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem;">
+                  <h3 style="font-size:0.95rem; font-weight:bold; color:#fbbf24; font-family:monospace; margin-bottom:0.75rem;">Physical &amp; Numerical Assumptions</h3>
+                  <ul style="list-style:none; padding-left:0; margin:0; font-size:0.85rem; color:#cbd5e1; line-height:1.6;">
+                    ${assumptionsHtml}
+                  </ul>
+                </div>
+                <div style="padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem;">
+                  <h3 style="font-size:0.95rem; font-weight:bold; color:#f43f5e; font-family:monospace; margin-bottom:0.75rem;">Operational Boundaries &amp; Limitations</h3>
+                  <ul style="list-style:none; padding-left:0; margin:0; font-size:0.85rem; color:#cbd5e1; line-height:1.6;">
+                    ${limitationsHtml}
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <!-- 3. Step-by-Step Calculation Example & Calculator Guide -->
+            <section style="margin-bottom:2rem;">
+              <h2 style="font-size:1.35rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:1rem; border-bottom:1px solid #1e293b; padding-bottom:0.5rem;">
+                <span style="color:#34d399;">3.</span> Step-by-Step Calculation Example (${escapeHtml(sim.title)} Calculator)
+              </h2>
+              <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">
+                ${escapeHtml(theory.stepByStepExample.summary)}
+              </p>
+
+              <!-- Given Nominal Inputs -->
+              <div style="margin-bottom:1.25rem; padding:1rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem;">
+                <div style="font-size:0.8rem; font-weight:bold; font-family:monospace; color:#94a3b8; text-transform:uppercase; margin-bottom:0.5rem;">
+                  Given Nominal Input Parameters:
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem;">
+                  ${givenInputsHtml}
+                </div>
+              </div>
+
+              <!-- Calculation Steps -->
+              <div>
+                ${stepsHtml}
+              </div>
+
+              <!-- Final Solved Output Result Callout -->
+              <div style="margin-top:1rem; padding:1.25rem; background:linear-gradient(135deg, rgba(6,78,59,0.3) 0%, rgba(11,19,36,0.9) 100%); border:1px solid #059669; border-radius:0.75rem;">
+                <div style="font-size:0.8rem; font-weight:bold; font-family:monospace; color:#34d399; text-transform:uppercase;">
+                  Calculated Output: ${escapeHtml(theory.stepByStepExample.finalAnswer.metric)}
+                </div>
+                <div style="font-size:1.5rem; font-weight:900; font-family:monospace; color:#ffffff; margin:0.35rem 0;">
+                  ${escapeHtml(theory.stepByStepExample.finalAnswer.value)}
+                </div>
+                <p style="color:#cbd5e1; font-size:0.85rem; line-height:1.6; margin:0;">
+                  ${escapeHtml(theory.stepByStepExample.finalAnswer.physicalMeaning)}
+                </p>
+                ${theory.stepByStepExample.benchmarkVerification ? `
+                <div style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid rgba(5,150,105,0.3); font-size:0.8rem; font-family:monospace; color:#34d399;">
+                  ${escapeHtml(theory.stepByStepExample.benchmarkVerification)}
+                </div>` : ''}
+              </div>
+            </section>
+
+            <!-- 4. Referenced Engineering Standards & Verification -->
+            <section style="margin-bottom:2rem;">
+              <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
+                <span style="color:#06b6d4;">4.</span> Referenced Engineering Standards &amp; Verification
+              </h2>
+              <div style="padding:1rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem;">
+                <div style="font-size:0.9rem; font-weight:bold; color:#34d399; font-family:monospace;">
+                  STANDARD: ${escapeHtml(sim.standardReference || sim.badge)}
+                </div>
+                <div style="font-size:0.8rem; color:#94a3b8; margin-top:0.25rem;">
+                  Referenced Body: ${escapeHtml(sim.standardBody || 'ISO / IEC / IEEE / AISC Literature')}
+                </div>
+                ${sim.colorStandardRule ? `
+                <div style="margin-top:0.5rem; font-family:monospace; font-size:0.8rem; color:#cbd5e1;">
+                  Color Rule: ${escapeHtml(sim.colorStandardRule)}
+                </div>` : ''}
+              </div>
+            </section>
+
+            <!-- 5. Adjustable System Parameters & Dynamic Range -->
+            <section style="margin-bottom:2rem;">
+              <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
+                <span style="color:#cbd5e1;">5.</span> Adjustable System Parameters &amp; Dynamic Range
+              </h2>
+              <table style="width:100%; border-collapse:collapse; text-align:left; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem; overflow:hidden;">
+                <thead style="background:#0f172a; color:#f8fafc; font-size:0.8rem; font-family:monospace;">
+                  <tr>
+                    <th style="padding:0.75rem; border-bottom:1px solid #1e293b;">Parameter</th>
+                    <th style="padding:0.75rem; border-bottom:1px solid #1e293b;">Nominal Value</th>
+                    <th style="padding:0.75rem; border-bottom:1px solid #1e293b;">Dynamic Range</th>
+                    <th style="padding:0.75rem; border-bottom:1px solid #1e293b;">Physical Role</th>
+                  </tr>
+                </thead>
+                <tbody>${paramsHtml}</tbody>
+              </table>
+            </section>
+
+            ${sim.courseMapping ? `
+            <!-- 6. University Syllabus & Curriculum Mapping -->
+            <section style="margin-bottom:2rem;">
+              <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
+                <span style="color:#a855f7;">6.</span> University Syllabus &amp; Curriculum Mapping
+              </h2>
+              <div style="padding:1rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem;">
+                <p style="color:#38bdf8; font-family:monospace; font-size:0.9rem; margin:0 0 0.5rem 0;">${escapeHtml(sim.courseMapping)}</p>
+                ${sim.textbookReferences ? `<p style="color:#94a3b8; font-size:0.85rem; margin:0;">Standard References: ${escapeHtml(sim.textbookReferences)}</p>` : ''}
+              </div>
+            </section>` : ''}
+
+            ${sim.faqs && sim.faqs.length > 0 ? `
+            <!-- 7. Frequently Asked Technical Questions -->
+            <section style="margin-bottom:1rem;">
+              <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
+                <span style="color:#38bdf8;">7.</span> Frequently Asked Technical Questions
+              </h2>
+              ${sim.faqs.map(f => `
+                <div style="margin-bottom:1rem; padding:1rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem;">
+                  <h3 style="font-size:0.95rem; font-weight:bold; color:#f8fafc; margin-bottom:0.4rem;">${escapeHtml(f.question)}</h3>
+                  <p style="font-size:0.85rem; color:#94a3b8; line-height:1.6; margin:0;">${escapeHtml(f.answer)}</p>
+                </div>
+              `).join('')}
+            </section>` : ''}
           </div>
-          ${sim.colorStandardRule ? `
-          <div style="padding:0.75rem; background:#0f172a; border-radius:0.5rem; border:1px solid #1e293b; font-family:monospace; font-size:0.8rem; color:#cbd5e1; margin-bottom:0.75rem;">
-            Waveform &amp; Color Convention: ${escapeHtml(sim.colorStandardRule)}
-          </div>` : ''}
-          <p style="font-size:0.75rem; color:#64748b; line-height:1.5;">
-            Standards Notice: Formulas and physical constants reference published scientific literature and international consensus standards solely for academic study. LiveSimulators is an independent educational platform.
-          </p>
         </details>
-
-        <!-- Adjustable System Parameters (Native HTML <details> & <summary>) -->
-        <details open style="margin-bottom:2rem; padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:1rem;">
-          <summary style="font-size:1.25rem; font-weight:bold; color:#ffffff; cursor:pointer; margin-bottom:1rem; user-select:none;">
-            ⚙️ Adjustable System Parameters &amp; Dynamic Range
-          </summary>
-          <table style="width:100%; border-collapse:collapse; text-align:left; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem; overflow:hidden;">
-            <thead style="background:#0f172a; color:#f8fafc; font-size:0.8rem; font-family:monospace;">
-              <tr>
-                <th style="padding:0.75rem; border-bottom:1px solid #1e293b;">Parameter</th>
-                <th style="padding:0.75rem; border-bottom:1px solid #1e293b;">Nominal Value</th>
-                <th style="padding:0.75rem; border-bottom:1px solid #1e293b;">Dynamic Range</th>
-                <th style="padding:0.75rem; border-bottom:1px solid #1e293b;">Physical Role</th>
-              </tr>
-            </thead>
-            <tbody>${paramsHtml}</tbody>
-          </table>
-        </details>
-
-        ${sim.courseMapping ? `
-        <!-- University Syllabus & Textbooks (Native HTML <details> & <summary>) -->
-        <details style="margin-bottom:2rem; padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:1rem;">
-          <summary style="font-size:1.25rem; font-weight:bold; color:#a855f7; cursor:pointer; margin-bottom:0.75rem; user-select:none;">
-            🎓 University Syllabus &amp; Curriculum Mapping
-          </summary>
-          <p style="color:#38bdf8; font-family:monospace; font-size:0.9rem; margin-bottom:0.5rem;">${escapeHtml(sim.courseMapping)}</p>
-          ${sim.textbookReferences ? `<p style="color:#94a3b8; font-size:0.85rem;">Standard References: ${escapeHtml(sim.textbookReferences)}</p>` : ''}
-        </details>` : ''}
-
-        ${sim.faqs && sim.faqs.length > 0 ? `
-        <!-- Frequently Asked Technical Questions (Native HTML <details> & <summary>) -->
-        <details style="margin-bottom:2rem; padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:1rem;">
-          <summary style="font-size:1.25rem; font-weight:bold; color:#ffffff; cursor:pointer; margin-bottom:1rem; user-select:none;">
-            ❓ Frequently Asked Technical Questions
-          </summary>
-          ${sim.faqs.map(f => `
-            <div style="margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid #1e293b;">
-              <h3 style="font-size:1rem; font-weight:bold; color:#f8fafc; margin-bottom:0.4rem;">${escapeHtml(f.question)}</h3>
-              <p style="font-size:0.875rem; color:#94a3b8; line-height:1.6;">${escapeHtml(f.answer)}</p>
-            </div>
-          `).join('')}
-        </details>` : ''}
       </article>
       `;
     }

@@ -51,6 +51,7 @@ import { renderDistillationColumn, renderHeatExchanger, renderGasAbsorption, ren
 import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel, renderPhotoelectric } from './semiconductor/renderers';
 import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare } from '../utils/analytics';
 import { WhyItHappenedCard } from './WhyItHappenedCard';
+import { EngineeringTheoryFormulas } from './EngineeringTheoryFormulas';
 import { MathWorkerBridge, SimulationMetric } from '../utils/mathWorkerBridge';
 
 interface DedicatedSimulatorPageProps {
@@ -2891,6 +2892,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               parameters={params}
               onApplyParameters={handleApplyPreset}
             />
+
+            {/* Reusable Engineering Theory & Formulas Component */}
+            <EngineeringTheoryFormulas simulator={simulator} />
 
             {/* Lower: Telemetry & Analysis Console with Native HTML <details> and <summary> for SEO & LLM discovery */}
             <div

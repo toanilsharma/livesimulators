@@ -88,6 +88,26 @@ export interface SimulatorItem {
   courseMapping?: string;
   textbookReferences?: string;
   faqs?: Array<{ question: string; answer: string }>;
+  assumptions?: string[];
+  calculationExample?: CalculationExample;
+}
+
+export interface CalculationStep {
+  stepNumber: number;
+  stepTitle: string;
+  formulaLatex: string;
+  substitution: string;
+  stepResult: string;
+  explanation: string;
+}
+
+export interface CalculationExample {
+  title: string;
+  summary: string;
+  givenInputs: Array<{ parameter: string; symbol: string; value: string }>;
+  steps: CalculationStep[];
+  finalAnswer: { metric: string; symbol: string; value: string; physicalMeaning: string };
+  benchmarkVerification?: string;
 }
 
 export interface DisciplineInfo {
