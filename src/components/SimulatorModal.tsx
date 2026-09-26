@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { SimulatorItem } from '../types';
 import { MathView } from './MathView';
+import { MathWorkerBridge } from '../utils/mathWorkerBridge';
 
 interface SimulatorModalProps {
   simulator: SimulatorItem | null;
@@ -48,6 +49,28 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
   const animRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
 
+  // Web Worker Physics Engine Bridge for RK4 Integration & Non-Blocking Sliders
+  const mathWorkerRef = useRef<MathWorkerBridge | null>(null);
+  const latestWorkerStateRef = useRef<Record<string, any>>({});
+
+  useEffect(() => {
+    const bridge = new MathWorkerBridge();
+    mathWorkerRef.current = bridge;
+    bridge.setParams(simulator.type, params, timeRef.current);
+
+    const unsubscribe = bridge.subscribe((data) => {
+      if (data.simulatorType === simulator.type) {
+        latestWorkerStateRef.current = data.state;
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      bridge.terminate();
+      mathWorkerRef.current = null;
+    };
+  }, [simulator.id, simulator.type]);
+
   // Update params if simulator changes
   useEffect(() => {
     const initial: Record<string, number> = {};
@@ -58,13 +81,21 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
     timeRef.current = 0;
   }, [simulator]);
 
-  // Handle parameter changes
+  // Handle parameter changes via postMessage to Web Worker
   const handleParamChange = (id: string, value: number) => {
-    setParams(prev => ({ ...prev, [id]: value }));
+    const nextParams = { ...params, [id]: value };
+    setParams(nextParams);
+    if (mathWorkerRef.current) {
+      mathWorkerRef.current.setParams(simulator.type, nextParams, timeRef.current);
+    }
   };
 
   const handleApplyPreset = (presetValues: Record<string, number>) => {
-    setParams(prev => ({ ...prev, ...presetValues }));
+    const nextParams = { ...params, ...presetValues };
+    setParams(nextParams);
+    if (mathWorkerRef.current) {
+      mathWorkerRef.current.setParams(simulator.type, nextParams, timeRef.current);
+    }
   };
 
   // Real-time canvas rendering loop
@@ -82,6 +113,9 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
 
       if (isRunning) {
         timeRef.current += dt * 3.0 * timebaseScale;
+        if (mathWorkerRef.current) {
+          mathWorkerRef.current.step(simulator.type, params, dt * 3.0 * timebaseScale, timeRef.current);
+        }
       }
       const t = timeRef.current;
 
@@ -935,7 +969,7 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
         <div className="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Integrator: RK4 60FPS</span>
+            <span>Integrator: Web Worker RK4 60FPS</span>
           </div>
 
           <div className="flex items-center gap-3">

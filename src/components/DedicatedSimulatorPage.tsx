@@ -51,6 +51,7 @@ import { renderDistillationColumn, renderHeatExchanger, renderGasAbsorption } fr
 import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel } from './semiconductor/renderers';
 import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare } from '../utils/analytics';
 import { WhyItHappenedCard } from './WhyItHappenedCard';
+import { MathWorkerBridge, SimulationMetric } from '../utils/mathWorkerBridge';
 
 interface DedicatedSimulatorPageProps {
   simulator: SimulatorItem;
@@ -164,6 +165,41 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const animRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
 
+  // Web Worker Physics Engine Bridge for RK4 Integration & Non-Blocking Sliders
+  const mathWorkerRef = useRef<MathWorkerBridge | null>(null);
+  const latestWorkerStateRef = useRef<Record<string, any>>({});
+  const [workerMetrics, setWorkerMetrics] = useState<SimulationMetric[]>([]);
+  const metricsFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const bridge = new MathWorkerBridge();
+    mathWorkerRef.current = bridge;
+    bridge.setParams(simulator.type, params, timeRef.current);
+
+    const unsubscribe = bridge.subscribe((data) => {
+      if (data.simulatorType === simulator.type) {
+        latestWorkerStateRef.current = data.state;
+        if (data.metrics && data.metrics.length > 0) {
+          if (metricsFrameRef.current === null) {
+            metricsFrameRef.current = requestAnimationFrame(() => {
+              setWorkerMetrics(data.metrics);
+              metricsFrameRef.current = null;
+            });
+          }
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      if (metricsFrameRef.current !== null) {
+        cancelAnimationFrame(metricsFrameRef.current);
+      }
+      bridge.terminate();
+      mathWorkerRef.current = null;
+    };
+  }, [simulator.id, simulator.type]);
+
   // Update params when simulator changes
   useEffect(() => {
     const init: Record<string, number> = {};
@@ -255,13 +291,22 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   };
 
   const handleParamChange = (id: string, value: number) => {
-    setParams((prev) => ({ ...prev, [id]: value }));
+    const nextParams = { ...params, [id]: value };
+    setParams(nextParams);
     trackParameterChange(id);
+    // Asynchronously dispatch slider parameter update to Web Worker (0ms main thread blocking)
+    if (mathWorkerRef.current) {
+      mathWorkerRef.current.setParams(simulator.type, nextParams, timeRef.current);
+    }
   };
 
   const handleApplyPreset = (values: Record<string, number>) => {
-    setParams((prev) => ({ ...prev, ...values }));
+    const nextParams = { ...params, ...values };
+    setParams(nextParams);
     Object.keys(values).forEach((k) => trackParameterChange(k));
+    if (mathWorkerRef.current) {
+      mathWorkerRef.current.setParams(simulator.type, nextParams, timeRef.current);
+    }
   };
 
   const handleResetDefaults = () => {
@@ -272,6 +317,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     setParams(init);
     timeRef.current = 0;
     trackParameterChange('reset_defaults');
+    if (mathWorkerRef.current) {
+      mathWorkerRef.current.reset(simulator.type, init);
+    }
   };
 
   const handleCopyLink = async () => {
@@ -822,6 +870,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     });
   }
 
+  // Use worker-computed RK4 metrics when available, falling back smoothly to local metrics
+  const effectiveMetrics = (workerMetrics && workerMetrics.length > 0) ? workerMetrics : metrics;
+
   // ---------------------------------------------------------------------------
   // 60 FPS VECTOR CANVAS RENDERER FOR ALL SIMULATOR TYPES
   // ---------------------------------------------------------------------------
@@ -837,6 +888,10 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
       if (isRunning) {
         localTime += 0.016 * simSpeed;
         timeRef.current = localTime;
+        // Step the Web Worker physics engine forward asynchronously
+        if (mathWorkerRef.current) {
+          mathWorkerRef.current.step(simulator.type, params, 0.016 * simSpeed, localTime);
+        }
       }
 
       const w = canvas.width;
@@ -2398,7 +2453,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                 {/* 1. Real-Time Telemetry Readouts (Compact Digital Cards) */}
                 {activeTab === 'telemetry' && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 h-full">
-                    {metrics.map((m, i) => (
+                    {effectiveMetrics.map((m, i) => (
                       <div
                         key={i}
                         className="p-2 sm:p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between shadow-inner"
