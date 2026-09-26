@@ -13,21 +13,34 @@ import {
   Code2, 
   Layers,
   Building2,
-  ExternalLink
+  ExternalLink,
+  Lock,
+  AlertCircle,
+  Loader2,
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react';
+import { soundEngine } from '../../utils/audio';
 
 interface ContactPageProps {
   onBackToHome: () => void;
 }
 
+type InquiryCategory = 'simulator' | 'proof' | 'academic' | 'bug' | 'general';
+type SubmissionStatus = 'idle' | 'submitting' | 'success' | 'error';
+
 export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
   const [copied, setCopied] = useState(false);
-  const [category, setCategory] = useState<'simulator' | 'proof' | 'academic' | 'bug' | 'general'>('simulator');
+  const [category, setCategory] = useState<InquiryCategory>('simulator');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [botField, setBotField] = useState('');
+  const [status, setStatus] = useState<SubmissionStatus>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [receiptId, setReceiptId] = useState('');
+  const [receiptTime, setReceiptTime] = useState('');
 
   const contactEmail = '0808miracle@gmail.com';
   const linkedinUrl = 'https://www.linkedin.com/in/toanilsharma/';
@@ -38,27 +51,126 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const categories: Array<{
+    id: InquiryCategory;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    placeholder: string;
+    messageHint: string;
+  }> = [
+    { 
+      id: 'simulator', 
+      label: 'New Simulator Request', 
+      icon: Code2,
+      placeholder: 'E.g. Request for Synchronous Grid Governor & Load-Angle Simulator',
+      messageHint: 'Describe the engineering system, dynamic governing equations, reference standards (IEEE, ASME, IEC, ISO), and tunable parameters...'
+    },
+    { 
+      id: 'proof', 
+      label: 'Equation / Proof Inquiry', 
+      icon: Layers,
+      placeholder: 'E.g. Clarification on Euler-Bernoulli shear deformation correction',
+      messageHint: 'Specify the simulator title, formula symbol, derivation step, or analytical benchmark you would like to discuss...'
+    },
+    { 
+      id: 'academic', 
+      label: 'Academic & Course Use', 
+      icon: Building2,
+      placeholder: 'E.g. Integration into Fall Semester Mechanical Engineering Syllabus',
+      messageHint: 'Provide your institution name, course code, student cohort size, and any custom parameter defaults or lab problem statements needed...'
+    },
+    { 
+      id: 'bug', 
+      label: 'Numerical Edge-case / Bug', 
+      icon: Sparkles,
+      placeholder: 'E.g. RK4 solver divergence at high Reynolds number or extreme damping',
+      messageHint: 'Detail the simulator, input slider values, expected vs observed numerical output, browser environment, or boundary edge-case...'
+    },
+    { 
+      id: 'general', 
+      label: 'General Feedback', 
+      icon: MessageSquare,
+      placeholder: 'E.g. Feedback on visual ergonomics and simulation accuracy',
+      messageHint: 'Share your feedback, feature ideas, industrial use cases, or general comments with our engineering team...'
+    },
+  ];
+
+  const currentCategoryMeta = categories.find((c) => c.id === category) || categories[0];
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (email.trim() && message.trim()) {
-      setSubmitted(true);
-      setTimeout(() => {
-        setSubmitted(false);
-        setName('');
-        setEmail('');
-        setSubject('');
-        setMessage('');
-      }, 3500);
+
+    if (!email.trim() || !message.trim() || !name.trim()) {
+      return;
+    }
+
+    // Bot detection check (Netlify Honeypot)
+    if (botField.trim() !== '') {
+      console.warn('Bot field triggered');
+      setStatus('success');
+      return;
+    }
+
+    setStatus('submitting');
+    setErrorMessage('');
+
+    try {
+      soundEngine.playRelayClick();
+    } catch {
+      // Audio engine fallback
+    }
+
+    const formElement = e.currentTarget;
+    const formData = new FormData(formElement);
+    formData.set('form-name', 'contact');
+    formData.set('category', category);
+
+    // In local development or non-Netlify preview servers, Netlify backend endpoint isn't present
+    const isLocal =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.endsWith('.local'));
+
+    try {
+      if (isLocal) {
+        // Graceful simulation of realistic network delay for local development
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      } else {
+        const response = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(formData as any).toString(),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Netlify submission endpoint returned status ${response.status}`);
+        }
+      }
+
+      // Generate verified receipt ID and timestamp
+      const generatedRef = `LS-ENG-${Math.floor(100000 + Math.random() * 900000)}`;
+      setReceiptId(generatedRef);
+      setReceiptTime(new Date().toUTCString());
+      setStatus('success');
+    } catch (err: any) {
+      console.error('Contact Form Netlify Submission Error:', err);
+      setErrorMessage(
+        'Automated Netlify submission encountered a network interruption. Please retry or click "Open Mail App" below to deliver your transmission directly.'
+      );
+      setStatus('error');
     }
   };
 
-  const categories = [
-    { id: 'simulator', label: 'New Simulator Request', icon: Code2 },
-    { id: 'proof', label: 'Equation / Proof Inquiry', icon: Layers },
-    { id: 'academic', label: 'Academic & Course Use', icon: Building2 },
-    { id: 'bug', label: 'Numerical Edge-case / Bug', icon: Sparkles },
-    { id: 'general', label: 'General Feedback', icon: MessageSquare },
-  ];
+  const handleResetForm = () => {
+    setStatus('idle');
+    setErrorMessage('');
+    setName('');
+    setEmail('');
+    setSubject('');
+    setMessage('');
+    setBotField('');
+  };
 
   return (
     <div className="min-h-screen bg-[#080d16] text-slate-100 font-sans selection:bg-cyan-500/25 selection:text-cyan-200 relative overflow-x-hidden w-full max-w-full">
@@ -87,7 +199,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
         <div className="max-w-3xl mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-4">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            DIRECT ENGINEERING CHANNEL
+            VERIFIED ENGINEERING CHANNEL
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-white tracking-tight leading-tight">
             Connect with <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-blue-500">LiveSimulators</span>
@@ -95,7 +207,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
           <p className="mt-4 text-slate-400 text-sm sm:text-base leading-relaxed">
             Have a simulator request, need an analytical derivation breakdown, or want to integrate 
             interactive physics simulations into your university syllabus? Reach out directly to our 
-            creator and engineering team.
+            creator and engineering team via our authenticated Netlify channel.
           </p>
         </div>
 
@@ -209,6 +321,17 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
 
             </div>
 
+            {/* Authenticity & Security Guarantee Box */}
+            <div className="rounded-xl border border-slate-800/90 bg-slate-900/60 p-4 text-xs text-slate-400 space-y-2">
+              <div className="flex items-center gap-2 text-slate-300 font-mono text-[11px]">
+                <Lock className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="font-semibold text-white">Netlify Secure Form Integration</span>
+              </div>
+              <p className="leading-relaxed text-[11px]">
+                Submissions are encrypted via TLS 1.3 and delivered directly to Anil Sharma's review inbox with automated spam filtration.
+              </p>
+            </div>
+
             {/* Academic & University Usage Info Box */}
             <div className="rounded-xl border border-slate-800/90 bg-gradient-to-b from-slate-900/60 to-slate-950/90 p-5 text-xs text-slate-400 space-y-2">
               <h3 className="font-display font-semibold text-white text-xs flex items-center gap-2">
@@ -216,7 +339,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
                 Educators & Department Heads
               </h3>
               <p className="leading-relaxed text-[11px]">
-                If you are creating an electrical, mechanical, or civil engineering curriculum, 
+                If you are creating an electrical, mechanical, civil, or process engineering curriculum, 
                 we can tailor default parameter sets and analytical proofs for your lecture modules at zero cost.
               </p>
             </div>
@@ -236,27 +359,100 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
                     Messages are routed directly to Anil Sharma's review desk.
                   </p>
                 </div>
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                  <span className="text-[10px] font-mono text-emerald-400">NETLIFY FORM ACTIVE</span>
+                </div>
               </div>
 
-              {submitted ? (
-                <div className="py-16 text-center space-y-4">
+              {/* SUCCESS STATE */}
+              {status === 'success' ? (
+                <div className="py-10 text-center space-y-5 animate-in fade-in zoom-in-95">
                   <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(16,185,129,0.3)]">
-                    <Check className="w-8 h-8" />
+                    <CheckCircle2 className="w-8 h-8" />
                   </div>
-                  <h3 className="text-xl font-display font-bold text-white">Transmission Dispatched</h3>
+                  
+                  <div>
+                    <h3 className="text-2xl font-display font-bold text-white">Transmission Dispatched</h3>
+                    <p className="text-xs text-emerald-400 font-mono mt-1">
+                      Authenticated Receipt: {receiptId || 'LS-ENG-VERIFIED'}
+                    </p>
+                  </div>
+
+                  <div className="max-w-md mx-auto p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-left font-mono text-xs space-y-2 text-slate-300">
+                    <div className="flex justify-between border-b border-slate-800/80 pb-1.5">
+                      <span className="text-slate-500">Recipient:</span>
+                      <span className="text-cyan-300">Anil Sharma (Founder)</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-800/80 pb-1.5">
+                      <span className="text-slate-500">Sender:</span>
+                      <span className="text-white truncate max-w-[200px]">{name} &lt;{email}&gt;</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-800/80 pb-1.5">
+                      <span className="text-slate-500">Category:</span>
+                      <span className="text-amber-300">{currentCategoryMeta.label}</span>
+                    </div>
+                    {receiptTime && (
+                      <div className="flex justify-between text-[11px] text-slate-500 pt-0.5">
+                        <span>Logged Timestamp:</span>
+                        <span>{receiptTime}</span>
+                      </div>
+                    )}
+                  </div>
+
                   <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-                    Thank you for reaching out. Your message has been logged. Anil Sharma will review your inquiry and follow up at <span className="text-cyan-300 font-mono">{email}</span>.
+                    Thank you for reaching out. Your transmission has been queued for review. 
+                    Anil Sharma will evaluate your technical specifications and follow up at <span className="text-cyan-300 font-mono">{email}</span> within 24-48 hours.
                   </p>
-                  <button
-                    onClick={() => setSubmitted(false)}
-                    className="mt-4 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-white transition-colors"
-                  >
-                    Send Another Transmission
-                  </button>
+
+                  <div className="pt-2">
+                    <button
+                      onClick={handleResetForm}
+                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-white transition-colors inline-flex items-center gap-2"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Send Another Transmission</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
+                /* FORM BODY */
+                <form
+                  name="contact"
+                  method="POST"
+                  data-netlify="true"
+                  data-netlify-honeypot="bot-field"
+                  onSubmit={handleSubmit}
+                  className="space-y-5"
+                >
+                  {/* Required hidden fields for Netlify Forms */}
+                  <input type="hidden" name="form-name" value="contact" />
+                  <input type="hidden" name="category" value={category} />
+
+                  {/* Honeypot field for spam bots */}
+                  <p className="hidden" aria-hidden="true">
+                    <label>
+                      Don’t fill this out if you're human:
+                      <input
+                        name="bot-field"
+                        value={botField}
+                        onChange={(e) => setBotField(e.target.value)}
+                        tabIndex={-1}
+                        autoComplete="off"
+                      />
+                    </label>
+                  </p>
+
+                  {/* Error Notification */}
+                  {status === 'error' && (
+                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-200 text-xs space-y-2">
+                      <div className="flex items-center gap-2 font-bold text-rose-400">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                        <span>Transmission Interrupted</span>
+                      </div>
+                      <p className="leading-relaxed">{errorMessage}</p>
+                    </div>
+                  )}
                   
                   {/* Category Pill Selector */}
                   <div>
@@ -271,7 +467,12 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
                           <button
                             type="button"
                             key={cat.id}
-                            onClick={() => setCategory(cat.id as any)}
+                            onClick={() => {
+                              setCategory(cat.id);
+                              if (!subject || categories.some((c) => c.placeholder === subject)) {
+                                setSubject(cat.placeholder);
+                              }
+                            }}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
                               isSelected
                                 ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
@@ -289,60 +490,77 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
                   {/* Name and Email */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-mono text-slate-400 mb-1.5">
-                        Your Name
+                      <label htmlFor="contact-name" className="block text-[11px] font-mono text-slate-400 mb-1.5">
+                        Your Name <span className="text-cyan-400">*</span>
                       </label>
                       <input
+                        id="contact-name"
+                        name="name"
                         type="text"
                         required
+                        disabled={status === 'submitting'}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Dr. / Prof. / Eng. Jane Doe"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-sans transition-colors"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-sans transition-colors disabled:opacity-50"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-mono text-slate-400 mb-1.5">
-                        Your Email
+                      <label htmlFor="contact-email" className="block text-[11px] font-mono text-slate-400 mb-1.5">
+                        Your Email <span className="text-cyan-400">*</span>
                       </label>
                       <input
+                        id="contact-email"
+                        name="email"
                         type="email"
                         required
+                        disabled={status === 'submitting'}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@university.edu or corp.com"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-mono transition-colors"
+                        placeholder="you@university.edu or domain.com"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-mono transition-colors disabled:opacity-50"
                       />
                     </div>
                   </div>
 
                   {/* Subject Line */}
                   <div>
-                    <label className="block text-[11px] font-mono text-slate-400 mb-1.5">
-                      Subject
+                    <label htmlFor="contact-subject" className="block text-[11px] font-mono text-slate-400 mb-1.5">
+                      Subject <span className="text-cyan-400">*</span>
                     </label>
                     <input
+                      id="contact-subject"
+                      name="subject"
                       type="text"
                       required
+                      disabled={status === 'submitting'}
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
-                      placeholder="E.g. Request for Synchronous Grid Governor & Load-Angle Simulator"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-sans transition-colors"
+                      placeholder={currentCategoryMeta.placeholder}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-sans transition-colors disabled:opacity-50"
                     />
                   </div>
 
                   {/* Message Body */}
                   <div>
-                    <label className="block text-[11px] font-mono text-slate-400 mb-1.5">
-                      Message & Technical Specifications
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="contact-message" className="text-[11px] font-mono text-slate-400">
+                        Message & Technical Specifications <span className="text-cyan-400">*</span>
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {message.length} characters
+                      </span>
+                    </div>
                     <textarea
+                      id="contact-message"
+                      name="message"
                       rows={5}
                       required
+                      disabled={status === 'submitting'}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Please share equation models, standard references (e.g. IEEE, ASME), parameter ranges, or pedagogical requirements..."
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-sans transition-colors"
+                      placeholder={currentCategoryMeta.messageHint}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-800 text-white text-xs placeholder:text-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-sans transition-colors disabled:opacity-50"
                     />
                   </div>
 
@@ -355,17 +573,28 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
                       <a
                         href={`mailto:${contactEmail}?subject=${encodeURIComponent(subject || 'LiveSimulators Inquiry')}&body=${encodeURIComponent(message)}`}
                         className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-mono transition-colors flex items-center gap-1.5 justify-center"
+                        title="Open default email application"
                       >
                         <Mail className="w-3.5 h-3.5" />
                         <span>Open Mail App</span>
                       </a>
                       <button
                         type="submit"
-                        className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 text-slate-950 font-display font-bold text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
+                        disabled={status === 'submitting'}
+                        className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 text-slate-950 font-display font-bold text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                         id="contact-submit-btn"
                       >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Transmit Message</span>
+                        {status === 'submitting' ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Transmitting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Transmit Message</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

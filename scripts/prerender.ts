@@ -442,7 +442,7 @@ function renderContentForRoute(route: AppRoute): string {
         </nav>
         <h1 style="font-size:2.5rem; font-weight:900; color:#ffffff; margin-bottom:1rem;">Contact Engineering Team</h1>
         <p style="font-size:1.125rem; color:#cbd5e1; margin-bottom:2rem;">Direct communication desk with founder Anil Sharma for simulator requests, formula proofs, and syllabus partnerships.</p>
-        <div style="padding:2rem; background:#0f172a; border:1px solid #1e293b; border-radius:1rem; max-width:36rem;">
+        <div style="padding:2rem; background:#0f172a; border:1px solid #1e293b; border-radius:1rem; max-width:36rem; margin-bottom:2rem;">
           <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; margin-bottom:1rem;">Anil Sharma (Founder)</h2>
           <p style="color:#cbd5e1; font-size:0.875rem; margin-bottom:0.75rem;">
             <strong>Official Email:</strong> <a href="mailto:0808miracle@gmail.com" style="color:#38bdf8; font-family:monospace;">0808miracle@gmail.com</a>
@@ -452,6 +452,34 @@ function renderContentForRoute(route: AppRoute): string {
           </p>
           <p style="color:#64748b; font-size:0.75rem; font-family:monospace;">Average Review Turnaround: &lt; 24-48 Hours</p>
         </div>
+
+        <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" style="padding:2rem; background:#0f172a; border:1px solid #1e293b; border-radius:1rem; max-width:36rem;">
+          <input type="hidden" name="form-name" value="contact" />
+          <div style="display:none;"><label>Don't fill this out: <input name="bot-field" /></label></div>
+          <p style="margin-bottom:1rem;">
+            <label style="display:block; color:#cbd5e1; margin-bottom:0.5rem; font-size:0.875rem;">Your Name</label>
+            <input type="text" name="name" required style="width:100%; padding:0.5rem; background:#020617; border:1px solid #334155; border-radius:0.375rem; color:#fff;" />
+          </p>
+          <p style="margin-bottom:1rem;">
+            <label style="display:block; color:#cbd5e1; margin-bottom:0.5rem; font-size:0.875rem;">Your Email</label>
+            <input type="email" name="email" required style="width:100%; padding:0.5rem; background:#020617; border:1px solid #334155; border-radius:0.375rem; color:#fff;" />
+          </p>
+          <p style="margin-bottom:1rem;">
+            <label style="display:block; color:#cbd5e1; margin-bottom:0.5rem; font-size:0.875rem;">Inquiry Category</label>
+            <input type="text" name="category" value="Simulator Request" style="width:100%; padding:0.5rem; background:#020617; border:1px solid #334155; border-radius:0.375rem; color:#fff;" />
+          </p>
+          <p style="margin-bottom:1rem;">
+            <label style="display:block; color:#cbd5e1; margin-bottom:0.5rem; font-size:0.875rem;">Subject</label>
+            <input type="text" name="subject" required style="width:100%; padding:0.5rem; background:#020617; border:1px solid #334155; border-radius:0.375rem; color:#fff;" />
+          </p>
+          <p style="margin-bottom:1rem;">
+            <label style="display:block; color:#cbd5e1; margin-bottom:0.5rem; font-size:0.875rem;">Message</label>
+            <textarea name="message" required rows="5" style="width:100%; padding:0.5rem; background:#020617; border:1px solid #334155; border-radius:0.375rem; color:#fff;"></textarea>
+          </p>
+          <p>
+            <button type="submit" style="padding:0.75rem 1.5rem; background:#06b6d4; color:#020617; font-weight:bold; border-radius:0.5rem; border:none; cursor:pointer;">Send Message</button>
+          </p>
+        </form>
       </div>
       `;
     }
@@ -758,7 +786,7 @@ ${sitemapEntries}
   console.log('🤖 Generated llms.txt & llms-full.txt for AI Search & LLM Discovery');
 
   // Copy static assets from public to dist
-  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt', 'manifest.webmanifest', 'sw.js'];
+  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt', 'manifest.webmanifest', 'sw.js', 'contact-form.html'];
   for (const asset of assetsToCopy) {
     const srcFile = path.join(publicDir, asset);
     if (fs.existsSync(srcFile)) {
