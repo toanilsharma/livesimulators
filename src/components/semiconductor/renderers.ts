@@ -810,3 +810,360 @@ export function renderMosfetChannel(rc: RenderContext, p: MosfetChannelParams) {
   ctx.fillStyle = isCutoff ? '#94a3b8' : isSaturation ? '#ec4899' : '#10b981';
   ctx.fillText(`Mode: ${isCutoff ? 'Cutoff' : isSaturation ? 'Saturation' : 'Linear Triode'}`, plotX + plotW - 170, plotY + 74);
 }
+
+// ---------------------------------------------------------------------------
+// 5. PHOTOELECTRIC EFFECT & EINSTEIN QUANTUM WORK FUNCTION RENDERER
+// ---------------------------------------------------------------------------
+export interface PhotoelectricParams {
+  wavelength: number; // nm (150 - 800)
+  intensity: number; // % (10 - 100)
+  targetMaterial: number; // 0=Cs(2.14), 1=K(2.30), 2=Na(2.36), 3=Zn(4.30), 4=Pt(5.65)
+  retardingVoltage: number; // V (-4.0 to +4.0)
+}
+
+function nmToColor(wavelength: number): string {
+  if (wavelength < 380) return '#a855f7'; // UV
+  if (wavelength < 440) return '#6366f1'; // Violet/Indigo
+  if (wavelength < 490) return '#06b6d4'; // Blue/Cyan
+  if (wavelength < 560) return '#10b981'; // Green
+  if (wavelength < 590) return '#eab308'; // Yellow
+  if (wavelength < 640) return '#f97316'; // Orange
+  return '#ef4444'; // Red/IR
+}
+
+export function renderPhotoelectric(rc: RenderContext, p: PhotoelectricParams) {
+  const { ctx, w, h, t } = rc;
+  const lambda_nm = p.wavelength || 380;
+  const intensity = p.intensity || 60;
+  const matIdx = Math.round(p.targetMaterial || 2);
+  const Vret = p.retardingVoltage !== undefined ? p.retardingVoltage : 0.0;
+
+  const materials = [
+    { name: 'Cesium (Cs)', phi: 2.14 },
+    { name: 'Potassium (K)', phi: 2.30 },
+    { name: 'Sodium (Na)', phi: 2.36 },
+    { name: 'Zinc (Zn)', phi: 4.30 },
+    { name: 'Platinum (Pt)', phi: 5.65 },
+  ];
+  const mat = materials[Math.min(materials.length - 1, Math.max(0, matIdx))];
+
+  const h_eVs = 4.135667696e-15;
+  const c = 2.99792458e8;
+  const photonE_eV = (h_eVs * c) / (lambda_nm * 1e-9);
+  const freq_14Hz = (c / (lambda_nm * 1e-9)) / 1e14;
+  const f0_14Hz = (mat.phi / h_eVs) / 1e14;
+
+  const Kmax_eV = Math.max(0, photonE_eV - mat.phi);
+  const Vstop_V = Kmax_eV;
+  const hasEmission = photonE_eV > mat.phi;
+
+  // Photocurrent
+  let I_uA = 0;
+  if (hasEmission) {
+    if (Vret <= -Vstop_V) I_uA = 0;
+    else if (Vret < 0) {
+      const frac = (Vret + Vstop_V) / Math.max(0.01, Vstop_V);
+      I_uA = (intensity * 0.15) * Math.pow(Math.min(1.0, frac), 1.5);
+    } else {
+      I_uA = (intensity * 0.15) * (1.0 + 0.15 * Math.tanh(Vret / 1.0));
+    }
+  }
+
+  // Background
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  const splitX = Math.floor(w * 0.48);
+
+  // --- LEFT: VACUUM PHOTOTUBE APPARATUS ---
+  ctx.save();
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(12, 12, splitX - 24, h - 24);
+
+  // Title
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('EINSTEIN PHOTOELECTRIC PHOTOTUBE', 24, 34);
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('QUANTUM PHOTON-ELECTRON EMISSION', 24, 48);
+
+  const tubeCenterX = splitX * 0.52;
+  const tubeCenterY = h * 0.46;
+  const tubeRadius = 75;
+
+  // Vacuum Glass Bulb
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(tubeCenterX, tubeCenterY, tubeRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Glass specular reflection highlight
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(tubeCenterX, tubeCenterY, tubeRadius - 5, -Math.PI * 0.75, -Math.PI * 0.25);
+  ctx.stroke();
+
+  // Metal Cathode Plate (Left curved electrode)
+  const cathX = tubeCenterX - 45;
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(cathX + 15, tubeCenterY, 35, Math.PI * 0.65, Math.PI * 1.35);
+  ctx.stroke();
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillText(`Cathode (${mat.name})`, cathX - 35, tubeCenterY - 45);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`Φ = ${mat.phi.toFixed(2)} eV`, cathX - 25, tubeCenterY + 50);
+
+  // Metal Anode Collector Plate (Right electrode)
+  const anodeX = tubeCenterX + 45;
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(anodeX, tubeCenterY - 25);
+  ctx.lineTo(anodeX, tubeCenterY + 25);
+  ctx.stroke();
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('Anode (+)', anodeX - 10, tubeCenterY - 32);
+
+  // Monochromatic Light Source Lamp (Top Left)
+  const lampX = 40;
+  const lampY = 90;
+  const beamColor = nmToColor(lambda_nm);
+
+  // Lamp casing
+  ctx.fillStyle = '#1e293b';
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(lampX, lampY, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Lamp bulb filament glow
+  ctx.fillStyle = beamColor;
+  ctx.beginPath();
+  ctx.arc(lampX, lampY, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Incident Light Beam rays
+  ctx.fillStyle = beamColor;
+  ctx.globalAlpha = (intensity / 100) * 0.35;
+  ctx.beginPath();
+  ctx.moveTo(lampX + 14, lampY + 8);
+  ctx.lineTo(cathX - 4, tubeCenterY - 18);
+  ctx.lineTo(cathX - 4, tubeCenterY + 18);
+  ctx.lineTo(lampX + 8, lampY + 16);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1.0;
+
+  // Photon ray dashed arrows
+  ctx.strokeStyle = beamColor;
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(lampX + 16, lampY + 12);
+  ctx.lineTo(cathX - 4, tubeCenterY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Emitted Photoelectrons
+  if (hasEmission) {
+    const numElectrons = 12;
+    const speed = Math.sqrt(Kmax_eV) * 40; // speed proportional to sqrt(Kmax)
+    for (let i = 0; i < numElectrons; i++) {
+      const ePhase = (t * (speed * 0.05) + (i / numElectrons)) % 1.0;
+      let eX = cathX + ePhase * (anodeX - cathX);
+      const eY = tubeCenterY + (Math.sin(i * 1.5) * 20);
+
+      // If retarding voltage repels electrons before reaching anode
+      if (Vret < 0 && -Vret >= Vstop_V * 0.8) {
+        const turnFrac = Math.max(0.1, Vstop_V / (-Vret + 0.001));
+        if (ePhase > turnFrac) {
+          // electron turned back!
+          eX = cathX + (turnFrac * 2 - ePhase) * (anodeX - cathX);
+        }
+      }
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(eX, eY, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    // Below threshold frequency callout
+    ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('NO EMISSION (hν < Φ)', tubeCenterX - 65, tubeCenterY + 6);
+  }
+
+  // Circuit wires at bottom with battery & microammeter
+  const wireBotY = h - 60;
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cathX, tubeCenterY + 35);
+  ctx.lineTo(cathX, wireBotY);
+  ctx.lineTo(tubeCenterX - 40, wireBotY);
+  ctx.moveTo(anodeX, tubeCenterY + 25);
+  ctx.lineTo(anodeX, wireBotY);
+  ctx.lineTo(tubeCenterX + 40, wireBotY);
+  ctx.stroke();
+
+  // Microammeter symbol
+  ctx.fillStyle = '#0f172a';
+  ctx.strokeStyle = '#10b981';
+  ctx.beginPath();
+  ctx.arc(tubeCenterX + 30, wireBotY, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('µA', tubeCenterX + 24, wireBotY + 4);
+
+  // Power Supply (Vret)
+  ctx.strokeStyle = '#f59e0b';
+  ctx.strokeRect(tubeCenterX - 35, wireBotY - 12, 40, 24);
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`${Vret >= 0 ? '+' : ''}${Vret.toFixed(1)}V`, tubeCenterX - 30, wireBotY + 4);
+
+  ctx.restore();
+
+  // --- RIGHT: TWO SCIENTIFIC CHARTS ---
+  ctx.save();
+  const rightX = splitX + 8;
+  const rightW = w - splitX - 20;
+
+  // Chart 1 (Top): I vs Vret
+  const c1Y = 12;
+  const c1H = Math.floor((h - 32) * 0.48);
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(rightX, c1Y, rightW, c1H);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(rightX, c1Y, rightW, c1H);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('PHOTOCURRENT vs RETARDING VOLTAGE (I vs V)', rightX + 12, c1Y + 20);
+
+  const c1PlotLeft = rightX + 45;
+  const c1PlotRight = rightX + rightW - 20;
+  const c1PlotTop = c1Y + 35;
+  const c1PlotBot = c1Y + c1H - 25;
+  const c1ZeroX = c1PlotLeft + (c1PlotRight - c1PlotLeft) * 0.5;
+
+  // Axes
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.7)';
+  ctx.beginPath();
+  ctx.moveTo(c1ZeroX, c1PlotTop); ctx.lineTo(c1ZeroX, c1PlotBot);
+  ctx.moveTo(c1PlotLeft, c1PlotBot); ctx.lineTo(c1PlotRight, c1PlotBot);
+  ctx.stroke();
+
+  // I vs V curve
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const ivSteps = 80;
+  for (let s = 0; s <= ivSteps; s++) {
+    const vStep = -4.0 + (s / ivSteps) * 8.0;
+    let iVal = 0;
+    if (hasEmission) {
+      if (vStep <= -Vstop_V) iVal = 0;
+      else if (vStep < 0) {
+        const frac = (vStep + Vstop_V) / Math.max(0.01, Vstop_V);
+        iVal = (intensity * 0.15) * Math.pow(Math.min(1.0, frac), 1.5);
+      } else {
+        iVal = (intensity * 0.15) * (1.0 + 0.15 * Math.tanh(vStep / 1.0));
+      }
+    }
+    const sx = c1PlotLeft + ((vStep + 4.0) / 8.0) * (c1PlotRight - c1PlotLeft);
+    const sy = c1PlotBot - (iVal / 20.0) * (c1PlotBot - c1PlotTop);
+    if (s === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // Stopping Potential Marker
+  if (hasEmission) {
+    const vStopSx = c1PlotLeft + ((-Vstop_V + 4.0) / 8.0) * (c1PlotRight - c1PlotLeft);
+    ctx.strokeStyle = '#ef4444';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(vStopSx, c1PlotTop); ctx.lineTo(vStopSx, c1PlotBot);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText(`-V_stop (-${Vstop_V.toFixed(2)}V)`, vStopSx - 35, c1PlotBot - 12);
+  }
+
+  // Active Operating Point dot
+  const curSx = c1PlotLeft + ((Vret + 4.0) / 8.0) * (c1PlotRight - c1PlotLeft);
+  const curSy = c1PlotBot - (I_uA / 20.0) * (c1PlotBot - c1PlotTop);
+  ctx.fillStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.arc(curSx, Math.max(c1PlotTop, Math.min(c1PlotBot, curSy)), 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Chart 2 (Bottom): Kmax vs Frequency (Einstein's linear equation)
+  const c2Y = c1Y + c1H + 8;
+  const c2H = h - 20 - c2Y;
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(rightX, c2Y, rightW, c2H);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(rightX, c2Y, rightW, c2H);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('EINSTEIN PHOTOELECTRIC EQUATION: K_max = hν - Φ', rightX + 12, c2Y + 20);
+
+  const c2PlotLeft = rightX + 45;
+  const c2PlotRight = rightX + rightW - 20;
+  const c2PlotTop = c2Y + 35;
+  const c2PlotBot = c2Y + c2H - 25;
+
+  // Axes
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.7)';
+  ctx.beginPath();
+  ctx.moveTo(c2PlotLeft, c2PlotTop); ctx.lineTo(c2PlotLeft, c2PlotBot);
+  ctx.lineTo(c2PlotRight, c2PlotBot);
+  ctx.stroke();
+
+  // Line Kmax = h * f - Phi
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const fSteps = 40;
+  for (let s = 0; s <= fSteps; s++) {
+    const fVal = 4.0 + (s / fSteps) * 16.0; // 10^14 Hz
+    const kVal = Math.max(0, (h_eVs * fVal * 1e14) - mat.phi);
+    const sx = c2PlotLeft + ((fVal - 4.0) / 16.0) * (c2PlotRight - c2PlotLeft);
+    const sy = c2PlotBot - (kVal / 5.0) * (c2PlotBot - c2PlotTop);
+    if (s === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // Current Frequency dot
+  const curFx = c2PlotLeft + ((freq_14Hz - 4.0) / 16.0) * (c2PlotRight - c2PlotLeft);
+  const curFy = c2PlotBot - (Kmax_eV / 5.0) * (c2PlotBot - c2PlotTop);
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(curFx, Math.max(c2PlotTop, Math.min(c2PlotBot, curFy)), 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillText(`hν = ${photonE_eV.toFixed(2)} eV`, curFx + 8, curFy - 4);
+
+  ctx.restore();
+}
+

@@ -819,8 +819,475 @@ function solveFourier(params, t) {
   return { state: { samples: Array.from(samples) }, metrics };
 }
 
+function solveOpAmp(params, t) {
+  const config = Math.round(params.config || 0);
+  const Rf = (params.rf || 10.0) * 1e3;
+  const Rin = (params.rin || 2.0) * 1e3;
+  const Vin = params.vin || 2.0;
+  const freq = params.freq || 1000.0;
+  const Vsupply = params.vsupply || 15.0;
+
+  const omega = 2 * Math.PI * freq;
+  let gain = 1.0;
+  let vOutCalc = 0.0;
+
+  if (config === 0) {
+    gain = -Rf / Rin;
+    vOutCalc = Math.abs(gain) * Vin;
+  } else if (config === 1) {
+    gain = 1.0 + Rf / Rin;
+    vOutCalc = gain * Vin;
+  } else if (config === 2) {
+    const C = 10e-9;
+    gain = 1.0 / (omega * Rin * C);
+    vOutCalc = gain * Vin;
+  } else {
+    const C = 10e-9;
+    gain = omega * Rf * C;
+    vOutCalc = gain * Vin;
+  }
+
+  const isSaturated = vOutCalc >= (Vsupply - 1.2);
+  const vOutClipped = Math.min(Vsupply - 1.2, vOutCalc);
+  const gbwp = 3.0; // MHz
+  const bandwidth = (gbwp * 1e6) / Math.max(1, Math.abs(gain));
+
+  const sampleCount = 100;
+  const waveIn = new Float64Array(sampleCount);
+  const waveOut = new Float64Array(sampleCount);
+
+  for (let i = 0; i < sampleCount; i++) {
+    const tau = (i / sampleCount) * 2.0 * Math.PI + t * 4.0;
+    const vinInstant = Vin * Math.sin(tau);
+    let voutInstant = 0;
+    if (config === 0) {
+      voutInstant = -(Rf / Rin) * vinInstant;
+    } else if (config === 1) {
+      voutInstant = (1.0 + Rf / Rin) * vinInstant;
+    } else if (config === 2) {
+      voutInstant = -vOutCalc * Math.cos(tau);
+    } else {
+      voutInstant = vOutCalc * Math.cos(tau);
+    }
+    const vRail = Vsupply - 1.2;
+    if (voutInstant > vRail) voutInstant = vRail;
+    if (voutInstant < -vRail) voutInstant = -vRail;
+
+    waveIn[i] = vinInstant;
+    waveOut[i] = voutInstant;
+  }
+
+  const configNames = ['Inverting Amp', 'Non-Inverting Amp', 'Active Integrator', 'Active Differentiator'];
+  const metrics = [
+    { label: 'Voltage Gain Av', value: gain.toFixed(2), unit: 'V/V', description: 'Closed-loop transfer ratio' },
+    { label: 'Peak Vout', value: vOutClipped.toFixed(2), unit: 'V', description: 'Output voltage swing after supply rails' },
+    { label: 'Saturation State', value: isSaturated ? 'Saturated (Clipping)' : 'Linear Active', unit: '', status: isSaturated ? 'warning' : 'normal', description: 'Operation bounded by Vcc/Vee rails' },
+    { label: 'Effective Bandwidth', value: bandwidth >= 1e6 ? `${(bandwidth / 1e6).toFixed(2)} MHz` : `${(bandwidth / 1e3).toFixed(1)} kHz`, unit: '', description: 'Gain-Bandwidth product upper limit (-3dB)' },
+  ];
+
+  return {
+    state: {
+      configName: configNames[config],
+      gain,
+      vOutClipped,
+      isSaturated,
+      bandwidth,
+      waveIn: Array.from(waveIn),
+      waveOut: Array.from(waveOut),
+    },
+    metrics,
+  };
+}
+
+function solveRcTransient(params, t) {
+  const circuitType = Math.round(params.circuitType || 0);
+  const R = params.resistance || 100.0;
+  const reactanceVal = params.reactanceVal || 100.0;
+  const V0 = params.vSource || 10.0;
+  const f_sw = params.switchingFreq || 10.0;
+
+  let tau = 0;
+  let energy = 0;
+  if (circuitType === 0) {
+    const C = reactanceVal * 1e-6;
+    tau = R * C;
+    energy = 0.5 * C * V0 * V0 * 1e3;
+  } else {
+    const L = reactanceVal * 1e-3;
+    tau = L / R;
+    const Imax = V0 / R;
+    energy = 0.5 * L * Imax * Imax * 1e3;
+  }
+
+  const period = 1.0 / f_sw;
+  const halfPeriod = period / 2.0;
+  const tMod = (t * 0.2) % period;
+  const isCharging = tMod < halfPeriod;
+  const tLocal = isCharging ? tMod : tMod - halfPeriod;
+
+  const expTerm = Math.exp(-tLocal / Math.max(1e-6, tau));
+  let instantVal = isCharging ? (1 - expTerm) * V0 : expTerm * V0;
+
+  const sampleCount = 100;
+  const waveV = new Float64Array(sampleCount);
+  const waveI = new Float64Array(sampleCount);
+
+  for (let i = 0; i < sampleCount; i++) {
+    const timeNorm = (i / sampleCount) * period;
+    const inCharge = timeNorm < halfPeriod;
+    const tLoc = inCharge ? timeNorm : timeNorm - halfPeriod;
+    const factor = Math.exp(-tLoc / Math.max(1e-6, tau));
+
+    if (circuitType === 0) {
+      const vc = inCharge ? V0 * (1 - factor) : V0 * factor;
+      const ic = (inCharge ? (V0 / R) * factor : -(V0 / R) * factor) * 1e3;
+      waveV[i] = vc;
+      waveI[i] = ic;
+    } else {
+      const il = inCharge ? (V0 / R) * (1 - factor) : (V0 / R) * factor;
+      const vl = inCharge ? V0 * factor : -V0 * factor;
+      waveV[i] = vl;
+      waveI[i] = il * 1e3;
+    }
+  }
+
+  const metrics = [
+    { label: 'Time Constant τ', value: tau < 1e-3 ? `${(tau * 1e6).toFixed(1)} µs` : `${(tau * 1e3).toFixed(2)} ms`, unit: '', description: 'Time to reach 63.2% of steady state' },
+    { label: 'Rise Time (10%-90%)', value: `${(2.197 * tau * 1e3).toFixed(2)} ms`, unit: '', description: 'Transient slew transition window' },
+    { label: 'Settling Time (5τ)', value: `${(5.0 * tau * 1e3).toFixed(2)} ms`, unit: '', description: 'Time to 99.3% completed equilibrium' },
+    { label: 'Peak Stored Energy', value: energy.toFixed(2), unit: 'mJ', description: circuitType === 0 ? 'Capacitor electrostatic energy 0.5*C*V²' : 'Inductor magnetic field energy 0.5*L*I²' },
+  ];
+
+  return {
+    state: {
+      tau,
+      instantVal,
+      isCharging,
+      waveV: Array.from(waveV),
+      waveI: Array.from(waveI),
+    },
+    metrics,
+  };
+}
+
+function solveOttoCycle(params) {
+  const cycleType = Math.round(params.cycleType || 0);
+  const r = params.compressionRatio || (cycleType === 0 ? 9.5 : 17.0);
+  const Vd_liters = params.displacement || 2.0;
+  const rpm = params.rpm || 2400.0;
+  const P1_bar = params.pInlet || 1.0;
+  const T3_K = params.tMax || 2200.0;
+
+  const gamma = 1.4;
+  const cp = 1.005;
+  const cv = 0.718;
+  const R_gas = 0.287;
+  const T1_K = 300.0;
+
+  const Vd = Vd_liters * 1e-3;
+  const V2 = Vd / (r - 1.0);
+  const V1 = r * V2;
+  const P1 = P1_bar * 1e5;
+
+  const massAir = (P1 * V1) / (R_gas * 1e3 * T1_K);
+
+  let eta_th = 0;
+  let W_net = 0;
+  let P2 = 0;
+  let T2 = 0;
+  let P3 = 0;
+  let P4 = 0;
+  let T4 = 0;
+
+  if (cycleType === 0) {
+    T2 = T1_K * Math.pow(r, gamma - 1.0);
+    P2 = P1 * Math.pow(r, gamma);
+    P3 = P2 * (T3_K / T2);
+    T4 = T3_K * Math.pow(1.0 / r, gamma - 1.0);
+    P4 = P3 * Math.pow(1.0 / r, gamma);
+
+    const Qin = massAir * cv * (T3_K - T2);
+    const Qout = massAir * cv * (T4 - T1_K);
+    W_net = Qin - Qout;
+    eta_th = 1.0 - 1.0 / Math.pow(r, gamma - 1.0);
+  } else {
+    T2 = T1_K * Math.pow(r, gamma - 1.0);
+    P2 = P1 * Math.pow(r, gamma);
+    P3 = P2;
+    const rc = T3_K / T2;
+    T4 = T3_K * Math.pow(rc / r, gamma - 1.0);
+    P4 = P3 * Math.pow(rc / r, gamma);
+
+    const Qin = massAir * cp * (T3_K - T2);
+    const Qout = massAir * cv * (T4 - T1_K);
+    W_net = Qin - Qout;
+    eta_th = 1.0 - (1.0 / Math.pow(r, gamma - 1.0)) * ((Math.pow(rc, gamma) - 1.0) / (gamma * (rc - 1.0)));
+  }
+
+  const imep_bar = (W_net * 1e-3) / (Vd * 100);
+  const cyclesPerSec = rpm / (2 * 60.0);
+  const power_kW = (W_net * cyclesPerSec) / 1000.0;
+  const power_hp = power_kW * 1.34102;
+
+  const metrics = [
+    { label: 'Thermal Efficiency η_th', value: `${(eta_th * 100).toFixed(1)}%`, unit: '', description: 'Air-standard ideal cycle thermodynamic efficiency' },
+    { label: 'Indicated Power', value: power_kW.toFixed(1), unit: 'kW', description: `${power_hp.toFixed(0)} bhp at ${rpm} RPM` },
+    { label: 'Mean Effective Pressure (IMEP)', value: imep_bar.toFixed(2), unit: 'bar', description: 'Average theoretical cylinder working pressure' },
+    { label: 'Peak Pressure P_max', value: (P3 / 1e5).toFixed(1), unit: 'bar', description: 'Maximum structural cylinder combustion stress' },
+  ];
+
+  return {
+    state: {
+      eta_th,
+      W_net,
+      power_kW,
+      imep_bar,
+      P1: P1 / 1e5,
+      P2: P2 / 1e5,
+      P3: P3 / 1e5,
+      P4: P4 / 1e5,
+      T1: T1_K,
+      T2,
+      T3: T3_K,
+      T4,
+      r,
+    },
+    metrics,
+  };
+}
+
+function solveProjectile(params, t) {
+  const v0 = params.launchVelocity || 80.0;
+  const angleDeg = params.launchAngle || 45.0;
+  const h0 = params.launchHeight || 0.0;
+  const Cd = params.dragCoeff !== undefined ? params.dragCoeff : 0.47;
+  const mass = params.projectileMass || 2.0;
+  const area = params.crossSectionArea || 0.02;
+
+  const g = 9.80665;
+  const rho = 1.225;
+  const theta = (angleDeg * Math.PI) / 180.0;
+
+  const v0x = v0 * Math.cos(theta);
+  const v0y = v0 * Math.sin(theta);
+  const tFlightVac = (v0y + Math.sqrt(v0y * v0y + 2 * g * h0)) / g;
+  const rangeVac = v0x * tFlightVac;
+  const hMaxVac = h0 + (v0y * v0y) / (2 * g);
+
+  const dt = 0.01;
+  let posX = 0;
+  let posY = h0;
+  let vx = v0x;
+  let vy = v0y;
+  let time = 0;
+  let apogee = h0;
+
+  const trajX = [posX];
+  const trajY = [posY];
+
+  while (posY >= 0 && time < 100.0) {
+    const vMag = Math.sqrt(vx * vx + vy * vy);
+    const Fdrag = 0.5 * rho * Cd * area * vMag * vMag;
+    const ax = -(Fdrag * (vx / vMag)) / mass;
+    const ay = -g - (Fdrag * (vy / vMag)) / mass;
+
+    vx += ax * dt;
+    vy += ay * dt;
+    posX += vx * dt;
+    posY += vy * dt;
+    time += dt;
+
+    if (posY > apogee) apogee = posY;
+    if (posY >= 0) {
+      trajX.push(posX);
+      trajY.push(posY);
+    }
+  }
+
+  const rangeDrag = posX;
+  const tFlightDrag = time;
+  const impactSpeed = Math.sqrt(vx * vx + vy * vy);
+  const initialKE = 0.5 * mass * v0 * v0;
+  const finalKE = 0.5 * mass * impactSpeed * impactSpeed;
+  const dragWorkJ = Math.max(0, initialKE + mass * g * h0 - finalKE);
+
+  const animTime = (t * 1.5) % (tFlightDrag + 1.0);
+  let curX = 0;
+  let curY = h0;
+  if (animTime < tFlightDrag) {
+    const idx = Math.min(trajX.length - 1, Math.floor((animTime / tFlightDrag) * trajX.length));
+    curX = trajX[idx];
+    curY = trajY[idx];
+  } else {
+    curX = rangeDrag;
+    curY = 0;
+  }
+
+  const metrics = [
+    { label: 'Max Apogee (Height)', value: apogee.toFixed(1), unit: 'm', description: `Vacuum ideal: ${hMaxVac.toFixed(1)} m` },
+    { label: 'Flight Range (Distance)', value: rangeDrag.toFixed(1), unit: 'm', description: `Vacuum ideal: ${rangeVac.toFixed(1)} m (${(((rangeDrag - rangeVac) / rangeVac) * 100).toFixed(0)}% drag reduction)` },
+    { label: 'Total Flight Time', value: tFlightDrag.toFixed(2), unit: 's', description: 'Hang time until surface impact' },
+    { label: 'Drag Energy Loss', value: (dragWorkJ / 1e3).toFixed(2), unit: 'kJ', description: 'Kinetic energy converted to atmospheric friction heat' },
+  ];
+
+  return {
+    state: {
+      apogee,
+      rangeDrag,
+      rangeVac,
+      tFlightDrag,
+      curX,
+      curY,
+      trajX,
+      trajY,
+    },
+    metrics,
+  };
+}
+
+function solvePhotoelectric(params) {
+  const lambda_nm = params.wavelength || 380.0;
+  const intensity = params.intensity || 60.0;
+  const matIndex = Math.round(params.targetMaterial || 2);
+  const Vret = params.retardingVoltage !== undefined ? params.retardingVoltage : 0.0;
+
+  const materials = [
+    { name: 'Cesium (Cs)', phi: 2.14 },
+    { name: 'Potassium (K)', phi: 2.30 },
+    { name: 'Sodium (Na)', phi: 2.36 },
+    { name: 'Zinc (Zn)', phi: 4.30 },
+    { name: 'Platinum (Pt)', phi: 5.65 },
+  ];
+  const mat = materials[Math.min(materials.length - 1, Math.max(0, matIndex))];
+
+  const h_eVs = 4.135667696e-15;
+  const c = 2.99792458e8;
+  const photonE_eV = (h_eVs * c) / (lambda_nm * 1e-9);
+  const freq_Hz = c / (lambda_nm * 1e-9);
+  const f0_Hz = (mat.phi / h_eVs);
+  const lambda0_nm = (c / f0_Hz) * 1e9;
+
+  const Kmax_eV = Math.max(0.0, photonE_eV - mat.phi);
+  const Vstop_V = Kmax_eV;
+  const hasEmission = photonE_eV > mat.phi;
+
+  let photocurrent_uA = 0;
+  if (hasEmission) {
+    if (Vret <= -Vstop_V) {
+      photocurrent_uA = 0;
+    } else if (Vret < 0) {
+      const fraction = (Vret + Vstop_V) / Math.max(0.01, Vstop_V);
+      photocurrent_uA = (intensity * 0.15) * Math.pow(Math.min(1.0, fraction), 1.5);
+    } else {
+      photocurrent_uA = (intensity * 0.15) * (1.0 + 0.15 * Math.tanh(Vret / 1.0));
+    }
+  }
+
+  const metrics = [
+    { label: 'Incident Photon Energy hν', value: photonE_eV.toFixed(2), unit: 'eV', description: `λ = ${lambda_nm.toFixed(0)} nm (${(freq_Hz / 1e14).toFixed(2)} × 10¹⁴ Hz)` },
+    { label: 'Work Function Φ', value: mat.phi.toFixed(2), unit: 'eV', description: `${mat.name} electron binding energy` },
+    { label: 'Max Kinetic Energy K_max', value: Kmax_eV.toFixed(2), unit: 'eV', description: hasEmission ? 'Photoelectron ejection excess energy' : 'Below threshold frequency (No emission)', status: hasEmission ? 'normal' : 'warning' },
+    { label: 'Stopping Potential V_stop', value: Vstop_V.toFixed(2), unit: 'V', description: 'Retarding voltage required to nullify photocurrent' },
+  ];
+
+  return {
+    state: {
+      materialName: mat.name,
+      phi: mat.phi,
+      photonE_eV,
+      Kmax_eV,
+      Vstop_V,
+      photocurrent_uA,
+      hasEmission,
+      lambda0_nm,
+      f0_Hz,
+    },
+    metrics,
+  };
+}
+
+function solveBodePlot(params) {
+  const K = params.gainK || 2.0;
+  const wn = params.naturalFreq || 10.0;
+  const zeta = params.dampingRatio || 0.4;
+  const Td = params.timeDelay !== undefined ? params.timeDelay : 0.05;
+  const wProbe = params.probeFreq || 10.0;
+
+  const calcG = (w) => {
+    const reDen = wn * wn - w * w;
+    const imDen = 2 * zeta * wn * w;
+    const denMag = Math.sqrt(reDen * reDen + imDen * imDen);
+    const denPhi = Math.atan2(imDen, reDen);
+
+    const mag = (K * wn * wn) / Math.max(1e-6, denMag);
+    let phi = -denPhi - w * Td;
+    return { mag, phi, magDb: 20 * Math.log10(Math.max(1e-4, mag)), phiDeg: (phi * 180) / Math.PI };
+  };
+
+  let w_gc = null;
+  let pm_deg = null;
+  for (let w = 0.1; w <= 300; w *= 1.02) {
+    const g = calcG(w);
+    if (g.magDb <= 0 && w_gc === null) {
+      w_gc = w;
+      let wrappedPhi = ((g.phiDeg % 360) + 360) % 360;
+      if (wrappedPhi > 180) wrappedPhi -= 360;
+      pm_deg = 180 + wrappedPhi;
+      break;
+    }
+  }
+
+  let w_pc = null;
+  let gm_db = null;
+  for (let w = 0.1; w <= 300; w *= 1.02) {
+    const g = calcG(w);
+    let wrappedPhi = ((g.phiDeg % 360) + 360) % 360;
+    if (wrappedPhi > 180) wrappedPhi -= 360;
+    if (wrappedPhi <= -180 || g.phiDeg <= -180) {
+      w_pc = w;
+      gm_db = -g.magDb;
+      break;
+    }
+  }
+
+  const probe = calcG(wProbe);
+  const isStable = (pm_deg !== null && pm_deg > 0) && (gm_db === null || gm_db > 0);
+
+  const metrics = [
+    { label: 'Phase Margin PM', value: pm_deg !== null ? `${pm_deg.toFixed(1)}°` : '> 180°', unit: '', description: `Measured at ω_gc = ${w_gc ? w_gc.toFixed(1) : 'N/A'} rad/s`, status: (pm_deg !== null && pm_deg < 30) ? 'warning' : 'normal' },
+    { label: 'Gain Margin GM', value: gm_db !== null ? `${gm_db.toFixed(1)} dB` : '∞ (No crossover)', unit: '', description: `Measured at ω_pc = ${w_pc ? w_pc.toFixed(1) : 'N/A'} rad/s` },
+    { label: 'Closed-Loop Stability', value: isStable ? 'Asymptotically Stable' : 'Unstable / Oscillatory', unit: '', status: isStable ? 'normal' : 'alert', description: 'Cauchy argument principle encirclement test' },
+    { label: 'Probe |G(jω)| at cursor', value: `${probe.magDb.toFixed(1)} dB, ${probe.phiDeg.toFixed(0)}°`, unit: '', description: `Magnitude and phase at ω = ${wProbe.toFixed(1)} rad/s` },
+  ];
+
+  return {
+    state: {
+      w_gc,
+      w_pc,
+      pm_deg,
+      gm_db,
+      isStable,
+      probeMagDb: probe.magDb,
+      probePhiDeg: probe.phiDeg,
+    },
+    metrics,
+  };
+}
+
 function computeSimulation(type, params, t, dt) {
   switch (type) {
+    case 'op_amp':
+      return solveOpAmp(params, t);
+    case 'rc_transient':
+      return solveRcTransient(params, t);
+    case 'otto_cycle':
+      return solveOttoCycle(params);
+    case 'projectile':
+      return solveProjectile(params, t);
+    case 'photoelectric':
+      return solvePhotoelectric(params);
+    case 'bode_plot':
+      return solveBodePlot(params);
     case 'rlc':
       return solveRlc(params, t, dt);
     case 'harmonic':

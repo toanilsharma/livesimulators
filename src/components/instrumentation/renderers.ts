@@ -1632,3 +1632,347 @@ export function renderCoriolisMeter(
   ctx.fillStyle = '#f59e0b';
   ctx.fillText(`VOL FLOW: ${volumetricFlowM3H.toFixed(2)} m³/h`, oscX + 530, rowY);
 }
+
+// ---------------------------------------------------------------------------
+// 8. BODE & NYQUIST FREQUENCY RESPONSE STABILITY RENDERER
+// ---------------------------------------------------------------------------
+export interface BodePlotParams {
+  gainK: number;
+  naturalFreq: number; // wn (rad/s)
+  dampingRatio: number; // zeta
+  timeDelay: number; // Td (s)
+  probeFreq: number; // probe w (rad/s)
+}
+
+export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
+  const { ctx, w, h } = rc;
+  const K = p.gainK || 2.0;
+  const wn = p.naturalFreq || 10.0;
+  const zeta = p.dampingRatio || 0.4;
+  const Td = p.timeDelay !== undefined ? p.timeDelay : 0.05;
+  const wProbe = p.probeFreq || 10.0;
+
+  // Background
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  // Divide canvas: Left = Dual Bode plots (Mag & Phase), Right = Nyquist Polar Diagram
+  const splitX = Math.floor(w * 0.54);
+
+  // G(jw) calculation helper
+  const calcG = (omegaVal: number) => {
+    const reDen = wn * wn - omegaVal * omegaVal;
+    const imDen = 2 * zeta * wn * omegaVal;
+    const denMag = Math.sqrt(reDen * reDen + imDen * imDen);
+    const denPhi = Math.atan2(imDen, reDen);
+    const mag = (K * wn * wn) / Math.max(1e-6, denMag);
+    const phi = -denPhi - omegaVal * Td;
+    const magDb = 20 * Math.log10(Math.max(1e-4, mag));
+    const phiDeg = (phi * 180) / Math.PI;
+    return { mag, phi, magDb, phiDeg, re: mag * Math.cos(phi), im: mag * Math.sin(phi) };
+  };
+
+  // Find Gain Crossover & Phase Margin
+  let w_gc: number | null = null;
+  let pm_deg: number | null = null;
+  for (let om = 0.1; om <= 300; om *= 1.02) {
+    const g = calcG(om);
+    if (g.magDb <= 0 && w_gc === null) {
+      w_gc = om;
+      let wrapped = ((g.phiDeg % 360) + 360) % 360;
+      if (wrapped > 180) wrapped -= 360;
+      pm_deg = 180 + wrapped;
+      break;
+    }
+  }
+
+  // Find Phase Crossover & Gain Margin
+  let w_pc: number | null = null;
+  let gm_db: number | null = null;
+  for (let om = 0.1; om <= 300; om *= 1.02) {
+    const g = calcG(om);
+    let wrapped = ((g.phiDeg % 360) + 360) % 360;
+    if (wrapped > 180) wrapped -= 360;
+    if (wrapped <= -180 || g.phiDeg <= -180) {
+      w_pc = om;
+      gm_db = -g.magDb;
+      break;
+    }
+  }
+
+  const isStable = (pm_deg !== null && pm_deg > 0) && (gm_db === null || gm_db > 0);
+
+  // --- LEFT: BODE DIAGRAMS (Magnitude on top, Phase on bottom) ---
+  ctx.save();
+  const bodeLeft = 50;
+  const bodeRight = splitX - 25;
+  const bodeW = bodeRight - bodeLeft;
+
+  const wMin = 0.1;
+  const wMax = 200;
+  const logWMin = Math.log10(wMin);
+  const logWMax = Math.log10(wMax);
+
+  const toBodeX = (omegaVal: number) => {
+    const frac = (Math.log10(Math.max(wMin, omegaVal)) - logWMin) / (logWMax - logWMin);
+    return bodeLeft + frac * bodeW;
+  };
+
+  // 1. Magnitude Plot
+  const magTop = 48;
+  const magBot = Math.floor(h * 0.48);
+  const magH = magBot - magTop;
+  const dbMin = -40;
+  const dbMax = 40;
+
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(bodeLeft, magTop, bodeW, magH);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(bodeLeft, magTop, bodeW, magH);
+
+  // Magnitude Grid & Decibel ticks
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+  ctx.lineWidth = 1;
+  for (let db = -40; db <= 40; db += 20) {
+    const y = magBot - ((db - dbMin) / (dbMax - dbMin)) * magH;
+    ctx.beginPath(); ctx.moveTo(bodeLeft, y); ctx.lineTo(bodeRight, y); ctx.stroke();
+    ctx.font = '9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText(`${db > 0 ? '+' : ''}${db}dB`, 10, y + 3);
+  }
+
+  // Frequency Decade grid lines
+  const decades = [0.1, 1, 10, 100];
+  decades.forEach((dec) => {
+    const x = toBodeX(dec);
+    ctx.strokeStyle = 'rgba(51, 65, 85, 0.7)';
+    ctx.beginPath(); ctx.moveTo(x, magTop); ctx.lineTo(x, magBot); ctx.stroke();
+    for (let sub = 2; sub <= 9; sub++) {
+      const subX = toBodeX(dec * sub);
+      if (subX <= bodeRight) {
+        ctx.strokeStyle = 'rgba(30, 41, 59, 0.4)';
+        ctx.beginPath(); ctx.moveTo(subX, magTop); ctx.lineTo(subX, magBot); ctx.stroke();
+      }
+    }
+  });
+
+  // 0 dB reference line
+  const zeroDbY = magBot - ((0 - dbMin) / (dbMax - dbMin)) * magH;
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.7)';
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(bodeLeft, zeroDbY); ctx.lineTo(bodeRight, zeroDbY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('0 dB (Unity Gain)', bodeLeft + 8, zeroDbY - 4);
+
+  // Draw Magnitude curve
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const plotSteps = 120;
+  for (let s = 0; s <= plotSteps; s++) {
+    const logOm = logWMin + (s / plotSteps) * (logWMax - logWMin);
+    const om = Math.pow(10, logOm);
+    const g = calcG(om);
+    const x = toBodeX(om);
+    const y = magBot - ((Math.min(dbMax, Math.max(dbMin, g.magDb)) - dbMin) / (dbMax - dbMin)) * magH;
+    if (s === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // 2. Phase Plot
+  const phaseTop = Math.floor(h * 0.54);
+  const phaseBot = h - 35;
+  const phaseH = phaseBot - phaseTop;
+  const degMin = -270;
+  const degMax = 0;
+
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(bodeLeft, phaseTop, bodeW, phaseH);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(bodeLeft, phaseTop, bodeW, phaseH);
+
+  // Phase grid lines
+  for (let deg = -270; deg <= 0; deg += 45) {
+    const y = phaseBot - ((deg - degMin) / (degMax - degMin)) * phaseH;
+    ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+    ctx.beginPath(); ctx.moveTo(bodeLeft, y); ctx.lineTo(bodeRight, y); ctx.stroke();
+    ctx.font = '9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText(`${deg}°`, 10, y + 3);
+  }
+
+  // -180° reference line
+  const m180Y = phaseBot - ((-180 - degMin) / (degMax - degMin)) * phaseH;
+  ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(bodeLeft, m180Y); ctx.lineTo(bodeRight, m180Y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText('-180° (Instability Limit)', bodeLeft + 8, m180Y - 4);
+
+  // Draw Phase curve
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let s = 0; s <= plotSteps; s++) {
+    const logOm = logWMin + (s / plotSteps) * (logWMax - logWMin);
+    const om = Math.pow(10, logOm);
+    const g = calcG(om);
+    let wrapped = ((g.phiDeg % 360) + 360) % 360;
+    if (wrapped > 0) wrapped -= 360;
+    const x = toBodeX(om);
+    const y = phaseBot - ((Math.min(degMax, Math.max(degMin, wrapped)) - degMin) / (degMax - degMin)) * phaseH;
+    if (s === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Phase Margin dimension marker at w_gc
+  if (w_gc && pm_deg !== null) {
+    const gcX = toBodeX(w_gc);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(gcX, magTop); ctx.lineTo(gcX, phaseBot); ctx.stroke();
+
+    const gAtGc = calcG(w_gc);
+    let wrapped = ((gAtGc.phiDeg % 360) + 360) % 360;
+    if (wrapped > 0) wrapped -= 360;
+    const phiGcY = phaseBot - ((Math.min(degMax, Math.max(degMin, wrapped)) - degMin) / (degMax - degMin)) * phaseH;
+
+    // PM arrow
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(gcX, m180Y);
+    ctx.lineTo(gcX, phiGcY);
+    ctx.stroke();
+
+    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`PM = ${pm_deg.toFixed(1)}°`, gcX + 6, (m180Y + phiGcY) / 2);
+  }
+
+  // Titles for Bode plots
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('BODE MAGNITUDE |G(jω)| (dB)', bodeLeft, magTop - 8);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('BODE PHASE ∠G(jω) (deg)', bodeLeft, phaseTop - 8);
+
+  ctx.restore();
+
+  // --- RIGHT: POLAR NYQUIST DIAGRAM ---
+  ctx.save();
+  const nyqX = splitX + 12;
+  const nyqY = 12;
+  const nyqW = w - splitX - 24;
+  const nyqH = h - 24;
+
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(nyqX, nyqY, nyqW, nyqH);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(nyqX, nyqY, nyqW, nyqH);
+
+  // Title
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#a855f7';
+  ctx.fillText('POLAR NYQUIST DIAGRAM & CAUCHY STABILITY', nyqX + 14, nyqY + 24);
+
+  const nyqCx = nyqX + nyqW * 0.58;
+  const nyqCy = nyqY + nyqH * 0.52;
+  const nyqScale = Math.min(nyqW, nyqH) * 0.32; // scale for unit circle
+
+  // Axes in complex plane
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(nyqX + 20, nyqCy); ctx.lineTo(nyqX + nyqW - 20, nyqCy); // Real axis
+  ctx.moveTo(nyqCx, nyqY + 40); ctx.lineTo(nyqCx, nyqY + nyqH - 30); // Imag axis
+  ctx.stroke();
+
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('Re G(jω)', nyqX + nyqW - 70, nyqCy - 6);
+  ctx.fillText('+Im', nyqCx + 6, nyqY + 52);
+  ctx.fillText('–Im', nyqCx + 6, nyqY + nyqH - 36);
+
+  // Unit Circle (|G| = 1)
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.arc(nyqCx, nyqCy, nyqScale, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillText('|G|=1', nyqCx + nyqScale * 0.7, nyqCy - nyqScale * 0.7);
+
+  // Critical Stability Point: (-1, j0)
+  const critX = nyqCx - nyqScale;
+  const critY = nyqCy;
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(critX, critY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillText('(-1, j0)', critX - 52, critY - 8);
+
+  // Draw Nyquist Contour G(jw) for w: 0.05 -> 150
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const nyqSteps = 160;
+  for (let s = 0; s <= nyqSteps; s++) {
+    const om = 0.05 + Math.pow(s / nyqSteps, 2.5) * 120;
+    const g = calcG(om);
+    const px = nyqCx + g.re * nyqScale;
+    const py = nyqCy - g.im * nyqScale;
+    if (s === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Draw Negative Frequency Conjugate locus (faint dashed)
+  ctx.strokeStyle = 'rgba(168, 85, 247, 0.35)';
+  ctx.setLineDash([2, 3]);
+  ctx.beginPath();
+  for (let s = 0; s <= nyqSteps; s++) {
+    const om = 0.05 + Math.pow(s / nyqSteps, 2.5) * 120;
+    const g = calcG(om);
+    const px = nyqCx + g.re * nyqScale;
+    const py = nyqCy + g.im * nyqScale;
+    if (s === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Probe Frequency point on Nyquist
+  const probeG = calcG(wProbe);
+  const probePx = nyqCx + probeG.re * nyqScale;
+  const probePy = nyqCy - probeG.im * nyqScale;
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(probePx, probePy, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillText(`ω=${wProbe.toFixed(1)}`, probePx + 8, probePy + 3);
+
+  // Stability Verdict Card at bottom
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+  ctx.fillRect(nyqX + 15, nyqY + nyqH - 52, nyqW - 30, 40);
+  ctx.strokeStyle = isStable ? '#10b981' : '#ef4444';
+  ctx.strokeRect(nyqX + 15, nyqY + nyqH - 52, nyqW - 30, 40);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = isStable ? '#10b981' : '#ef4444';
+  ctx.fillText(isStable ? '✓ CLOSED-LOOP SYSTEM ASYMPTOTICALLY STABLE' : '⚠ SYSTEM CLOSED-LOOP UNSTABLE / OSCILLATORY', nyqX + 25, nyqY + nyqH - 32);
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`PM = ${pm_deg !== null ? pm_deg.toFixed(1) + '°' : '>180°'} | GM = ${gm_db !== null ? gm_db.toFixed(1) + ' dB' : '∞'} | N = 0 Encirclements`, nyqX + 25, nyqY + nyqH - 18);
+
+  ctx.restore();
+}
+

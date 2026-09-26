@@ -43,12 +43,12 @@ import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
 import { MathView } from './MathView';
 import { physicsAudio } from '../utils/physicsAudio';
 import { SIMULATOR_EXPERIMENTS, getDynamicPhysicsExplanation, GuidedExperiment } from '../data/simulatorExperiments';
-import { renderFourBar, renderHarmonicOscillator, renderSpurGear, renderRankineCycle } from './mechanical/renderers';
-import { renderRlcCircuit, renderThreePhase, renderBuckBoost, renderSallenKey, renderTransmissionLine } from './electrical/renderers';
+import { renderFourBar, renderHarmonicOscillator, renderSpurGear, renderRankineCycle, renderOttoCycle, renderProjectile } from './mechanical/renderers';
+import { renderRlcCircuit, renderThreePhase, renderBuckBoost, renderSallenKey, renderTransmissionLine, renderOpAmp, renderRcTransient } from './electrical/renderers';
 import { renderBeamBending, renderTrussAnalysis, renderSeismicIsolation, renderMohrCircle } from './civil/renderers';
-import { renderCurrentLoop, renderControlValve, renderOrificeFlow, renderPidLoop, renderRtd } from './instrumentation/renderers';
+import { renderCurrentLoop, renderControlValve, renderOrificeFlow, renderPidLoop, renderRtd, renderBodePlot } from './instrumentation/renderers';
 import { renderDistillationColumn, renderHeatExchanger, renderGasAbsorption } from './process/renderers';
-import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel } from './semiconductor/renderers';
+import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel, renderPhotoelectric } from './semiconductor/renderers';
 import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare } from '../utils/analytics';
 import { WhyItHappenedCard } from './WhyItHappenedCard';
 import { MathWorkerBridge, SimulationMetric } from '../utils/mathWorkerBridge';
@@ -864,6 +864,138 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     metrics.push({ label: 'Threshold Voltage Vth', value: Vth.toFixed(2), unit: 'V', description: 'Gate voltage required for strong surface inversion' });
     metrics.push({ label: 'Inversion Charge Qinv', value: Qinv.toFixed(2), unit: 'µC/cm²', description: 'Mobile 2D electron sheet density under oxide' });
     metrics.push({ label: 'Channel State', value: isCutoff ? 'Cutoff' : isSaturation ? 'Pinch-Off Saturation' : 'Linear Triode', unit: '', description: 'Operating regime along channel' });
+  } else if (simulator.type === 'op_amp') {
+    const config = Math.round(params['config'] || 0);
+    const Rf = (params['rf'] || 10) * 1e3;
+    const Rin = (params['rin'] || 2) * 1e3;
+    const Vin = params['vin'] || 2.0;
+    const freq = params['freq'] || 1000;
+    const Vsupply = params['vsupply'] || 15.0;
+    const omega = 2 * Math.PI * freq;
+    let gain = 1.0;
+    if (config === 0) gain = -Rf / Rin;
+    else if (config === 1) gain = 1.0 + Rf / Rin;
+    else if (config === 2) gain = 1.0 / (omega * Rin * 10e-9);
+    else gain = omega * Rf * 10e-9;
+    const vOutPeakUnclipped = Math.abs(gain) * Vin;
+    const isSaturated = vOutPeakUnclipped >= (Vsupply - 1.2);
+    const vOutPeak = Math.min(Vsupply - 1.2, vOutPeakUnclipped);
+    const gbwp = 3.0e6;
+    const bandwidth = gbwp / Math.max(1, Math.abs(gain));
+
+    metrics.push({ label: 'Voltage Gain Av', value: gain.toFixed(2), unit: 'V/V', description: 'Closed-loop transfer ratio' });
+    metrics.push({ label: 'Peak Vout', value: vOutPeak.toFixed(2), unit: 'V', description: 'Output voltage swing after rail limits' });
+    metrics.push({ label: 'Saturation State', value: isSaturated ? 'Saturated (Clipping)' : 'Linear Active', unit: '', status: isSaturated ? 'warning' : 'normal', description: 'Operation bounded by Vcc/Vee rails' });
+    metrics.push({ label: 'Effective Bandwidth', value: bandwidth >= 1e6 ? `${(bandwidth / 1e6).toFixed(2)} MHz` : `${(bandwidth / 1e3).toFixed(1)} kHz`, unit: '', description: 'Gain-Bandwidth product limit' });
+  } else if (simulator.type === 'rc_transient') {
+    const circuitType = Math.round(params['circuitType'] || 0);
+    const R = params['resistance'] || 100;
+    const reactanceVal = params['reactanceVal'] || 100;
+    const V0 = params['vSource'] || 10;
+    let tau = 0;
+    let energy = 0;
+    if (circuitType === 0) {
+      const C = reactanceVal * 1e-6;
+      tau = R * C;
+      energy = 0.5 * C * V0 * V0 * 1e3;
+    } else {
+      const L = reactanceVal * 1e-3;
+      tau = L / R;
+      const Imax = V0 / R;
+      energy = 0.5 * L * Imax * Imax * 1e3;
+    }
+    metrics.push({ label: 'Time Constant τ', value: tau < 1e-3 ? `${(tau * 1e6).toFixed(1)} µs` : `${(tau * 1e3).toFixed(2)} ms`, unit: '', description: 'Time to reach 63.2% of steady state' });
+    metrics.push({ label: 'Rise Time (10%-90%)', value: `${(2.197 * tau * 1e3).toFixed(2)} ms`, unit: '', description: 'Transient slew transition window' });
+    metrics.push({ label: 'Settling Time (5τ)', value: `${(5.0 * tau * 1e3).toFixed(2)} ms`, unit: '', description: 'Time to 99.3% completed equilibrium' });
+    metrics.push({ label: 'Peak Stored Energy', value: energy.toFixed(2), unit: 'mJ', description: circuitType === 0 ? 'Capacitor electrostatic energy' : 'Inductor magnetic field energy' });
+  } else if (simulator.type === 'otto_cycle') {
+    const cycleType = Math.round(params['cycleType'] || 0);
+    const r = params['compressionRatio'] || (cycleType === 0 ? 9.5 : 17.0);
+    const Vd_liters = params['displacement'] || 2.0;
+    const rpm = params['rpm'] || 2400;
+    const P1_bar = params['pInlet'] || 1.0;
+    const T3_K = params['tMax'] || 2200;
+    const gamma = 1.4;
+    const T1_K = 300;
+    const T2 = T1_K * Math.pow(r, gamma - 1);
+    const P1 = P1_bar * 1e5;
+    const P2 = P1 * Math.pow(r, gamma);
+    let P3 = 0;
+    let eta = 0;
+    const Vd = Vd_liters * 1e-3;
+    const V2 = Vd / (r - 1.0);
+    const V1 = r * V2;
+    const massAir = (P1 * V1) / (287 * T1_K);
+    let W_net = 0;
+    if (cycleType === 0) {
+      P3 = P2 * (T3_K / T2);
+      const T4 = T3_K * Math.pow(1.0 / r, gamma - 1.0);
+      W_net = massAir * 0.718 * (T3_K - T2 - (T4 - T1_K));
+      eta = 1 - 1 / Math.pow(r, gamma - 1);
+    } else {
+      P3 = P2;
+      const rc = T3_K / T2;
+      const T4 = T3_K * Math.pow(rc / r, gamma - 1.0);
+      W_net = massAir * 1.005 * (T3_K - T2) - massAir * 0.718 * (T4 - T1_K);
+      eta = 1 - (1 / Math.pow(r, gamma - 1)) * ((Math.pow(rc, gamma) - 1) / (gamma * (rc - 1)));
+    }
+    const power_kW = (W_net * (rpm / 120)) / 1000;
+    const imep_bar = (W_net * 1e-3) / (Vd * 100);
+
+    metrics.push({ label: 'Thermal Efficiency η_th', value: `${(eta * 100).toFixed(1)}%`, unit: '', description: 'Air-standard ideal cycle thermodynamic efficiency' });
+    metrics.push({ label: 'Indicated Power', value: power_kW.toFixed(1), unit: 'kW', description: `${(power_kW * 1.341).toFixed(0)} bhp at ${rpm} RPM` });
+    metrics.push({ label: 'Mean Effective Pressure (IMEP)', value: imep_bar.toFixed(2), unit: 'bar', description: 'Average theoretical cylinder working pressure' });
+    metrics.push({ label: 'Peak Pressure P_max', value: (P3 / 1e5).toFixed(1), unit: 'bar', description: 'Maximum structural cylinder combustion stress' });
+  } else if (simulator.type === 'projectile') {
+    const v0 = params['launchVelocity'] || 80;
+    const angleDeg = params['launchAngle'] || 45;
+    const h0 = params['launchHeight'] || 0;
+    const theta = (angleDeg * Math.PI) / 180;
+    const g = 9.80665;
+    const v0x = v0 * Math.cos(theta);
+    const v0y = v0 * Math.sin(theta);
+    const tFlightVac = (v0y + Math.sqrt(v0y * v0y + 2 * g * h0)) / g;
+    const rangeVac = v0x * tFlightVac;
+    const hMaxVac = h0 + (v0y * v0y) / (2 * g);
+    // Approximation for drag range
+    const Cd = params['dragCoeff'] !== undefined ? params['dragCoeff'] : 0.47;
+    const rangeEst = rangeVac * (1 - Cd * 0.35);
+
+    metrics.push({ label: 'Max Apogee (Height)', value: hMaxVac.toFixed(1), unit: 'm', description: 'Apex altitude above launch plane' });
+    metrics.push({ label: 'Flight Range (Distance)', value: rangeEst.toFixed(1), unit: 'm', description: `Vacuum ideal: ${rangeVac.toFixed(1)} m` });
+    metrics.push({ label: 'Total Flight Time', value: (tFlightVac * 0.92).toFixed(2), unit: 's', description: 'Hang time until surface impact' });
+    metrics.push({ label: 'Muzzle Velocity v0', value: v0.toFixed(0), unit: 'm/s', description: 'Initial kinetic launch speed' });
+  } else if (simulator.type === 'photoelectric') {
+    const lambda_nm = params['wavelength'] || 380;
+    const matIdx = Math.round(params['targetMaterial'] || 2);
+    const materials = [
+      { name: 'Cesium (Cs)', phi: 2.14 },
+      { name: 'Potassium (K)', phi: 2.30 },
+      { name: 'Sodium (Na)', phi: 2.36 },
+      { name: 'Zinc (Zn)', phi: 4.30 },
+      { name: 'Platinum (Pt)', phi: 5.65 },
+    ];
+    const mat = materials[Math.min(materials.length - 1, Math.max(0, matIdx))];
+    const h_eVs = 4.135667696e-15;
+    const c = 2.99792458e8;
+    const photonE_eV = (h_eVs * c) / (lambda_nm * 1e-9);
+    const Kmax_eV = Math.max(0, photonE_eV - mat.phi);
+    const hasEmission = photonE_eV > mat.phi;
+
+    metrics.push({ label: 'Incident Photon Energy hν', value: photonE_eV.toFixed(2), unit: 'eV', description: `λ = ${lambda_nm.toFixed(0)} nm` });
+    metrics.push({ label: 'Work Function Φ', value: mat.phi.toFixed(2), unit: 'eV', description: `${mat.name} electron binding energy` });
+    metrics.push({ label: 'Max Kinetic Energy K_max', value: Kmax_eV.toFixed(2), unit: 'eV', description: hasEmission ? 'Photoelectron ejection excess energy' : 'Below threshold frequency (No emission)', status: hasEmission ? 'normal' : 'warning' });
+    metrics.push({ label: 'Stopping Potential V_stop', value: Kmax_eV.toFixed(2), unit: 'V', description: 'Retarding voltage required to nullify photocurrent' });
+  } else if (simulator.type === 'bode_plot') {
+    const K = params['gainK'] || 2.0;
+    const wn = params['naturalFreq'] || 10.0;
+    const zeta = params['dampingRatio'] || 0.4;
+    const wProbe = params['probeFreq'] || 10.0;
+
+    metrics.push({ label: 'DC Gain K', value: `${(20 * Math.log10(K)).toFixed(1)} dB`, unit: '', description: `Linear scale K = ${K.toFixed(1)}` });
+    metrics.push({ label: 'Natural Frequency ωn', value: wn.toFixed(1), unit: 'rad/s', description: 'Resonant frequency pole location' });
+    metrics.push({ label: 'Damping Ratio ζ', value: zeta.toFixed(2), unit: '', description: zeta < 0.707 ? 'Underdamped resonant peak' : 'Overdamped non-oscillatory' });
+    metrics.push({ label: 'Probe Frequency ω', value: wProbe.toFixed(1), unit: 'rad/s', description: 'Frequency response evaluation cursor' });
   } else {
     simulator.parameters.slice(0, 4).forEach((p) => {
       metrics.push({ label: p.name, value: (params[p.id] || p.default).toString(), unit: p.unit, description: p.description });
@@ -1542,6 +1674,56 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
           drainVoltage: params['drainVoltage'] !== undefined ? params['drainVoltage'] : 1.2,
           oxideThickness: params['oxideThickness'] || 3.2,
           substrateDoping: params['substrateDoping'] || 17,
+        });
+      } else if (simulator.type === 'op_amp') {
+        renderOpAmp(rc, {
+          config: params['config'] || 0,
+          rf: params['rf'] || 10,
+          rin: params['rin'] || 2,
+          vin: params['vin'] || 2.0,
+          freq: params['freq'] || 1000,
+          vsupply: params['vsupply'] || 15.0,
+        });
+      } else if (simulator.type === 'rc_transient') {
+        renderRcTransient(rc, {
+          circuitType: params['circuitType'] || 0,
+          resistance: params['resistance'] || 100,
+          reactanceVal: params['reactanceVal'] || 100,
+          vSource: params['vSource'] || 10,
+          switchingFreq: params['switchingFreq'] || 10,
+        });
+      } else if (simulator.type === 'otto_cycle') {
+        renderOttoCycle(rc, {
+          cycleType: params['cycleType'] || 0,
+          compressionRatio: params['compressionRatio'] || 9.5,
+          displacement: params['displacement'] || 2.0,
+          rpm: params['rpm'] || 2400,
+          pInlet: params['pInlet'] || 1.0,
+          tMax: params['tMax'] || 2200,
+        });
+      } else if (simulator.type === 'projectile') {
+        renderProjectile(rc, {
+          launchVelocity: params['launchVelocity'] || 80,
+          launchAngle: params['launchAngle'] || 45,
+          launchHeight: params['launchHeight'] || 0,
+          dragCoeff: params['dragCoeff'] !== undefined ? params['dragCoeff'] : 0.47,
+          projectileMass: params['projectileMass'] || 2.0,
+          crossSectionArea: params['crossSectionArea'] || 0.02,
+        });
+      } else if (simulator.type === 'photoelectric') {
+        renderPhotoelectric(rc, {
+          wavelength: params['wavelength'] || 380,
+          intensity: params['intensity'] || 60,
+          targetMaterial: params['targetMaterial'] || 2,
+          retardingVoltage: params['retardingVoltage'] !== undefined ? params['retardingVoltage'] : 0.0,
+        });
+      } else if (simulator.type === 'bode_plot') {
+        renderBodePlot(rc, {
+          gainK: params['gainK'] || 2.0,
+          naturalFreq: params['naturalFreq'] || 10.0,
+          dampingRatio: params['dampingRatio'] || 0.4,
+          timeDelay: params['timeDelay'] !== undefined ? params['timeDelay'] : 0.05,
+          probeFreq: params['probeFreq'] || 10.0,
         });
       } else {
         const midY = h * 0.5;

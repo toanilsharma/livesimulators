@@ -32,7 +32,13 @@ export type SimulatorType =
   | 'pn_junction'
   | 'sic_switching'
   | 'igbt_thermal'
-  | 'mosfet_channel';
+  | 'mosfet_channel'
+  | 'op_amp'
+  | 'rc_transient'
+  | 'otto_cycle'
+  | 'projectile'
+  | 'photoelectric'
+  | 'bode_plot';
 
 export interface ParameterDef {
   id: string;

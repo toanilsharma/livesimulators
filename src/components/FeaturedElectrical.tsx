@@ -264,6 +264,46 @@ const MicroSimulatorCanvas: React.FC<{
         }
         ctx.stroke();
         ctx.setLineDash([]);
+      } else if (type === 'op_amp') {
+        // Op-amp inverting amplifier with soft clipping
+        ctx.beginPath();
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2.2;
+        for (let x = 0; x < w; x++) {
+          const raw = Math.sin((x / w) * 3 * Math.PI - t * 3) * 1.4;
+          const clipped = Math.max(-1.0, Math.min(1.0, raw));
+          const y = midY - clipped * (h * 0.36);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Input reference wave in amber
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let x = 0; x < w; x++) {
+          const y = midY + Math.sin((x / w) * 3 * Math.PI - t * 3) * (h * 0.18);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      } else if (type === 'rc_transient') {
+        // Exponential charge / discharge curve
+        ctx.beginPath();
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2.2;
+        const periodW = w * 0.5;
+        for (let x = 0; x < w; x++) {
+          const locX = x % periodW;
+          const isCharge = x < periodW;
+          const factor = Math.exp(-locX / (periodW * 0.25));
+          const norm = isCharge ? (1 - factor) : factor;
+          const y = (h - 15) - norm * (h - 30);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
       }
 
       animRef.current = requestAnimationFrame(render);
