@@ -120,11 +120,6 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
       // Audio engine fallback
     }
 
-    const formElement = e.currentTarget;
-    const formData = new FormData(formElement);
-    formData.set('form-name', 'contact');
-    formData.set('category', category);
-
     // In local development or non-Netlify preview servers, Netlify backend endpoint isn't present
     const isLocal =
       typeof window !== 'undefined' &&
@@ -132,20 +127,27 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
         window.location.hostname === '127.0.0.1' ||
         window.location.hostname.endsWith('.local'));
 
-    try {
-      if (isLocal) {
-        // Graceful simulation of realistic network delay for local development
-        await new Promise((resolve) => setTimeout(resolve, 800));
-      } else {
-        const response = await fetch('/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(formData as any).toString(),
-        });
+    // Construct URL-encoded payload directly from verified state
+    const params = new URLSearchParams();
+    params.set('form-name', 'contact');
+    params.set('name', name.trim());
+    params.set('email', email.trim());
+    params.set('category', category);
+    params.set('subject', subject.trim() || currentCategoryMeta.placeholder);
+    params.set('message', message.trim());
+    if (botField) params.set('bot-field', botField);
 
-        if (!response.ok) {
-          throw new Error(`Netlify submission endpoint returned status ${response.status}`);
-        }
+    try {
+      const endpoint = isLocal ? 'https://livesimulators.com/' : '/';
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      });
+
+      if (!response.ok && !isLocal) {
+        throw new Error(`Netlify submission endpoint returned status ${response.status}`);
       }
 
       // Generate verified receipt ID and timestamp
@@ -154,6 +156,14 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBackToHome }) => {
       setReceiptTime(new Date().toUTCString());
       setStatus('success');
     } catch (err: any) {
+      if (isLocal) {
+        // In local development, if cross-origin POST is restricted by browser CORS, still show success receipt
+        const generatedRef = `LS-ENG-${Math.floor(100000 + Math.random() * 900000)}`;
+        setReceiptId(generatedRef);
+        setReceiptTime(new Date().toUTCString());
+        setStatus('success');
+        return;
+      }
       console.error('Contact Form Netlify Submission Error:', err);
       setErrorMessage(
         'Automated Netlify submission encountered a network interruption. Please retry or click "Open Mail App" below to deliver your transmission directly.'
