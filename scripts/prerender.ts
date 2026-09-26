@@ -600,9 +600,9 @@ async function runPrerender() {
   }
 
   let templateHtml = fs.readFileSync(templatePath, 'utf8');
-  // Clean any existing injected fallback content or noscript to ensure a clean base template
+  // Clean any existing injected fallback content to ensure a clean base template
   templateHtml = templateHtml.replace(
-    /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
+    /<div id="root">[\s\S]*?<\/div>(\s*<div id="seo-fallback">[\s\S]*?<\/div>|\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
     '<div id="root"></div>'
   );
 
@@ -692,13 +692,11 @@ async function runPrerender() {
       );
     }
 
-    // 6. Inject Pre-rendered Semantic HTML for search crawlers inside <noscript>
-    // Keeping <div id="root"></div> clean prevents the browser from flashing raw fallback HTML
-    // to real users when opening livesimulators.com, while main.tsx removes #seo-fallback on hydration
-    // to maintain strictly 1 canonical <h1> for headless crawlers.
+    // 6. Inject Pre-rendered Semantic HTML for search crawlers & LLM indexers inside <div id="seo-fallback">
+    // main.tsx removes #seo-fallback on client-side JS hydration to guarantee a smooth transition
     html = html.replace(
-      /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
-      `<div id="root"></div>\n    <noscript id="seo-fallback">\n${contentHtml}\n    </noscript>`
+      /<div id="root">[\s\S]*?<\/div>(\s*<div id="seo-fallback">[\s\S]*?<\/div>|\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
+      `<div id="root"></div>\n    <div id="seo-fallback">\n${contentHtml}\n    </div>`
     );
 
     // 7. Output directory and file
