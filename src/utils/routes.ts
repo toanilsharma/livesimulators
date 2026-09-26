@@ -14,10 +14,13 @@ export function parsePathToRoute(pathname: string, hash?: string): AppRoute {
     return parsePathToRoute(hashPath);
   }
 
+  // Strip query parameters and hashes if present (e.g. ?R=25&L=60)
+  const rawPath = pathname.split('?')[0].split('#')[0];
+
   // Normalize pathname: strip trailing slash (unless it is '/')
-  const cleanPath = pathname.length > 1 && pathname.endsWith('/') 
-    ? pathname.slice(0, -1) 
-    : pathname;
+  const cleanPath = rawPath.length > 1 && rawPath.endsWith('/') 
+    ? rawPath.slice(0, -1) 
+    : rawPath;
 
   if (!cleanPath || cleanPath === '/' || cleanPath === '') {
     return { view: 'home' };

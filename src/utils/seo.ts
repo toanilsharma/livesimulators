@@ -212,7 +212,9 @@ export const FAQ_SCHEMA = {
  */
 export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
   const path = routeToPath(route);
-  const canonicalUrl = `${SITE_URL}${path}`;
+  // Ensure strict clean base URL by stripping any query strings or hashes
+  const cleanPath = path.split('?')[0].split('#')[0];
+  const canonicalUrl = `${SITE_URL}${cleanPath === '/' ? '/' : cleanPath}`;
   const defaultOgImage = `${SITE_URL}/og-default.png`;
 
   switch (route.view) {
@@ -412,10 +414,13 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
 
     case 'department': {
       const dept = DISCIPLINES.find((d) => d.id === route.departmentId) || DISCIPLINES[0];
-      const shortDept = dept.name.split('(')[0].trim();
+      const title = `Interactive ${dept.name} Engineering Simulators & Calculators | LiveSimulators`;
+      const description = `Interactive ${dept.name} (${dept.code}) engineering simulators and calculators. ${dept.description} Solves first-principles equations governed by ${dept.coreEquation}, covering ${dept.subfields.join(', ')}. Run real-time Float64 physics solvers online.`
+        .replace(/\s+/g, ' ')
+        .trim();
       return {
-        title: formatSeoTitle(`${shortDept} Simulators`),
-        description: `Explore interactive ${dept.name} simulations. ${dept.description.slice(0, 140)}... Run real-time differential equation solutions online.`,
+        title,
+        description,
         canonicalUrl,
         ogType: 'website',
         ogImage: defaultOgImage,
@@ -455,7 +460,10 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
     case 'simulator': {
       const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || ALL_AVAILABLE_SIMULATORS[0];
       const dept = DISCIPLINES.find((d) => d.id === sim.discipline);
-      const cleanDesc = `${sim.tagline} ${sim.description}`.slice(0, 155);
+      const title = `Interactive ${sim.title} Simulator & Calculator | LiveSimulators`;
+      const description = `Interactive ${sim.title} simulator & calculator. ${sim.description} Governed by ${sim.physicalLaw} (${sim.equationDescription}: ${sim.governingEquation}). Solves real-time 60 FPS Float64 differential equations in your browser.`
+        .replace(/\s+/g, ' ')
+        .trim();
 
       const breadcrumbSchema = {
         '@context': 'https://schema.org',
@@ -571,8 +579,8 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
       };
 
       return {
-        title: formatSeoTitle(sim.title),
-        description: cleanDesc,
+        title,
+        description,
         canonicalUrl,
         ogType: 'website',
         ogImage: defaultOgImage,
@@ -600,9 +608,13 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
 
     case 'embed': {
       const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || ALL_AVAILABLE_SIMULATORS[0];
+      const title = `Interactive ${sim.title} Simulator & Calculator (Embed) | LiveSimulators`;
+      const description = `Interactive virtual laboratory embed for ${sim.title}. Governed by ${sim.physicalLaw} (${sim.equationDescription}: ${sim.governingEquation}). Solves real-time Float64 differential equations in your browser.`
+        .replace(/\s+/g, ' ')
+        .trim();
       return {
-        title: formatSeoTitle(`${sim.title} (Embed)`),
-        description: `Interactive embed for ${sim.title}. First-principles engineering simulation for laboratory coursework.`,
+        title,
+        description,
         canonicalUrl: `${SITE_URL}/simulator/${sim.id}`,
         ogType: 'website',
         ogImage: defaultOgImage,
@@ -767,6 +779,7 @@ export function applySeoMetadata(route: AppRoute): RouteSeoMetadata {
   // Standard Meta Tags
   setMeta('description', meta.description);
   setMeta('keywords', meta.keywords.join(', '));
+  setMeta('robots', 'index, follow, max-snippet:-1, max-image-preview:large');
 
   // OpenGraph Tags
   setMeta('og:title', meta.title, true);
@@ -781,14 +794,23 @@ export function applySeoMetadata(route: AppRoute): RouteSeoMetadata {
   setMeta('twitter:description', meta.description);
   setMeta('twitter:image', meta.ogImage);
 
-  // 3. Canonical Link Tag
+  // 3. Strict Canonical Link Tag (dynamically strips ALL query parameters and hashes)
+  const cleanCanonical = meta.canonicalUrl.split('?')[0].split('#')[0];
   let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
   if (!canonicalEl) {
     canonicalEl = document.createElement('link');
     canonicalEl.setAttribute('rel', 'canonical');
     document.head.appendChild(canonicalEl);
   }
-  canonicalEl.setAttribute('href', meta.canonicalUrl);
+  canonicalEl.setAttribute('href', cleanCanonical);
+
+  // Ensure only 1 canonical tag exists
+  const allCanonicals = document.querySelectorAll('link[rel="canonical"]');
+  if (allCanonicals.length > 1) {
+    for (let i = 1; i < allCanonicals.length; i++) {
+      allCanonicals[i].remove();
+    }
+  }
 
   // 4. Update JSON-LD Script with @graph format
   let jsonLdEl = document.getElementById('seo-jsonld') as HTMLScriptElement;

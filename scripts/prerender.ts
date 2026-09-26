@@ -549,7 +549,7 @@ async function runPrerender() {
   console.log(`📦 Prerendering ${routesToPrerender.length} distinct routes...`);
 
   function setMetaTag(html: string, attr: 'property' | 'name', key: string, content: string): string {
-    const regex = new RegExp(`<meta\\s+${attr}="${key}"[\\s\\S]*?>`, 'i');
+    const regex = new RegExp(`<meta\\s+${attr}="${key}"[^>]*>`, 'i');
     const tag = `<meta ${attr}="${key}" content="${escapeHtml(content)}" />`;
     if (regex.test(html)) {
       return html.replace(regex, tag);
@@ -571,9 +571,13 @@ async function runPrerender() {
     // 2. Set / Replace Description
     html = setMetaTag(html, 'name', 'description', meta.description);
 
-    // 3. Set / Replace Canonical Link Tag
-    const canonicalRegex = /<link\s+rel="canonical"[\s\S]*?>/i;
-    const canonicalTag = `<link rel="canonical" href="${meta.canonicalUrl}" />`;
+    // 2b. Strictly inject/replace robots tag in raw pre-rendered HTML
+    html = setMetaTag(html, 'name', 'robots', 'index, follow, max-snippet:-1, max-image-preview:large');
+
+    // 3. Set / Replace Canonical Link Tag (strictly strips all query parameters)
+    const cleanCanonicalUrl = meta.canonicalUrl.split('?')[0].split('#')[0];
+    const canonicalRegex = /<link\s+rel="canonical"[^>]*>/i;
+    const canonicalTag = `<link rel="canonical" href="${cleanCanonicalUrl}" />`;
     if (canonicalRegex.test(html)) {
       html = html.replace(canonicalRegex, canonicalTag);
     } else {
@@ -583,7 +587,7 @@ async function runPrerender() {
     // 4. Set / Replace OpenGraph & Twitter Tags
     html = setMetaTag(html, 'property', 'og:title', meta.title);
     html = setMetaTag(html, 'property', 'og:description', meta.description);
-    html = setMetaTag(html, 'property', 'og:url', meta.canonicalUrl);
+    html = setMetaTag(html, 'property', 'og:url', cleanCanonicalUrl);
     html = setMetaTag(html, 'property', 'og:type', meta.ogType);
     html = setMetaTag(html, 'property', 'og:image', meta.ogImage);
 
@@ -643,6 +647,7 @@ async function runPrerender() {
   let notFoundHtml = templateHtml;
   notFoundHtml = notFoundHtml.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(notFoundMeta.title)}</title>`);
   notFoundHtml = setMetaTag(notFoundHtml, 'name', 'description', notFoundMeta.description);
+  notFoundHtml = setMetaTag(notFoundHtml, 'name', 'robots', 'noindex, follow');
   notFoundHtml = setMetaTag(notFoundHtml, 'property', 'og:title', notFoundMeta.title);
   notFoundHtml = setMetaTag(notFoundHtml, 'property', 'og:description', notFoundMeta.description);
   notFoundHtml = setMetaTag(notFoundHtml, 'property', 'og:image', notFoundMeta.ogImage);
