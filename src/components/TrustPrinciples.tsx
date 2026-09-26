@@ -312,6 +312,11 @@ export const TrustPrinciples: React.FC = () => {
                   onChange={(e) => setStepSize(Number(e.target.value))}
                   className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
                   id="principles-slider-step"
+                  aria-label="Discretization Step (Delta t)"
+                  aria-valuenow={stepSize}
+                  aria-valuemin={0.005}
+                  aria-valuemax={0.20}
+                  aria-valuetext={`${(stepSize * 1000).toFixed(0)} milliseconds`}
                 />
                 <div className="flex justify-between text-[10px] text-slate-500">
                   <span>5ms (High Fidelity)</span>

@@ -2455,10 +2455,11 @@ export const Hero: React.FC<HeroProps> = ({
                   ref={canvasRef}
                   width={640}
                   height={340}
+                  style={{ aspectRatio: '640 / 340' }}
                   onClick={handleCanvasClick}
                   onMouseMove={handleCanvasMouseMove}
                   onMouseLeave={() => setHoverPos(null)}
-                  className="w-full h-[260px] sm:h-[300px] lg:h-[330px] block cursor-crosshair"
+                  className="interactive-canvas w-full h-[260px] sm:h-[300px] lg:h-[330px] block cursor-crosshair aspect-[640/340]"
                 />
 
                 {/* Overlaid Telemetry Indicator */}
@@ -2493,11 +2494,17 @@ export const Hero: React.FC<HeroProps> = ({
                       <span className="text-slate-400 shrink-0 text-[11px]">Grid Freq:</span>
                       <input
                         type="range"
+                        id="hero-slider-elec-freq"
                         min="30"
                         max="90"
                         value={elecFreq}
                         onChange={(e) => setElecFreq(parseFloat(e.target.value))}
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                        aria-label="Grid Frequency"
+                        aria-valuenow={elecFreq}
+                        aria-valuemin={30}
+                        aria-valuemax={90}
+                        aria-valuetext={`${elecFreq} Hz`}
                       />
                       <span className="text-cyan-300 font-bold shrink-0 text-xs">{elecFreq} Hz</span>
                     </div>
@@ -2508,11 +2515,17 @@ export const Hero: React.FC<HeroProps> = ({
                       <span className="text-slate-400 shrink-0 text-[11px]">Crank RPM:</span>
                       <input
                         type="range"
+                        id="hero-slider-mech-rpm"
                         min="10"
                         max="90"
                         value={mechRpm}
                         onChange={(e) => setMechRpm(parseFloat(e.target.value))}
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                        aria-label="Crank Speed RPM"
+                        aria-valuenow={mechRpm}
+                        aria-valuemin={10}
+                        aria-valuemax={90}
+                        aria-valuetext={`${mechRpm} RPM`}
                       />
                       <span className="text-amber-300 font-bold shrink-0 text-xs">{mechRpm} RPM</span>
                     </div>
@@ -2523,11 +2536,17 @@ export const Hero: React.FC<HeroProps> = ({
                       <span className="text-slate-400 shrink-0 text-[11px]">Core Temp:</span>
                       <input
                         type="range"
+                        id="hero-slider-chem-temp"
                         min="290"
                         max="420"
                         value={chemTemp}
                         onChange={(e) => setChemTemp(parseFloat(e.target.value))}
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-400"
+                        aria-label="Reactor Core Temperature"
+                        aria-valuenow={chemTemp}
+                        aria-valuemin={290}
+                        aria-valuemax={420}
+                        aria-valuetext={`${chemTemp} K`}
                       />
                       <span className="text-purple-300 font-bold shrink-0 text-xs">{chemTemp} K</span>
                     </div>
@@ -2538,12 +2557,18 @@ export const Hero: React.FC<HeroProps> = ({
                       <span className="text-slate-400 shrink-0 text-[11px]">Bias V_a:</span>
                       <input
                         type="range"
+                        id="hero-slider-semi-bias"
                         min="-3.5"
                         max="0.85"
                         step="0.05"
                         value={semiBias}
                         onChange={(e) => setSemiBias(parseFloat(e.target.value))}
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                        aria-label="Semiconductor Bias Voltage"
+                        aria-valuenow={semiBias}
+                        aria-valuemin={-3.5}
+                        aria-valuemax={0.85}
+                        aria-valuetext={`${semiBias >= 0 ? '+' : ''}${semiBias.toFixed(2)} V`}
                       />
                       <span className="text-sky-300 font-bold shrink-0 text-xs">
                         {semiBias >= 0 ? '+' : ''}{semiBias.toFixed(2)} V
@@ -2556,11 +2581,17 @@ export const Hero: React.FC<HeroProps> = ({
                       <span className="text-slate-400 shrink-0 text-[11px]">Level SP:</span>
                       <input
                         type="range"
+                        id="hero-slider-pid-sp"
                         min="15"
                         max="95"
                         value={pidSetpoint}
                         onChange={(e) => setPidSetpoint(parseFloat(e.target.value))}
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+                        aria-label="PID Level Setpoint"
+                        aria-valuenow={pidSetpoint}
+                        aria-valuemin={15}
+                        aria-valuemax={95}
+                        aria-valuetext={`${pidSetpoint}%`}
                       />
                       <span className="text-emerald-300 font-bold shrink-0 text-xs">{pidSetpoint}%</span>
                     </div>
@@ -2571,11 +2602,17 @@ export const Hero: React.FC<HeroProps> = ({
                       <span className="text-slate-400 shrink-0 text-[11px]">Truck Load:</span>
                       <input
                         type="range"
+                        id="hero-slider-civil-load"
                         min="20"
                         max="120"
                         value={civilLoad}
                         onChange={(e) => setCivilLoad(parseFloat(e.target.value))}
                         className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-400"
+                        aria-label="Bridge Truck Load"
+                        aria-valuenow={civilLoad}
+                        aria-valuemin={20}
+                        aria-valuemax={120}
+                        aria-valuetext={`${civilLoad} kN`}
                       />
                       <span className="text-pink-300 font-bold shrink-0 text-xs">{civilLoad} kN</span>
                     </div>

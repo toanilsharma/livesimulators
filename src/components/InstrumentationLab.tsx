@@ -1172,12 +1172,13 @@ export const InstrumentationLab: React.FC<InstrumentationLabProps> = ({ onOpenTo
               </div>
 
               {/* The Big Canvas */}
-              <div className="relative bg-[#040711]">
+              <div className="relative bg-[#040711] aspect-[720/430]">
                 <canvas
                   ref={canvasRef}
                   width={720}
                   height={430}
-                  className="w-full h-[330px] sm:h-[400px] lg:h-[430px] block"
+                  style={{ aspectRatio: '720 / 430' }}
+                  className="interactive-canvas w-full h-full block"
                 />
               </div>
 

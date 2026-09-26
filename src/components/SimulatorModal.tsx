@@ -16,7 +16,8 @@ import {
   Info,
   ShieldCheck,
   Award,
-  BookOpen
+  BookOpen,
+  ChevronDown
 } from 'lucide-react';
 import { SimulatorItem } from '../types';
 import { MathView } from './MathView';
@@ -786,12 +787,13 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
               </div>
             </div>
 
-            <div className="relative">
+            <div className="relative aspect-[860/260] w-full">
               <canvas
                 ref={canvasRef}
                 width={860}
                 height={260}
-                className="w-full h-[220px] sm:h-[260px] block cursor-crosshair bg-[#030712]"
+                style={{ aspectRatio: '860 / 260' }}
+                className="interactive-canvas w-full h-[220px] sm:h-[260px] block cursor-crosshair bg-[#030712] aspect-[860/260]"
               />
 
               {/* Canvas Inset Control Bar */}
@@ -889,12 +891,18 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
 
                     <input
                       type="range"
+                      id={`modal-slider-${param.id}`}
                       min={param.min}
                       max={param.max}
                       step={param.step}
                       value={val}
                       onChange={(e) => handleParamChange(param.id, Number(e.target.value))}
                       className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                      aria-label={`${param.name} (${param.symbol}) in ${param.unit}`}
+                      aria-valuenow={val}
+                      aria-valuemin={param.min}
+                      aria-valuemax={param.max}
+                      aria-valuetext={`${val} ${param.unit}`}
                     />
 
                     <div className="flex justify-between text-[10px] text-slate-500">
@@ -908,60 +916,68 @@ export const SimulatorModal: React.FC<SimulatorModalProps> = ({ simulator, onClo
             </div>
           </div>
 
-          {/* Educational Notes & Laboratory Relevance */}
-          <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2 text-xs text-slate-300">
-            <div className="flex items-center gap-2 font-mono text-cyan-400 font-semibold">
-              <Info className="w-4 h-4" />
-              <span>Laboratory & Engineering Application</span>
-            </div>
-            <p className="leading-relaxed">
+          {/* Educational Notes & Laboratory Relevance (Native <details> & <summary>) */}
+          <details open className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2 text-xs text-slate-300 group">
+            <summary className="flex items-center justify-between font-mono text-cyan-400 font-semibold cursor-pointer select-none">
+              <div className="flex items-center gap-2">
+                <Info className="w-4 h-4" />
+                <span>Theory &amp; Laboratory Engineering Application</span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
+            </summary>
+            <p className="leading-relaxed pt-2">
               {simulator.description}
             </p>
-          </div>
+          </details>
 
-          {/* Referenced Engineering Standards & Technical Formulas */}
-          <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 space-y-3 text-xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-mono text-emerald-400 font-semibold">
+          {/* Referenced Engineering Standards & Technical Formulas (Native <details> & <summary>) */}
+          <details open className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 space-y-3 text-xs group">
+            <summary className="flex items-center justify-between font-mono text-emerald-400 font-semibold cursor-pointer select-none">
+              <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Referenced Engineering Standards & Technical Formulas</span>
+                <span>Referenced Engineering Standards &amp; Technical Formulas</span>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950 border border-emerald-700/60 text-emerald-300 font-bold uppercase tracking-wider">
-                Reference Model
-              </span>
-            </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950 border border-emerald-700/60 text-emerald-300 font-bold uppercase tracking-wider">
+                  Reference Model
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
+              </div>
+            </summary>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-[11px]">
-              <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1">
-                <span className="text-slate-400 text-[10px] block uppercase">Referenced Standard (Academic):</span>
-                <span className="text-emerald-300 font-semibold">
-                  {simulator.standardReference || `${simulator.disciplineName} Reference Literature`}
+            <div className="pt-2 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-[11px]">
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1">
+                  <span className="text-slate-400 text-[10px] block uppercase">Referenced Standard (Academic):</span>
+                  <span className="text-emerald-300 font-semibold">
+                    {simulator.standardReference || `${simulator.disciplineName} Reference Literature`}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1">
+                  <span className="text-slate-400 text-[10px] block uppercase">Publishing Body (Reference Only):</span>
+                  <span className="text-cyan-300 font-semibold">
+                    {simulator.standardBody || 'ISO / IEC / IEEE / ANSI'}
+                  </span>
+                </div>
+              </div>
+
+              {simulator.colorStandardRule && (
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1 font-mono text-[11px]">
+                  <span className="text-slate-400 text-[10px] block uppercase">Color &amp; Diagram Legend Conventions:</span>
+                  <span className="text-slate-200">
+                    {simulator.colorStandardRule}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>
+                  Formulas and nomenclature reference published technical literature for educational study. Standards are cited for identification only; no official affiliation or endorsement is implied.
                 </span>
               </div>
-              <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1">
-                <span className="text-slate-400 text-[10px] block uppercase">Publishing Body (Reference Only):</span>
-                <span className="text-cyan-300 font-semibold">
-                  {simulator.standardBody || 'ISO / IEC / IEEE / ANSI'}
-                </span>
-              </div>
             </div>
-
-            {simulator.colorStandardRule && (
-              <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-1 font-mono text-[11px]">
-                <span className="text-slate-400 text-[10px] block uppercase">Color & Diagram Legend Conventions:</span>
-                <span className="text-slate-200">
-                  {simulator.colorStandardRule}
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
-              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>
-                Formulas and nomenclature reference published technical literature for educational study. Standards are cited for identification only; no official affiliation or endorsement is implied.
-              </span>
-            </div>
-          </div>
+          </details>
 
         </div>
 

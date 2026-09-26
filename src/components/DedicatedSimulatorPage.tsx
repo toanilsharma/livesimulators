@@ -2199,12 +2199,18 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
 
                       <input
                         type="range"
+                        id={`param-slider-${p.id}`}
                         min={p.min}
                         max={p.max}
                         step={p.step}
                         value={val}
                         onChange={(e) => handleParamChange(p.id, parseFloat(e.target.value))}
                         className="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                        aria-label={`${p.name} (${p.symbol}) in ${p.unit}`}
+                        aria-valuenow={val}
+                        aria-valuemin={p.min}
+                        aria-valuemax={p.max}
+                        aria-valuetext={`${val} ${p.unit}`}
                       />
 
                       <button
@@ -2280,7 +2286,10 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               >
                 <canvas
                   ref={canvasRef}
-                  className="w-full h-full block absolute inset-0 cursor-crosshair touch-none"
+                  width={1200}
+                  height={675}
+                  style={{ aspectRatio: '16 / 9' }}
+                  className="interactive-canvas w-full h-full block absolute inset-0 cursor-crosshair touch-none aspect-[16/9]"
                   onMouseDown={(e) => {
                     if (showDualCursors) {
                       const rect = e.currentTarget.getBoundingClientRect();
@@ -2363,107 +2372,94 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               onApplyParameters={handleApplyPreset}
             />
 
-            {/* Lower: Telemetry & Analysis Console (Fixed height on desktop, fits screen) */}
+            {/* Lower: Telemetry & Analysis Console with Native HTML <details> and <summary> for SEO & LLM discovery */}
             <div
               className={`shrink-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col min-h-0 shadow-lg ${
                 mobileTab === 'workbench'
-                  ? 'h-36 sm:h-40 lg:h-44 xl:h-48'
+                  ? 'h-44 sm:h-48 lg:h-56 xl:h-64'
                   : mobileTab === 'analysis'
                   ? 'flex-1 h-full'
-                  : 'h-44'
+                  : 'h-52 lg:h-60'
               }`}
             >
-              {/* Tab Selector Header */}
-              <div className="flex items-center gap-1 sm:gap-2 pb-1.5 border-b border-slate-800 shrink-0 overflow-x-auto custom-scrollbar">
-                <button
-                  onClick={() => setActiveTab('telemetry')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                    activeTab === 'telemetry'
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  <span>Telemetry Readouts</span>
-                </button>
+              {/* Quick Navigation Strip */}
+              <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-800 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto custom-scrollbar text-xs">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider hidden sm:inline">
+                    Jump:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('details-equations') as HTMLDetailsElement | null;
+                      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0"
+                  >
+                    <BookOpen className="w-3 h-3 text-cyan-400" />
+                    <span>Equations</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('details-standards') as HTMLDetailsElement | null;
+                      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0"
+                  >
+                    <Award className="w-3 h-3 text-emerald-400" />
+                    <span>Standards</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('details-theory') as HTMLDetailsElement | null;
+                      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-400" />
+                    <span>Theory</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('details-curriculum') as HTMLDetailsElement | null;
+                      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-purple-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0"
+                  >
+                    <GraduationCap className="w-3 h-3 text-purple-400" />
+                    <span>Curriculum</span>
+                  </button>
+                </div>
 
-                <button
-                  onClick={() => setActiveTab('derivation')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                    activeTab === 'derivation'
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>Equations & Proof</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('standards')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                    activeTab === 'standards'
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Award className="w-3.5 h-3.5" />
-                  <span>Standards</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('insights')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                    activeTab === 'insights'
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Field Rules</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('curriculum')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                    activeTab === 'curriculum'
-                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Curriculum & FAQs</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('experiments')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                    activeTab === 'experiments'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Guided Labs ({(SIMULATOR_EXPERIMENTS[simulator.type] || []).length})</span>
-                </button>
+                <span className="text-[10px] font-mono text-cyan-400 font-bold hidden md:inline-flex items-center gap-1 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span>CRAWLER-DISCOVERABLE DOM</span>
+                </span>
               </div>
 
-              {/* Tab Content (Scrollable inside its container) */}
-              <div className="flex-1 min-h-0 overflow-y-auto pt-2 custom-scrollbar">
-                {/* 1. Real-Time Telemetry Readouts (Compact Digital Cards) */}
-                {activeTab === 'telemetry' && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 h-full">
+              {/* Scrollable Container with Always-Rendered Native <details> and <summary> */}
+              <div className="flex-1 min-h-0 overflow-y-auto pt-2 custom-scrollbar space-y-2.5">
+                {/* 1. Real-Time Telemetry Readouts (Always in DOM) */}
+                <div className="space-y-1">
+                  <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Activity className="w-3 h-3 text-cyan-400" />
+                    <span>Live 60 FPS Telemetry Readouts</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {effectiveMetrics.map((m, i) => (
                       <div
                         key={i}
-                        className="p-2 sm:p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between shadow-inner"
+                        className="p-2 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between shadow-inner"
                       >
                         <span className="text-[10px] font-mono text-slate-400 truncate">
                           {m.label}
                         </span>
-                        <div className="my-1 flex items-baseline gap-1">
+                        <div className="my-0.5 flex items-baseline gap-1">
                           <span
-                            className={`text-lg sm:text-xl xl:text-2xl font-mono font-black ${
+                            className={`text-base sm:text-lg xl:text-xl font-mono font-black ${
                               m.status === 'alert'
                                 ? 'text-rose-400'
                                 : m.status === 'warning'
@@ -2477,18 +2473,29 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                             {m.unit}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 truncate" title={m.description}>
+                        <p className="text-[9px] text-slate-500 truncate" title={m.description}>
                           {m.description}
                         </p>
                       </div>
                     ))}
                   </div>
-                )}
+                </div>
 
-                {/* 2. Analytical Equations & Proof */}
-                {activeTab === 'derivation' && (
-                  <div className="space-y-3 text-xs">
-                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                {/* 2. Governing Equations & Mathematical Formulation (Native <details> & <summary>) */}
+                <details
+                  id="details-equations"
+                  open
+                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
+                >
+                  <summary className="px-3 py-2 text-xs font-mono font-bold text-cyan-300 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Governing Equations &amp; Mathematical Formulation</span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
                       <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
                         Governing Formulation ({simulator.physicalLaw}):
                       </div>
@@ -2501,10 +2508,10 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                     </div>
 
                     {simulator.analyticalProof && (
-                      <div className="p-3 rounded-xl bg-slate-950/80 border border-cyan-900/40 space-y-1.5">
+                      <div className="p-3 rounded-xl bg-slate-900/60 border border-cyan-900/40 space-y-1.5">
                         <div className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                           <BookOpen className="w-3.5 h-3.5" />
-                          <span>Analytical First-Principles Proof & Derivation:</span>
+                          <span>Analytical First-Principles Proof &amp; Derivation:</span>
                         </div>
                         <p className="text-slate-200 text-xs leading-relaxed">
                           {simulator.analyticalProof}
@@ -2513,7 +2520,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                     )}
 
                     {simulator.validationTest && (
-                      <div className="p-3 rounded-xl bg-slate-950/80 border border-emerald-900/40 space-y-1.5">
+                      <div className="p-3 rounded-xl bg-slate-900/60 border border-emerald-900/40 space-y-1.5">
                         <div className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Numerical Validation Benchmark (Error &lt; 0.2%):</span>
@@ -2524,11 +2531,22 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       </div>
                     )}
                   </div>
-                )}
+                </details>
 
-                {/* 3. Standards Compliance */}
-                {activeTab === 'standards' && (
-                  <div className="space-y-2.5 text-xs">
+                {/* 3. Referenced Engineering Standards & Compliance (Native <details> & <summary>) */}
+                <details
+                  id="details-standards"
+                  open
+                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
+                >
+                  <summary className="px-3 py-2 text-xs font-mono font-bold text-emerald-300 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
+                    <div className="flex items-center gap-2">
+                      <Award className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Referenced Engineering Standards &amp; Verification</span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
                     <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/60 flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2.5">
                         <Award className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -2547,9 +2565,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                     </div>
 
                     {simulator.colorStandardRule && (
-                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
                         <div className="text-[10px] font-mono text-slate-400 uppercase">
-                          Standard Waveform & Color Topology:
+                          Standard Waveform &amp; Color Topology:
                         </div>
                         <p className="text-slate-300 text-xs font-mono">
                           {simulator.colorStandardRule}
@@ -2557,48 +2575,78 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       </div>
                     )}
 
-                    {simulator.validationTest && (
-                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                        <div className="text-[10px] font-mono text-slate-400 uppercase">
-                          Standard Acceptance Criterion:
-                        </div>
-                        <p className="text-slate-300 text-xs">
-                          All physics algorithms verified against standard engineering tables and textbook analytical solutions.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Reference Standards Context & Non-Affiliation Notice */}
-                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-start gap-2 text-[10px] text-slate-400 font-sans">
+                    <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start gap-2 text-[10px] text-slate-400 font-sans">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                       <span className="leading-relaxed">
                         <strong className="text-slate-200">Reference Standards Notice:</strong> Mathematical formulations reference published engineering literature and fundamental physical laws for educational exploration. LiveSimulators is an independent educational platform and is not endorsed by, affiliated with, certified by, or officially linked with any international standards organization.
                       </span>
                     </div>
                   </div>
-                )}
+                </details>
 
-                {/* 4. Field Rules & Failure Modes */}
-                {activeTab === 'insights' && (
-                  <div className="space-y-2.5 text-xs">
-                    <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-800/50 space-y-1.5">
-                      <div className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                        <span>Industrial Field Engineering Rules & Failure Modes:</span>
+                {/* 4. Engineering Theory & Physical Law (Native <details> & <summary>) */}
+                <details
+                  id="details-theory"
+                  open
+                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
+                >
+                  <summary className="px-3 py-2 text-xs font-mono font-bold text-amber-300 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Engineering Theory, Physical Law &amp; Field Rules</span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                      <div className="text-[10px] font-mono uppercase text-cyan-400 font-bold flex items-center gap-1">
+                        <Info className="w-3.5 h-3.5" />
+                        <span>Physical Principle &amp; Operating Mechanism:</span>
                       </div>
                       <p className="text-slate-200 text-xs leading-relaxed">
-                        {simulator.fieldInsights || 'Standard industrial design practices mandate minimum 1.5x to 2.0x safety margins over steady-state operating envelopes.'}
+                        {simulator.description}
                       </p>
                     </div>
-                  </div>
-                )}
 
-                {/* 5. University Curriculum Mapping, Standard Textbooks & FAQs */}
-                {activeTab === 'curriculum' && (
-                  <div className="space-y-3 text-xs">
-                    {/* Course Mapping & Textbook References Grid */}
+                    <div className="p-3 rounded-xl bg-slate-900/60 border border-cyan-500/30 space-y-1.5">
+                      <div className="text-[10px] font-mono uppercase text-cyan-400 font-bold flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Live Machine State Evaluation:</span>
+                      </div>
+                      <p className="text-slate-200 text-xs leading-relaxed">
+                        {getDynamicPhysicsExplanation(simulator.type, params)}
+                      </p>
+                    </div>
+
+                    {simulator.fieldInsights && (
+                      <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-800/50 space-y-1.5">
+                        <div className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span>Industrial Field Engineering Rules &amp; Failure Modes:</span>
+                        </div>
+                        <p className="text-slate-200 text-xs leading-relaxed">
+                          {simulator.fieldInsights}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </details>
+
+                {/* 5. Curriculum Alignment & Technical FAQs (Native <details> & <summary>) */}
+                <details
+                  id="details-curriculum"
+                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
+                >
+                  <summary className="px-3 py-2 text-xs font-mono font-bold text-purple-300 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Curriculum Mapping, Textbooks &amp; Technical FAQs</span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="p-3 border-t border-slate-800/80 space-y-3 text-xs">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                      <div className="p-3 rounded-xl bg-slate-950 border border-purple-900/40 space-y-1.5">
+                      <div className="p-3 rounded-xl bg-slate-900/60 border border-purple-900/40 space-y-1.5">
                         <div className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
                           <GraduationCap className="w-3.5 h-3.5" />
                           <span>University Course Alignment:</span>
@@ -2608,7 +2656,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         </p>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-slate-950 border border-cyan-900/40 space-y-1.5">
+                      <div className="p-3 rounded-xl bg-slate-900/60 border border-cyan-900/40 space-y-1.5">
                         <div className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                           <BookOpen className="w-3.5 h-3.5" />
                           <span>Standard Textbook References:</span>
@@ -2631,6 +2679,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         </p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => setShowEmbedModal(true)}
                         className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors shrink-0 shadow-sm"
                       >
@@ -2641,7 +2690,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                     {/* Frequently Asked Technical Questions (FAQs) */}
                     <div className="space-y-2">
                       <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
-                        Technical & Theoretical FAQs:
+                        Technical &amp; Theoretical FAQs:
                       </div>
                       <div className="space-y-2">
                         {((simulator.faqs && simulator.faqs.length > 0) ? simulator.faqs : [
@@ -2654,7 +2703,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                             answer: `${simulator.validationTest || 'All computational routines are tested against exact analytical first-principles solutions to ensure numerical errors remain below 0.2% across normal parameter domains.'}`
                           }
                         ]).map((faq, idx) => (
-                          <div key={idx} className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                          <div key={idx} className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
                             <div className="font-bold text-slate-200 text-xs flex items-start gap-2">
                               <span className="text-purple-400 font-mono font-bold text-[11px]">Q{idx + 1}:</span>
                               <span>{faq.question}</span>
@@ -2667,17 +2716,28 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       </div>
                     </div>
                   </div>
-                )}
+                </details>
 
-                {/* 5. Guided Experiments & Laboratory Learning Modules */}
-                {activeTab === 'experiments' && (
-                  <div className="space-y-3 p-1">
+                {/* 6. Guided Experiments (Native <details> & <summary>) */}
+                <details
+                  id="details-experiments"
+                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
+                >
+                  <summary className="px-3 py-2 text-xs font-mono font-bold text-amber-400 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
+                    <div className="flex items-center gap-2">
+                      <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Guided Laboratory Investigations ({(SIMULATOR_EXPERIMENTS[simulator.type] || []).length})</span>
+                    </div>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
                     <div className="flex items-center justify-between pb-1 border-b border-slate-800">
                       <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5 font-mono">
                         <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
                         <span>FIRST-PRINCIPLES LABORATORY CURRICULUM</span>
                       </span>
                       <button
+                        type="button"
                         onClick={() => setShowExperimentsModal(true)}
                         className="text-[11px] font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
                       >
@@ -2686,25 +2746,11 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       </button>
                     </div>
 
-                    {/* Live Dynamic Physics Breakdown based on current sliders */}
-                    <div className="p-3 rounded-xl bg-slate-950 border border-cyan-500/30 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono uppercase text-cyan-400 font-bold flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          <span>Live Physical State Analysis</span>
-                        </span>
-                      </div>
-                      <p className="text-slate-200 text-xs leading-relaxed">
-                        {getDynamicPhysicsExplanation(simulator.type, params)}
-                      </p>
-                    </div>
-
-                    {/* Experiments Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {(SIMULATOR_EXPERIMENTS[simulator.type] || []).map((exp) => (
                         <div
                           key={exp.id}
-                          className="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/40 transition-colors flex flex-col justify-between gap-2 shadow-inner"
+                          className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-amber-500/40 transition-colors flex flex-col justify-between gap-2 shadow-inner"
                         >
                           <div className="space-y-1">
                             <div className="flex items-center justify-between">
@@ -2717,11 +2763,12 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                             <p className="text-[10px] text-slate-500 line-clamp-2">{exp.description}</p>
                           </div>
 
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-900">
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                             <span className="text-[10px] font-mono text-cyan-400 truncate max-w-[160px]">
                               {exp.expectedObservation}
                             </span>
                             <button
+                              type="button"
                               onClick={() => {
                                 handleApplyPreset(exp.parameters);
                                 setSelectedExperiment(exp);
@@ -2736,7 +2783,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       ))}
                     </div>
                   </div>
-                )}
+                </details>
               </div>
             </div>
           </div>

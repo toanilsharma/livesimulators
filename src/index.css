@@ -95,3 +95,29 @@ input[type="range"] {
   background: rgba(6, 182, 212, 0.7);
 }
 
+/* Prevent Cumulative Layout Shift (CLS) on Interactive Physics Canvas */
+canvas.interactive-canvas,
+.simulator-canvas-stage canvas,
+canvas[width][height] {
+  max-width: 100%;
+  aspect-ratio: attr(width) / attr(height);
+}
+
+@supports not (aspect-ratio: attr(width) / attr(height)) {
+  canvas[width="1200"][height="675"],
+  .simulator-canvas-stage canvas {
+    aspect-ratio: 16 / 9;
+  }
+  canvas[width="860"][height="260"] {
+    aspect-ratio: 860 / 260;
+  }
+}
+
+/* Native HTML details & summary styling */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+

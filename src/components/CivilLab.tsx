@@ -493,6 +493,12 @@ export const CivilLab: React.FC = () => {
                       value={beamLength}
                       onChange={(e) => setBeamLength(parseFloat(e.target.value))}
                       className="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-span"
+                      aria-label="Span Length L"
+                      aria-valuenow={beamLength}
+                      aria-valuemin={2.0}
+                      aria-valuemax={12.0}
+                      aria-valuetext={`${beamLength.toFixed(1)} meters`}
                     />
                   </div>
 
@@ -510,6 +516,12 @@ export const CivilLab: React.FC = () => {
                       value={pointLoadP}
                       onChange={(e) => setPointLoadP(parseFloat(e.target.value))}
                       className="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-point-load"
+                      aria-label="Point Load P"
+                      aria-valuenow={pointLoadP}
+                      aria-valuemin={0}
+                      aria-valuemax={150}
+                      aria-valuetext={`${pointLoadP} kilonewtons`}
                     />
                   </div>
 
@@ -527,6 +539,12 @@ export const CivilLab: React.FC = () => {
                       value={Math.min(pointLoadPos, beamLength)}
                       onChange={(e) => setPointLoadPos(parseFloat(e.target.value))}
                       className="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-load-pos"
+                      aria-label="Load Position x"
+                      aria-valuenow={Math.min(pointLoadPos, beamLength)}
+                      aria-valuemin={0.5}
+                      aria-valuemax={beamLength}
+                      aria-valuetext={`${Math.min(pointLoadPos, beamLength).toFixed(1)} meters`}
                     />
                   </div>
 
@@ -544,6 +562,12 @@ export const CivilLab: React.FC = () => {
                       value={udlQ}
                       onChange={(e) => setUdlQ(parseFloat(e.target.value))}
                       className="w-full accent-amber-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-udl"
+                      aria-label="Distributed Load q"
+                      aria-valuenow={udlQ}
+                      aria-valuemin={0}
+                      aria-valuemax={35}
+                      aria-valuetext={`${udlQ.toFixed(1)} kilonewtons per meter`}
                     />
                   </div>
 
@@ -605,6 +629,12 @@ export const CivilLab: React.FC = () => {
                       value={liveLoadP}
                       onChange={(e) => setLiveLoadP(parseFloat(e.target.value))}
                       className="w-full accent-amber-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-truck-load"
+                      aria-label="Live Truck Load"
+                      aria-valuenow={liveLoadP}
+                      aria-valuemin={20}
+                      aria-valuemax={200}
+                      aria-valuetext={`${liveLoadP} kilonewtons`}
                     />
                   </div>
 
@@ -622,6 +652,12 @@ export const CivilLab: React.FC = () => {
                       value={deadLoadNode}
                       onChange={(e) => setDeadLoadNode(parseFloat(e.target.value))}
                       className="w-full accent-slate-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-dead-load"
+                      aria-label="Dead Load per Node"
+                      aria-valuenow={deadLoadNode}
+                      aria-valuemin={5}
+                      aria-valuemax={40}
+                      aria-valuetext={`${deadLoadNode} kilonewtons`}
                     />
                   </div>
 
@@ -639,6 +675,12 @@ export const CivilLab: React.FC = () => {
                       value={truckPos}
                       onChange={(e) => { setTruckPos(parseFloat(e.target.value)); setIsTruckMoving(false); }}
                       className="w-full accent-emerald-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-truck-pos"
+                      aria-label="Truck Position"
+                      aria-valuenow={truckPos}
+                      aria-valuemin={0}
+                      aria-valuemax={1}
+                      aria-valuetext={`${(truckPos * 100).toFixed(0)} percent span`}
                     />
                   </div>
 
@@ -703,6 +745,12 @@ export const CivilLab: React.FC = () => {
                       value={pgaG}
                       onChange={(e) => setPgaG(parseFloat(e.target.value))}
                       className="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-pga"
+                      aria-label="PGA Excitation"
+                      aria-valuenow={pgaG}
+                      aria-valuemin={0.10}
+                      aria-valuemax={0.80}
+                      aria-valuetext={`${pgaG.toFixed(2)} g`}
                     />
                   </div>
 
@@ -720,6 +768,12 @@ export const CivilLab: React.FC = () => {
                       value={earthquakeFreq}
                       onChange={(e) => setEarthquakeFreq(parseFloat(e.target.value))}
                       className="w-full accent-cyan-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-earthquake-freq"
+                      aria-label="Earthquake Frequency"
+                      aria-valuenow={earthquakeFreq}
+                      aria-valuemin={0.5}
+                      aria-valuemax={4.0}
+                      aria-valuetext={`${earthquakeFreq.toFixed(1)} Hertz`}
                     />
                   </div>
 
@@ -762,6 +816,12 @@ export const CivilLab: React.FC = () => {
                       value={sigmaX}
                       onChange={(e) => setSigmaX(parseFloat(e.target.value))}
                       className="w-full accent-cyan-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-sigma-x"
+                      aria-label="Normal Stress Sigma x"
+                      aria-valuenow={sigmaX}
+                      aria-valuemin={20}
+                      aria-valuemax={250}
+                      aria-valuetext={`${sigmaX} kilopascals`}
                     />
                   </div>
 
@@ -779,6 +839,12 @@ export const CivilLab: React.FC = () => {
                       value={sigmaY}
                       onChange={(e) => setSigmaY(parseFloat(e.target.value))}
                       className="w-full accent-cyan-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-sigma-y"
+                      aria-label="Normal Stress Sigma y"
+                      aria-valuenow={sigmaY}
+                      aria-valuemin={0}
+                      aria-valuemax={180}
+                      aria-valuetext={`${sigmaY} kilopascals`}
                     />
                   </div>
 
@@ -796,6 +862,12 @@ export const CivilLab: React.FC = () => {
                       value={tauXy}
                       onChange={(e) => setTauXy(parseFloat(e.target.value))}
                       className="w-full accent-amber-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-tau-xy"
+                      aria-label="Shear Stress Tau xy"
+                      aria-valuenow={tauXy}
+                      aria-valuemin={0}
+                      aria-valuemax={80}
+                      aria-valuetext={`${tauXy} kilopascals`}
                     />
                   </div>
 
@@ -813,6 +885,12 @@ export const CivilLab: React.FC = () => {
                       value={planeAngleTheta}
                       onChange={(e) => setPlaneAngleTheta(parseFloat(e.target.value))}
                       className="w-full accent-pink-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-theta"
+                      aria-label="Plane Rotation Theta"
+                      aria-valuenow={planeAngleTheta}
+                      aria-valuemin={0}
+                      aria-valuemax={180}
+                      aria-valuetext={`${planeAngleTheta} degrees`}
                     />
                   </div>
 
@@ -830,6 +908,12 @@ export const CivilLab: React.FC = () => {
                       value={cohesionC}
                       onChange={(e) => setCohesionC(parseFloat(e.target.value))}
                       className="w-full accent-slate-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-cohesion"
+                      aria-label="Soil Cohesion c"
+                      aria-valuenow={cohesionC}
+                      aria-valuemin={0}
+                      aria-valuemax={60}
+                      aria-valuetext={`${cohesionC} kilopascals`}
                     />
                   </div>
 
@@ -847,6 +931,12 @@ export const CivilLab: React.FC = () => {
                       value={frictionAnglePhi}
                       onChange={(e) => setFrictionAnglePhi(parseFloat(e.target.value))}
                       className="w-full accent-slate-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                      id="civil-slider-friction-angle"
+                      aria-label="Friction Angle Phi"
+                      aria-valuenow={frictionAnglePhi}
+                      aria-valuemin={10}
+                      aria-valuemax={45}
+                      aria-valuetext={`${frictionAnglePhi} degrees`}
                     />
                   </div>
                 </div>
@@ -881,7 +971,8 @@ export const CivilLab: React.FC = () => {
                   ref={canvasRef} 
                   width={800} 
                   height={450} 
-                  className="w-full h-full block"
+                  style={{ aspectRatio: '16 / 9' }}
+                  className="interactive-canvas w-full h-full block"
                 />
               </div>
 
