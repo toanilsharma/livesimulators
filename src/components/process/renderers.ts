@@ -809,3 +809,282 @@ export function renderGasAbsorption(rc: RenderContext, p: GasAbsorptionParams) {
   ctx.fillStyle = isFlooded ? '#ef4444' : '#f59e0b';
   ctx.fillText(`Flooding: ${(floodRatio * 100).toFixed(0)}% (${isFlooded ? 'FLOOD ALERT' : 'Normal'})`, cLeft + 16, cTop + 70);
 }
+
+// ---------------------------------------------------------------------------
+// 4. BATCH REACTOR & PLUG FLOW REACTOR (PFR) KINETICS RENDERER (Levenspiel / Fogler)
+// ---------------------------------------------------------------------------
+export interface BatchPfrParams {
+  reactorType?: number; // 0 = Batch Reactor, 1 = Plug Flow Reactor
+  order?: number; // 1 or 2
+  kRate?: number; // rate constant at 50°C
+  tempC?: number; // temperature °C
+  actEnergy?: number; // Ea in kJ/mol
+  ca0?: number; // mol/L
+  volOrTime?: number; // min or L
+}
+
+export function renderBatchPfr(rc: RenderContext, p: BatchPfrParams) {
+  const { ctx, w, h, t } = rc;
+  const reactorType = Math.round(p.reactorType || 0);
+  const order = Math.round(p.order || 1);
+  const k0 = p.kRate || 0.05;
+  const tempC = p.tempC || 65.0;
+  const Ea = (p.actEnergy || 45.0) * 1e3;
+  const Ca0 = p.ca0 || 2.0;
+  const t_or_V = p.volOrTime || 30.0;
+
+  const R_gas = 8.314462;
+  const T_ref = 323.15;
+  const Tk = tempC + 273.15;
+  const k = k0 * Math.exp((-Ea / R_gas) * (1.0 / Tk - 1.0 / T_ref));
+
+  const calcConcentrations = (timeVal: number) => {
+    let Xa = 0;
+    if (order === 1) {
+      Xa = 1.0 - Math.exp(-k * timeVal);
+    } else {
+      Xa = (k * Ca0 * timeVal) / (1.0 + k * Ca0 * timeVal);
+    }
+    const Ca = Ca0 * (1.0 - Xa);
+    const Cb = Ca0 * Xa;
+    return { Xa, Ca, Cb };
+  };
+
+  const currentSol = calcConcentrations(t_or_V);
+  const Da = order === 1 ? k * t_or_V : k * Ca0 * t_or_V;
+
+  // Background
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  // Layout: Left 60% Concentration Plot, Right 40% Physical Reactor
+  const plotLeft = 55;
+  const plotRight = Math.floor(w * 0.60);
+  const plotTop = 50;
+  const plotBottom = h - 50;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBottom - plotTop;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(plotLeft, plotTop, plotW, plotH);
+
+  for (let gy = 0.25; gy <= 0.75; gy += 0.25) {
+    const y = plotBottom - gy * plotH;
+    ctx.beginPath();
+    ctx.moveTo(plotLeft, y);
+    ctx.lineTo(plotRight, y);
+    ctx.stroke();
+  }
+
+  const maxPlotT = Math.max(60, t_or_V * 1.5);
+  const maxPlotC = Ca0 * 1.15;
+
+  // Concentration Curve A: C_A(t) - Cyan (Reactant Consumption)
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  const cSteps = 60;
+  for (let i = 0; i <= cSteps; i++) {
+    const tVal = (i / cSteps) * maxPlotT;
+    const { Ca } = calcConcentrations(tVal);
+    const sx = plotLeft + (tVal / maxPlotT) * plotW;
+    const sy = plotBottom - (Ca / maxPlotC) * plotH;
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // Concentration Curve B: C_B(t) - Amber (Product Yield)
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let i = 0; i <= cSteps; i++) {
+    const tVal = (i / cSteps) * maxPlotT;
+    const { Cb } = calcConcentrations(tVal);
+    const sx = plotLeft + (tVal / maxPlotT) * plotW;
+    const sy = plotBottom - (Cb / maxPlotC) * plotH;
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // Operating Point on Curves
+  const curSx = plotLeft + (t_or_V / maxPlotT) * plotW;
+  const curSyA = plotBottom - (currentSol.Ca / maxPlotC) * plotH;
+  const curSyB = plotBottom - (currentSol.Cb / maxPlotC) * plotH;
+
+  // Dotted vertical line
+  ctx.save();
+  ctx.setLineDash([2, 3]);
+  ctx.strokeStyle = '#64748b';
+  ctx.beginPath();
+  ctx.moveTo(curSx, plotBottom);
+  ctx.lineTo(curSx, plotTop);
+  ctx.stroke();
+  ctx.restore();
+
+  // Markers
+  ctx.fillStyle = '#06b6d4';
+  ctx.beginPath();
+  ctx.arc(curSx, curSyA, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(curSx, curSyB, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Axis labels
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('0', plotLeft - 15, plotBottom + 12);
+  ctx.fillText(`${Ca0.toFixed(1)} M`, plotLeft - 36, plotTop + 10);
+  ctx.fillText(reactorType === 0 ? 'RESIDENCE TIME t (min) →' : 'REACTOR VOLUME V (L) →', plotLeft + plotW * 0.3, plotBottom + 26);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('C_A (Reactant)', plotLeft + 15, plotTop + 20);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('C_B (Product)', plotLeft + 120, plotTop + 20);
+
+  // Right schematic: Physical Reactor Model
+  const rX = plotRight + 25;
+  const rW = w - rX - 25;
+  const rMidX = rX + rW * 0.5;
+
+  if (reactorType === 0) {
+    // -------------------------------------------------------------
+    // Stirred Jacketed Batch Reactor Vessel
+    // -------------------------------------------------------------
+    const vW = Math.min(130, rW * 0.75);
+    const vH = plotH * 0.75;
+    const vX = rMidX - vW * 0.5;
+    const vY = plotTop + (plotH - vH) * 0.5;
+
+    // Jacket Outer Shell (Orange heat transfer jacket)
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(vX - 6, vY + 15, vW + 12, vH - 20);
+
+    // Vessel Body
+    ctx.fillStyle = '#0f172a';
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2.5;
+    ctx.fillRect(vX, vY, vW, vH);
+    ctx.strokeRect(vX, vY, vW, vH);
+
+    // Fluid Level with dynamic color blend (Blue to Orange as conversion increases)
+    const fluidH = vH * 0.8;
+    const fluidY = vY + (vH - fluidH);
+    const redCh = Math.floor(6 + 230 * currentSol.Xa);
+    const blueCh = Math.floor(212 * (1.0 - currentSol.Xa));
+    ctx.fillStyle = `rgba(${redCh}, 120, ${blueCh}, 0.5)`;
+    ctx.fillRect(vX + 2, fluidY, vW - 4, fluidH - 2);
+
+    // Rotating Agitator Shaft & Impeller
+    const shaftX = vX + vW * 0.5;
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(shaftX, vY - 12);
+    ctx.lineTo(shaftX, fluidY + fluidH * 0.75);
+    ctx.stroke();
+
+    // Impeller Blades with rotation
+    const impAngle = (t * 8.0) % (Math.PI * 2);
+    const impW = Math.cos(impAngle) * (vW * 0.35);
+    const impY = fluidY + fluidH * 0.75;
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(shaftX - impW, impY);
+    ctx.lineTo(shaftX + impW, impY);
+    ctx.stroke();
+
+    // Swirl particles
+    ctx.fillStyle = '#f8fafc';
+    for (let pIdx = 0; pIdx < 6; pIdx++) {
+      const pAng = impAngle + (pIdx * Math.PI) / 3.0;
+      const px = shaftX + Math.cos(pAng) * (vW * 0.28);
+      const py = impY - 20 + Math.sin(pAng * 2.0) * 15;
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText('JACKETED BATCH REACTOR', rMidX - 60, vY - 8);
+    ctx.fillText(`T = ${tempC.toFixed(0)}°C`, rMidX - 25, vY + vH + 20);
+
+  } else {
+    // -------------------------------------------------------------
+    // Tubular Plug Flow Reactor (PFR)
+    // -------------------------------------------------------------
+    const pfrW = Math.min(180, rW * 0.9);
+    const pfrH = 45;
+    const pfrX = rMidX - pfrW * 0.5;
+    const pfrY = plotTop + plotH * 0.45;
+
+    // Tube Body
+    ctx.fillStyle = '#0f172a';
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 3;
+    ctx.fillRect(pfrX, pfrY, pfrW, pfrH);
+    ctx.strokeRect(pfrX, pfrY, pfrW, pfrH);
+
+    // Color Gradient across axial length (Cyan feed -> Amber effluent)
+    const grad = ctx.createLinearGradient(pfrX, pfrY, pfrX + pfrW, pfrY);
+    grad.addColorStop(0, 'rgba(6, 182, 212, 0.6)');
+    grad.addColorStop(1, `rgba(245, 158, 11, ${0.3 + currentSol.Xa * 0.6})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(pfrX + 2, pfrY + 2, pfrW - 4, pfrH - 4);
+
+    // Flow particles moving through PFR
+    ctx.fillStyle = '#f8fafc';
+    for (let fIdx = 0; fIdx < 8; fIdx++) {
+      const fX = pfrX + ((t * 80 + fIdx * 25) % pfrW);
+      const fY = pfrY + 12 + (fIdx % 3) * 10;
+      ctx.beginPath();
+      ctx.arc(fX, fY, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Inflow & Outflow Arrows
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(pfrX - 22, pfrY + pfrH * 0.5);
+    ctx.lineTo(pfrX, pfrY + pfrH * 0.5);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#f59e0b';
+    ctx.beginPath();
+    ctx.moveTo(pfrX + pfrW, pfrY + pfrH * 0.5);
+    ctx.lineTo(pfrX + pfrW + 22, pfrY + pfrH * 0.5);
+    ctx.stroke();
+
+    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText('TUBULAR PLUG FLOW (PFR)', rMidX - 60, pfrY - 14);
+    ctx.fillText('FEED IN', pfrX - 35, pfrY + pfrH + 16);
+    ctx.fillText('PRODUCT OUT', pfrX + pfrW - 25, pfrY + pfrH + 16);
+  }
+
+  // Top Telemetry HUD
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(plotLeft, 10, w - plotLeft - 20, 32);
+  ctx.strokeStyle = '#334155';
+  ctx.strokeRect(plotLeft, 10, w - plotLeft - 20, 32);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`CONVERSION X_A: ${(currentSol.Xa * 100).toFixed(1)}%`, plotLeft + 15, 30);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`C_A: ${currentSol.Ca.toFixed(3)} M`, plotLeft + 220, 30);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`C_B: ${currentSol.Cb.toFixed(3)} M`, plotLeft + 350, 30);
+  ctx.fillStyle = '#ec4899';
+  ctx.fillText(`Da: ${Da.toFixed(2)} | k: ${k.toFixed(3)}`, plotLeft + plotW - 10, 30);
+}
+

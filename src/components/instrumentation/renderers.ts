@@ -1976,3 +1976,257 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
   ctx.restore();
 }
 
+// ---------------------------------------------------------------------------
+// 9. EVANS ROOT LOCUS PLOTTER RENDERER (IEEE Control Systems / Evans 180° Rule)
+// ---------------------------------------------------------------------------
+export interface RootLocusParams {
+  gainK: number;
+  pole1?: number;
+  pole2?: number;
+  pole3?: number;
+  zero1?: number;
+}
+
+export function renderRootLocus(rc: RenderContext, p: RootLocusParams) {
+  const { ctx, w, h } = rc;
+  const K = p.gainK || 5.0;
+  const p1 = p.pole1 !== undefined ? p.pole1 : 0.0;
+  const p2 = p.pole2 !== undefined ? p.pole2 : -2.0;
+  const p3 = p.pole3 !== undefined ? p.pole3 : -5.0;
+  const z1 = p.zero1 !== undefined ? p.zero1 : -4.0;
+
+  const sigmaA = ((p1 + p2 + p3) - z1) / 2.0;
+
+  // Cubic Cardan solver for closed-loop poles at arbitrary gain k
+  const solveCubicPoles = (kVal: number) => {
+    const c2 = -(p1 + p2 + p3);
+    const c1 = (p1 * p2 + p2 * p3 + p3 * p1) + kVal;
+    const c0 = -(p1 * p2 * p3) - kVal * z1;
+
+    const Q = (3 * c1 - c2 * c2) / 9.0;
+    const R = (9 * c2 * c1 - 27 * c0 - 2 * c2 * c2 * c2) / 54.0;
+    const D = Q * Q * Q + R * R;
+
+    let r1 = { re: 0, im: 0 };
+    let r2 = { re: 0, im: 0 };
+    let r3 = { re: 0, im: 0 };
+
+    if (D >= 0) {
+      const S = Math.cbrt(R + Math.sqrt(D));
+      const T = Math.cbrt(R - Math.sqrt(D));
+      r1.re = -c2 / 3.0 + (S + T);
+      r2.re = -c2 / 3.0 - (S + T) / 2.0;
+      r2.im = (Math.sqrt(3.0) / 2.0) * (S - T);
+      r3.re = r2.re;
+      r3.im = -r2.im;
+    } else {
+      const theta = Math.acos(R / Math.sqrt(-Q * Q * Q));
+      r1.re = 2 * Math.sqrt(-Q) * Math.cos(theta / 3.0) - c2 / 3.0;
+      r2.re = 2 * Math.sqrt(-Q) * Math.cos((theta + 2 * Math.PI) / 3.0) - c2 / 3.0;
+      r3.re = 2 * Math.sqrt(-Q) * Math.cos((theta + 4 * Math.PI) / 3.0) - c2 / 3.0;
+    }
+    return [r1, r2, r3];
+  };
+
+  const curPoles = solveCubicPoles(K);
+  const isStable = curPoles.every(pt => pt.re < 0);
+  const domWn = Math.sqrt(curPoles[1].re * curPoles[1].re + curPoles[1].im * curPoles[1].im);
+  const domZeta = domWn > 0 ? -curPoles[1].re / domWn : 1.0;
+
+  // Background
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  // s-Plane Viewport
+  const plotLeft = 55;
+  const plotRight = w - 45;
+  const plotTop = 50;
+  const plotBottom = h - 45;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBottom - plotTop;
+
+  const minRe = -8.0;
+  const maxRe = 2.5;
+  const maxIm = 6.0;
+  const minIm = -6.0;
+
+  const toSx = (re: number) => plotLeft + ((re - minRe) / (maxRe - minRe)) * plotW;
+  const toSy = (im: number) => plotTop + ((maxIm - im) / (maxIm - minIm)) * plotH;
+
+  const originX = toSx(0);
+  const originY = toSy(0);
+
+  // Background Grid
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.5)';
+  ctx.lineWidth = 1;
+  for (let r = Math.ceil(minRe); r <= Math.floor(maxRe); r++) {
+    const x = toSx(r);
+    ctx.beginPath();
+    ctx.moveTo(x, plotTop);
+    ctx.lineTo(x, plotBottom);
+    ctx.stroke();
+  }
+  for (let im = Math.ceil(minIm); im <= Math.floor(maxIm); im++) {
+    const y = toSy(im);
+    ctx.beginPath();
+    ctx.moveTo(plotLeft, y);
+    ctx.lineTo(plotRight, y);
+    ctx.stroke();
+  }
+
+  // Natural Frequency Circles (wn = 2, 4, 6)
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.35)';
+  ctx.setLineDash([2, 4]);
+  [2, 4, 6].forEach(wn => {
+    const rPx = wn * (plotW / (maxRe - minRe));
+    ctx.beginPath();
+    ctx.arc(originX, originY, rPx, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // Constant Damping Zeta Rays (zeta = 0.5, 0.707)
+  [0.5, 0.707].forEach(zeta => {
+    const ang = Math.acos(zeta);
+    const len = 7.0;
+    const xEnd1 = -len * Math.cos(ang);
+    const yEnd1 = len * Math.sin(ang);
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(toSx(xEnd1), toSy(yEnd1));
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(toSx(xEnd1), toSy(-yEnd1));
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Stability Border (jω Axis) - Highlighted
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(originX, plotTop);
+  ctx.lineTo(originX, plotBottom);
+  ctx.stroke();
+
+  // Real Axis (σ)
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(plotLeft, originY);
+  ctx.lineTo(plotRight, originY);
+  ctx.stroke();
+
+  // Asymptote Centroid & Lines (θa = ±90°)
+  const centX = toSx(sigmaA);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(centX, plotTop);
+  ctx.lineTo(centX, plotBottom);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Plot Root Locus Branches across Gain K (0 to 60)
+  const kSteps = 120;
+  const branch1: Array<{ x: number; y: number }> = [];
+  const branch2: Array<{ x: number; y: number }> = [];
+  const branch3: Array<{ x: number; y: number }> = [];
+
+  for (let i = 0; i <= kSteps; i++) {
+    const kVal = Math.pow(i / kSteps, 2) * 60.0;
+    const roots = solveCubicPoles(kVal);
+    branch1.push({ x: toSx(roots[0].re), y: toSy(roots[0].im) });
+    branch2.push({ x: toSx(roots[1].re), y: toSy(roots[1].im) });
+    branch3.push({ x: toSx(roots[2].re), y: toSy(roots[2].im) });
+  }
+
+  // Draw Branches in Cyan
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2.5;
+  [branch1, branch2, branch3].forEach(branch => {
+    ctx.beginPath();
+    branch.forEach((pt, idx) => {
+      if (idx === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.stroke();
+  });
+
+  // Open-Loop Poles (P1, P2, P3) - Cyan Crosses (X)
+  const drawPole = (re: number, im: number, lbl: string) => {
+    const sx = toSx(re);
+    const sy = toSy(im);
+    const sz = 6;
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(sx - sz, sy - sz);
+    ctx.lineTo(sx + sz, sy + sz);
+    ctx.moveTo(sx - sz, sy + sz);
+    ctx.lineTo(sx + sz, sy - sz);
+    ctx.stroke();
+    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText(lbl, sx + 8, sy - 4);
+  };
+
+  drawPole(p1, 0, `p1 (${p1})`);
+  drawPole(p2, 0, `p2 (${p2})`);
+  drawPole(p3, 0, `p3 (${p3})`);
+
+  // Open-Loop Zero (Z1) - Emerald Circle (O)
+  const zx = toSx(z1);
+  const zy = toSy(0);
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(zx, zy, 5.5, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`z1 (${z1})`, zx + 8, zy - 4);
+
+  // Current Closed-Loop Poles at gain K - Rose glowing circles
+  curPoles.forEach((cp, idx) => {
+    const sx = toSx(cp.re);
+    const sy = toSy(cp.im);
+    ctx.fillStyle = '#f43f5e';
+    ctx.beginPath();
+    ctx.arc(sx, sy, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#fda4af';
+    if (idx === 1) {
+      ctx.fillText(`s = ${cp.re.toFixed(2)} + j${Math.abs(cp.im).toFixed(2)}`, sx + 8, sy - 6);
+    }
+  });
+
+  // Axis and Region labels
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('Re (σ) →', plotRight - 55, originY - 8);
+  ctx.fillText('Im (jω) ↑', originX + 8, plotTop + 14);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText('UNSTABLE RHP', originX + 12, plotBottom - 12);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('STABLE LHP', originX - 85, plotBottom - 12);
+
+  // Top Telemetry HUD
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(plotLeft, 10, plotW, 32);
+  ctx.strokeStyle = isStable ? '#10b981' : '#ef4444';
+  ctx.strokeRect(plotLeft, 10, plotW, 32);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`GAIN K: ${K.toFixed(1)}`, plotLeft + 15, 30);
+  ctx.fillStyle = isStable ? '#10b981' : '#ef4444';
+  ctx.fillText(isStable ? '● ASYMPTOTICALLY STABLE' : '▲ UNSTABLE (RHP POLE)', plotLeft + 140, 30);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`DAMPING ζ: ${domZeta.toFixed(2)}`, plotLeft + 350, 30);
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText(`ωn: ${domWn.toFixed(2)} rad/s`, plotLeft + plotW - 130, 30);
+}
+
+

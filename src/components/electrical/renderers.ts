@@ -1276,3 +1276,670 @@ export function renderRcTransient(rc: RenderContext, p: RcTransientParams) {
   ctx.restore();
 }
 
+// ---------------------------------------------------------------------------
+// 8. TRANSFORMER OPEN-CIRCUIT & SHORT-CIRCUIT TEST RENDERER
+// ---------------------------------------------------------------------------
+export interface TransformerTestParams {
+  voc?: number;
+  ioc?: number;
+  poc?: number;
+  vsc?: number;
+  isc?: number;
+  psc?: number;
+  loadPowerFactor?: number;
+  ratedKva?: number;
+  vPrimary?: number;
+  vSecondary?: number;
+  pCoreOc?: number;
+  iOcPercent?: number;
+  pCopperSc?: number;
+  vScPercent?: number;
+  loadFraction?: number;
+  powerFactor?: number;
+}
+
+export function renderTransformerTest(rc: RenderContext, p: TransformerTestParams) {
+  const { ctx, w, h, t } = rc;
+  const Voc = p.voc || p.vPrimary || 230;
+  const Ioc = p.ioc || 1.2;
+  const Poc = p.poc || p.pCoreOc || 85;
+  const Vsc = p.vsc || 24;
+  const Isc = p.isc || 10;
+  const Psc = p.psc || p.pCopperSc || 140;
+  const pf = p.loadPowerFactor !== undefined ? p.loadPowerFactor : (p.powerFactor !== undefined ? p.powerFactor : 0.85);
+  const xLoad = p.loadFraction !== undefined ? p.loadFraction : 1.0;
+
+  const S_rated = (p.ratedKva ? p.ratedKva * 1e3 : Voc * Isc);
+  const V1 = Voc;
+  const V2 = p.vSecondary || Math.round(Voc / 2);
+  const I1_rated = Isc;
+  const Req = Psc / Math.max(1e-3, Isc * Isc);
+  const Zeq = Vsc / Math.max(1e-3, Isc);
+  const Xeq = Math.sqrt(Math.max(0, Zeq * Zeq - Req * Req));
+
+  const cosPhi0 = Math.min(1.0, Poc / Math.max(1, Voc * Ioc));
+  const Ic = Ioc * cosPhi0;
+  const Im = Ioc * Math.sqrt(Math.max(0, 1 - cosPhi0 * cosPhi0));
+  const Rc_calc = Voc / Math.max(1e-3, Ic);
+  const Xm_calc = Voc / Math.max(1e-3, Im);
+
+  const sinPhi = Math.sqrt(Math.max(0, 1.0 - pf * pf));
+  const Pout = xLoad * S_rated * pf;
+  const Pcu = xLoad * xLoad * Psc;
+  const eta = (Pout / Math.max(1, Pout + Poc + Pcu)) * 100.0;
+  const vReg = ((xLoad * (I1_rated * Req * pf + I1_rated * Xeq * sinPhi)) / V1) * 100.0;
+
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  const splitX = Math.floor(w * 0.48);
+
+  // Left: Transformer Core & Winding Schematic
+  ctx.save();
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(12, 12, splitX - 24, h - 24);
+
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('TRANSFORMER OC / SC EQUIVALENT CIRCUIT', 24, 34);
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('IEEE C57.12 / IEC 60076 TESTING STANDARD', 24, 48);
+
+  // Laminated Core
+  const coreX = splitX * 0.5;
+  const coreY = h * 0.50;
+  const coreW = 140;
+  const coreH = 150;
+  const limbW = 28;
+
+  ctx.fillStyle = '#0f172a';
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(coreX - coreW / 2, coreY - coreH / 2, coreW, coreH);
+  ctx.fillRect(coreX - coreW / 2, coreY - coreH / 2, coreW, coreH);
+
+  // Inner window
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(coreX - coreW / 2 + limbW, coreY - coreH / 2 + limbW, coreW - 2 * limbW, coreH - 2 * limbW);
+  ctx.strokeRect(coreX - coreW / 2 + limbW, coreY - coreH / 2 + limbW, coreW - 2 * limbW, coreH - 2 * limbW);
+
+  // Animated Magnetic Flux (Pulsing dashed loop inside core)
+  const fluxAlpha = 0.4 + 0.4 * Math.sin(t * 5);
+  ctx.strokeStyle = `rgba(6, 182, 212, ${fluxAlpha})`;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.lineDashOffset = -t * 20;
+  const fX = coreX - coreW / 2 + limbW / 2;
+  const fY = coreY - coreH / 2 + limbW / 2;
+  const fW = coreW - limbW;
+  const fH = coreH - limbW;
+  ctx.strokeRect(fX, fY, fW, fH);
+  ctx.setLineDash([]);
+
+  // Primary Winding (Copper Coils on left limb)
+  const pLimbX = coreX - coreW / 2;
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 4;
+  for (let c = 0; c < 8; c++) {
+    const yC = coreY - coreH / 2 + limbW + 8 + c * 11;
+    ctx.beginPath();
+    ctx.moveTo(pLimbX - 8, yC);
+    ctx.lineTo(pLimbX + limbW + 8, yC);
+    ctx.stroke();
+  }
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`Primary: ${V1}V`, pLimbX - 45, coreY - coreH / 2 - 8);
+
+  // Secondary Winding (Cyan Coils on right limb)
+  const sLimbX = coreX + coreW / 2 - limbW;
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 5;
+  for (let c = 0; c < 5; c++) {
+    const yC = coreY - coreH / 2 + limbW + 15 + c * 16;
+    ctx.beginPath();
+    ctx.moveTo(sLimbX - 8, yC);
+    ctx.lineTo(sLimbX + limbW + 8, yC);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`Secondary: ${V2}V`, sLimbX - 10, coreY - coreH / 2 - 8);
+
+  // Voltmeter / Wattmeter Telemetry below
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(24, h - 68, splitX - 48, 44);
+  ctx.strokeStyle = '#334155';
+  ctx.strokeRect(24, h - 68, splitX - 48, 44);
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`OC TEST: Poc = ${Poc} W (Core Loss) | I0 = ${Ioc.toFixed(2)} A (Rc = ${Rc_calc.toFixed(0)} Ω, Xm = ${Xm_calc.toFixed(0)} Ω)`, 34, h - 50);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`SC TEST: Psc = ${Psc} W (Cu Loss) | Req = ${Req.toFixed(2)} Ω, Xeq = ${Xeq.toFixed(2)} Ω`, 34, h - 34);
+
+  ctx.restore();
+
+  // Right: Efficiency & Voltage Regulation Curves
+  ctx.save();
+  const rightX = splitX + 8;
+  const rightW = w - splitX - 20;
+
+  // Top Graph: Efficiency vs Load Factor x (0 to 1.3)
+  const g1Y = 12;
+  const g1H = Math.floor((h - 32) * 0.48);
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(rightX, g1Y, rightW, g1H);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(rightX, g1Y, rightW, g1H);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('EFFICIENCY CURVE η vs LOAD FACTOR x', rightX + 12, g1Y + 20);
+
+  const plot1Left = rightX + 45;
+  const plot1Right = rightX + rightW - 20;
+  const plot1Top = g1Y + 32;
+  const plot1Bot = g1Y + g1H - 24;
+
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.5)';
+  ctx.beginPath();
+  ctx.moveTo(plot1Left, plot1Top); ctx.lineTo(plot1Left, plot1Bot);
+  ctx.lineTo(plot1Right, plot1Bot);
+  ctx.stroke();
+
+  // Efficiency curve plot
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const eSteps = 50;
+  for (let i = 0; i <= eSteps; i++) {
+    const xF = 0.05 + (i / eSteps) * 1.25;
+    const pO = xF * S_rated * pf;
+    const pC = xF * xF * Psc;
+    const e = (pO / (pO + Poc + pC)) * 100.0;
+    const sx = plot1Left + (xF / 1.3) * (plot1Right - plot1Left);
+    const sy = plot1Bot - ((e - 85) / 15) * (plot1Bot - plot1Top);
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, Math.max(plot1Top, Math.min(plot1Bot, sy)));
+  }
+  ctx.stroke();
+
+  // Operating Point Dot on Efficiency
+  const curEtaX = plot1Left + (xLoad / 1.3) * (plot1Right - plot1Left);
+  const curEtaY = plot1Bot - ((eta - 85) / 15) * (plot1Bot - plot1Top);
+  ctx.fillStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.arc(curEtaX, Math.max(plot1Top, Math.min(plot1Bot, curEtaY)), 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillText(`η=${eta.toFixed(1)}%`, curEtaX + 8, curEtaY - 4);
+
+  // Bottom Graph: Voltage Regulation %VR vs Load Factor
+  const g2Y = g1Y + g1H + 8;
+  const g2H = h - 20 - g2Y;
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(rightX, g2Y, rightW, g2H);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(rightX, g2Y, rightW, g2H);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('VOLTAGE REGULATION %VR (IEC / IEEE STANDARD)', rightX + 12, g2Y + 20);
+
+  const plot2Left = rightX + 45;
+  const plot2Right = rightX + rightW - 20;
+  const plot2Top = g2Y + 32;
+  const plot2Bot = g2Y + g2H - 24;
+
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.5)';
+  ctx.beginPath();
+  ctx.moveTo(plot2Left, plot2Top); ctx.lineTo(plot2Left, plot2Bot);
+  ctx.lineTo(plot2Right, plot2Bot);
+  ctx.stroke();
+
+  // %VR Line
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i = 0; i <= eSteps; i++) {
+    const xF = (i / eSteps) * 1.3;
+    const vrVal = ((xF * (I1_rated * Req * pf + I1_rated * Xeq * sinPhi)) / V1) * 100.0;
+    const sx = plot2Left + (xF / 1.3) * (plot2Right - plot2Left);
+    const sy = plot2Bot - (vrVal / 8.0) * (plot2Bot - plot2Top);
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, Math.max(plot2Top, Math.min(plot2Bot, sy)));
+  }
+  ctx.stroke();
+
+  // Current VR Dot
+  const curVrX = plot2Left + (xLoad / 1.3) * (plot2Right - plot2Left);
+  const curVrY = plot2Bot - (vReg / 8.0) * (plot2Bot - plot2Top);
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(curVrX, Math.max(plot2Top, Math.min(plot2Bot, curVrY)), 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillText(`VR=${vReg.toFixed(2)}%`, curVrX + 8, curVrY - 4);
+
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// 9. DC MOTOR SPEED CONTROL & FLUX WEAKENING RENDERER
+// ---------------------------------------------------------------------------
+export interface DcMotorParams {
+  armatureVoltage?: number;
+  fieldCurrentRel?: number;
+  extArmatureR?: number;
+  loadTorque?: number;
+  vArmature?: number;
+  iField?: number;
+  rArmature?: number;
+  fluxConstant?: number;
+}
+
+export function renderDcMotor(rc: RenderContext, p: DcMotorParams) {
+  const { ctx, w, h, t } = rc;
+  const Va = p.armatureVoltage || p.vArmature || 220;
+  const phiRel = p.fieldCurrentRel !== undefined ? p.fieldCurrentRel : (p.iField !== undefined ? p.iField : 1.0);
+  const TL = p.loadTorque !== undefined ? p.loadTorque : 25;
+  const Rext = p.extArmatureR || 0;
+  const Ra = (p.rArmature || 0.6) + Rext;
+  const kPhi = p.fluxConstant || 1.05;
+
+  const phi = kPhi * phiRel;
+  const Kt = phi;
+  const Ke = Kt;
+  const Ia = TL / Math.max(0.01, Kt);
+  const Eb = Math.max(0, Va - Ia * Ra);
+  const omega = Math.max(0, Eb / Math.max(0.01, Ke));
+  const rpm = (omega * 60.0) / (2.0 * Math.PI);
+  const Pmech = TL * omega;
+
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  const splitX = Math.floor(w * 0.46);
+
+  // Left: DC Motor Rotor & Commutator Animation
+  ctx.save();
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(12, 12, splitX - 24, h - 24);
+
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('DC SHUNT MOTOR ELECTRODYNAMICS', 24, 34);
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('WARD-LEONARD & FIELD FLUX WEAKENING', 24, 48);
+
+  const rotCenterX = splitX * 0.5;
+  const rotCenterY = h * 0.48;
+  const rotorRadius = 65;
+
+  // Stator Field Poles (North on Left, South on Right)
+  ctx.fillStyle = '#1e293b';
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+  // N Pole
+  ctx.beginPath();
+  ctx.arc(rotCenterX - 95, rotCenterY, 35, -Math.PI * 0.4, Math.PI * 0.4);
+  ctx.lineTo(rotCenterX - 110, rotCenterY);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.font = 'bold 14px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText('N', rotCenterX - 85, rotCenterY + 5);
+
+  // S Pole
+  ctx.beginPath();
+  ctx.arc(rotCenterX + 95, rotCenterY, 35, Math.PI * 0.6, Math.PI * 1.4);
+  ctx.lineTo(rotCenterX + 110, rotCenterY);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('S', rotCenterX + 75, rotCenterY + 5);
+
+  // Rotating Armature Core
+  ctx.fillStyle = '#0f172a';
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(rotCenterX, rotCenterY, rotorRadius, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+
+  // Rotating Armature Slots & Conductors
+  const rotAngle = t * (rpm / 60) * 2 * Math.PI * 0.15;
+  const slots = 12;
+  for (let s = 0; s < slots; s++) {
+    const a = rotAngle + (s / slots) * 2 * Math.PI;
+    const condX = rotCenterX + Math.cos(a) * (rotorRadius - 10);
+    const condY = rotCenterY + Math.sin(a) * (rotorRadius - 10);
+    ctx.fillStyle = s < 6 ? '#f59e0b' : '#06b6d4';
+    ctx.beginPath();
+    ctx.arc(condX, condY, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Commutator Segments & Carbon Brushes
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.arc(rotCenterX, rotCenterY, 18, 0, Math.PI * 2);
+  ctx.fill();
+  // Brushes (Top and Bottom)
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(rotCenterX - 6, rotCenterY - 26, 12, 8);
+  ctx.fillRect(rotCenterX - 6, rotCenterY + 18, 12, 8);
+
+  // Telemetry HUD below
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(20, h - 56, splitX - 40, 36);
+  ctx.strokeStyle = '#334155';
+  ctx.strokeRect(20, h - 56, splitX - 40, 36);
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`SPEED: ${rpm.toFixed(0)} RPM`, 30, h - 34);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`Ia: ${Ia.toFixed(1)} A`, 160, h - 34);
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText(`Eb: ${Eb.toFixed(1)} V`, 250, h - 34);
+
+  ctx.restore();
+
+  // Right: Torque-Speed Curve (T vs N)
+  ctx.save();
+  const rightX = splitX + 8;
+  const rightW = w - splitX - 20;
+  const plotY = 12;
+  const plotH = h - 24;
+
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(rightX, plotY, rightW, plotH);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(rightX, plotY, rightW, plotH);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('TORQUE-SPEED CHARACTERISTIC CURVE (N vs T)', rightX + 16, plotY + 24);
+
+  const pLeft = rightX + 50;
+  const pRight = rightX + rightW - 25;
+  const pTop = plotY + 45;
+  const pBot = plotY + plotH - 35;
+
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pLeft, pTop); ctx.lineTo(pLeft, pBot);
+  ctx.lineTo(pRight, pBot);
+  ctx.stroke();
+
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('TORQUE T (Nm) →', pRight - 80, pBot + 20);
+  ctx.fillText('SPEED N (RPM)', pLeft - 10, pTop - 12);
+
+  const noLoadN = (Va / Math.max(0.01, Ke)) * (60.0 / (2.0 * Math.PI));
+  const stallT = Kt * (Va / Ra);
+
+  // Speed-Torque Linear drooping curve
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const maxPlotT = Math.max(100, TL * 2.2);
+  for (let s = 0; s <= 40; s++) {
+    const tVal = (s / 40) * maxPlotT;
+    const nVal = Math.max(0, noLoadN * (1.0 - (tVal / stallT)));
+    const sx = pLeft + (tVal / maxPlotT) * (pRight - pLeft);
+    const sy = pBot - (nVal / (noLoadN * 1.15)) * (pBot - pTop);
+    if (s === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, Math.max(pTop, Math.min(pBot, sy)));
+  }
+  ctx.stroke();
+
+  // Operating Point Dot
+  const opX = pLeft + (TL / maxPlotT) * (pRight - pLeft);
+  const opY = pBot - (rpm / (noLoadN * 1.15)) * (pBot - pTop);
+  ctx.fillStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.arc(opX, Math.max(pTop, Math.min(pBot, opY)), 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillText(`OPERATING POINT (${TL}Nm, ${rpm.toFixed(0)}RPM)`, opX - 50, opY - 12);
+
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// 10. 3-PHASE INDUCTION MOTOR TORQUE-SLIP RENDERER
+// ---------------------------------------------------------------------------
+export interface InductionMotorParams {
+  appliedVoltage: number;
+  poles: number;
+  rStator: number;
+  xStator: number;
+  rRotor: number;
+  xRotor: number;
+  slip: number;
+}
+
+export function renderInductionMotor(rc: RenderContext, p: InductionMotorParams) {
+  const { ctx, w, h } = rc;
+  const VL = p.appliedVoltage || 400;
+  const P = Math.round(p.poles || 4);
+  const R1 = p.rStator || 0.4;
+  const X1 = p.xStator || 0.8;
+  const R2 = p.rRotor || 0.35;
+  const X2 = p.xRotor || 0.75;
+  const s = p.slip !== undefined ? p.slip : 0.04;
+
+  const f = 50.0;
+  const Ns = (120.0 * f) / P;
+  const ws = (4.0 * Math.PI * f) / P;
+  const V1ph = VL / Math.sqrt(3.0);
+  const Xeq = X1 + X2;
+  const sMax = R2 / Math.sqrt(R1 * R1 + Xeq * Xeq);
+  const Tmax = (3.0 * V1ph * V1ph) / (2.0 * ws * (R1 + Math.sqrt(R1 * R1 + Xeq * Xeq)));
+
+  const calcT = (slipVal: number) => {
+    const r2Eff = R2 / Math.max(1e-4, slipVal);
+    const i2 = V1ph / Math.sqrt(Math.pow(R1 + r2Eff, 2) + Xeq * Xeq);
+    return (3.0 * i2 * i2 * r2Eff) / ws;
+  };
+
+  const Top = calcT(s);
+  const Tstart = calcT(1.0);
+  const Nr = Ns * (1.0 - s);
+
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  const plotLeft = 60;
+  const plotRight = w - 40;
+  const plotTop = 45;
+  const plotBottom = h - 55;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBottom - plotTop;
+
+  // Grid & Axes
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(plotLeft, plotTop, plotW, plotH);
+
+  // Torque-Slip Curve
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  const steps = 100;
+  const maxPlotT = Tmax * 1.25;
+
+  for (let i = 0; i <= steps; i++) {
+    const slipStep = (i / steps); // 0 to 1
+    const tVal = calcT(slipStep);
+    const sx = plotLeft + slipStep * plotW;
+    const sy = plotBottom - (tVal / maxPlotT) * plotH;
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // Peak Breakdown Torque Marker
+  const tmaxSx = plotLeft + sMax * plotW;
+  const tmaxSy = plotBottom - (Tmax / maxPlotT) * plotH;
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(tmaxSx, tmaxSy, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillText(`BREAKDOWN Tmax = ${Tmax.toFixed(0)}Nm (s = ${(sMax * 100).toFixed(0)}%)`, tmaxSx - 40, tmaxSy - 10);
+
+  // Starting Torque Marker (s = 1.0)
+  const tstartSx = plotRight;
+  const tstartSy = plotBottom - (Tstart / maxPlotT) * plotH;
+  ctx.fillStyle = '#ec4899';
+  ctx.beginPath();
+  ctx.arc(tstartSx, tstartSy, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillText(`Tstart = ${Tstart.toFixed(0)}Nm`, tstartSx - 85, tstartSy + 16);
+
+  // Active Operating Point
+  const curSx = plotLeft + s * plotW;
+  const curSy = plotBottom - (Top / maxPlotT) * plotH;
+  ctx.fillStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.arc(curSx, curSy, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Telemetry HUD Bar at top
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(plotLeft, 10, plotW, 30);
+  ctx.strokeStyle = '#334155';
+  ctx.strokeRect(plotLeft, 10, plotW, 30);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`ROTOR SPEED Nr = ${Nr.toFixed(0)} RPM (Ns = ${Ns.toFixed(0)})`, plotLeft + 15, 28);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`TORQUE = ${Top.toFixed(1)} Nm`, plotLeft + 300, 28);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`SLIP s = ${(s * 100).toFixed(1)}%`, plotLeft + plotW - 140, 28);
+}
+
+// ---------------------------------------------------------------------------
+// 11. SOLAR PV I-V & MAXIMUM POWER POINT TRACKER (MPPT) RENDERER
+// ---------------------------------------------------------------------------
+export interface SolarPvParams {
+  irradiance: number;
+  cellTemp: number;
+  seriesCells: number;
+  rSeries: number;
+  rShunt: number;
+}
+
+export function renderSolarPv(rc: RenderContext, p: SolarPvParams) {
+  const { ctx, w, h } = rc;
+  const G = p.irradiance || 1000;
+  const Tc = p.cellTemp !== undefined ? p.cellTemp : 25;
+  const Ns = Math.round(p.seriesCells || 60);
+
+  const Tk = Tc + 273.15;
+  const Vt = (1.38e-23 * Tk) / 1.602e-19;
+  const Iph = (9.2 + 0.0005 * (Tk - 298.15)) * (G / 1000.0);
+  const I0 = 1.5e-9 * Math.pow(Tk / 298.15, 3);
+  const Voc = Math.max(10, Ns * (0.65 - 0.0022 * (Tk - 298.15)) + Ns * Vt * Math.log(Math.max(1e-3, G / 1000.0)));
+
+  const calcI = (v: number) => {
+    const arg = Math.min(45, v / (Ns * 1.25 * Vt));
+    return Math.max(0, Iph - I0 * (Math.exp(arg) - 1.0) - v / 300.0);
+  };
+
+  let Pmax = 0;
+  let Vmpp = 0;
+  let Impp = 0;
+  const steps = 60;
+  for (let s = 0; s <= steps; s++) {
+    const v = (s / steps) * Voc;
+    const i = calcI(v);
+    const pow = v * i;
+    if (pow > Pmax) {
+      Pmax = pow;
+      Vmpp = v;
+      Impp = i;
+    }
+  }
+
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  const plotLeft = 55;
+  const plotRight = w - 35;
+  const plotTop = 45;
+  const plotBottom = h - 45;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBottom - plotTop;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+  ctx.strokeRect(plotLeft, plotTop, plotW, plotH);
+
+  // Curve 1: Current vs Voltage (Cyan #06b6d4)
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let s = 0; s <= steps; s++) {
+    const v = (s / steps) * Voc;
+    const i = calcI(v);
+    const sx = plotLeft + (v / Voc) * plotW;
+    const sy = plotBottom - (i / (Iph * 1.15)) * plotH;
+    if (s === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // Curve 2: Power vs Voltage (Amber #f59e0b)
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let s = 0; s <= steps; s++) {
+    const v = (s / steps) * Voc;
+    const i = calcI(v);
+    const pow = v * i;
+    const sx = plotLeft + (v / Voc) * plotW;
+    const sy = plotBottom - (pow / (Pmax * 1.25)) * plotH;
+    if (s === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // Maximum Power Point Marker
+  const mppSx = plotLeft + (Vmpp / Voc) * plotW;
+  const mppSy = plotBottom - (Pmax / (Pmax * 1.25)) * plotH;
+  ctx.fillStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.arc(mppSx, mppSy, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText(`MPPT: ${Pmax.toFixed(0)}W (${Vmpp.toFixed(1)}V, ${Impp.toFixed(1)}A)`, mppSx - 60, mppSy - 12);
+
+  // Telemetry HUD Bar at top
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(plotLeft, 10, plotW, 30);
+  ctx.strokeStyle = '#334155';
+  ctx.strokeRect(plotLeft, 10, plotW, 30);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`IRRADIANCE G: ${G.toFixed(0)} W/m²`, plotLeft + 15, 28);
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText(`CELL TEMP: ${Tc.toFixed(0)}°C`, plotLeft + 220, 28);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`Voc: ${Voc.toFixed(1)}V | Isc: ${Iph.toFixed(2)}A`, plotLeft + 370, 28);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`P_MPP: ${Pmax.toFixed(1)}W`, plotLeft + plotW - 130, 28);
+}
+
+

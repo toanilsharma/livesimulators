@@ -1340,3 +1340,449 @@ export function renderProjectile(rc: RenderContext, p: ProjectileParams) {
   ctx.fillText(`HANG TIME: ${time.toFixed(2)}s`, plotLeft + plotW - 160, 31);
 }
 
+// ---------------------------------------------------------------------------
+// 8. CENTRIFUGAL PUMP & SYSTEM HYDRAULIC CURVES RENDERER (HI 14.6 / ISO 9906)
+// ---------------------------------------------------------------------------
+export interface CentrifugalPumpParams {
+  pumpSpeed: number; // RPM
+  impellerDia: number; // mm
+  staticHead: number; // m
+  systemResistanceK: number; // m/(m3/h)^2
+}
+
+export function renderCentrifugalPump(rc: RenderContext, p: CentrifugalPumpParams) {
+  const { ctx, w, h, t } = rc;
+  const N = p.pumpSpeed || 1750.0;
+  const D_mm = p.impellerDia || 220.0;
+  const Hstat = p.staticHead || 15.0;
+  const kPipe = p.systemResistanceK || 0.004;
+
+  const N_ratio = N / 1750.0;
+  const D_ratio = D_mm / 220.0;
+  const H0 = 42.0 * Math.pow(N_ratio * D_ratio, 2);
+  const Qmax = 95.0 * N_ratio * Math.pow(D_ratio, 3);
+  const kp = (H0 * 0.75) / Math.pow(Math.max(1, Qmax), 2);
+
+  let Qop = 0;
+  let Hop = Hstat;
+  if (H0 > Hstat) {
+    Qop = Math.sqrt((H0 - Hstat) / (kp + kPipe));
+    Hop = Hstat + kPipe * Qop * Qop;
+  }
+  const Qbep = Qmax * 0.65;
+  const etaMax = 0.78;
+  const qNorm = Qop / Math.max(1, Qbep);
+  const etaHyd = Math.max(0.1, Math.min(etaMax, 4.0 * etaMax * qNorm * (1.0 - 0.5 * qNorm)));
+  const PshaftKw = (1000.0 * 9.81 * (Qop / 3600.0) * Hop) / (1000.0 * etaHyd);
+
+  // Background
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  // Layout: Left 65% is hydraulic plot, Right 35% is animated pump volute & pipeline
+  const plotLeft = 55;
+  const plotRight = Math.floor(w * 0.64);
+  const plotTop = 50;
+  const plotBottom = h - 50;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBottom - plotTop;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(plotLeft, plotTop, plotW, plotH);
+
+  for (let gy = 0.25; gy <= 0.75; gy += 0.25) {
+    const y = plotBottom - gy * plotH;
+    ctx.beginPath();
+    ctx.moveTo(plotLeft, y);
+    ctx.lineTo(plotRight, y);
+    ctx.stroke();
+  }
+
+  const maxPlotQ = Math.max(80, Qmax * 1.15);
+  const maxPlotH = Math.max(50, H0 * 1.2);
+
+  // 1. Pump Head Curve H(Q) - Cyan
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  const qSteps = 60;
+  for (let i = 0; i <= qSteps; i++) {
+    const qVal = (i / qSteps) * Qmax;
+    const hVal = Math.max(0, H0 - kp * qVal * qVal);
+    const sx = plotLeft + (qVal / maxPlotQ) * plotW;
+    const sy = plotBottom - (hVal / maxPlotH) * plotH;
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // 2. System Resistance Curve H_sys(Q) - Emerald
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i = 0; i <= qSteps; i++) {
+    const qVal = (i / qSteps) * maxPlotQ;
+    const hSys = Hstat + kPipe * qVal * qVal;
+    const sx = plotLeft + (qVal / maxPlotQ) * plotW;
+    const sy = plotBottom - (Math.min(maxPlotH, hSys) / maxPlotH) * plotH;
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // 3. Efficiency Curve - Amber dashed
+  ctx.save();
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= qSteps; i++) {
+    const qVal = (i / qSteps) * Qmax;
+    const qN = qVal / Math.max(1, Qbep);
+    const eff = Math.max(0, Math.min(etaMax, 4.0 * etaMax * qN * (1.0 - 0.5 * qN)));
+    const sx = plotLeft + (qVal / maxPlotQ) * plotW;
+    const sy = plotBottom - (eff / 1.0) * plotH;
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // 4. Operating Point Crosshair & Indicator
+  if (Qop > 0) {
+    const opSx = plotLeft + (Qop / maxPlotQ) * plotW;
+    const opSy = plotBottom - (Hop / maxPlotH) * plotH;
+
+    ctx.save();
+    ctx.setLineDash([2, 3]);
+    ctx.strokeStyle = '#f43f5e';
+    ctx.beginPath();
+    ctx.moveTo(opSx, plotBottom);
+    ctx.lineTo(opSx, opSy);
+    ctx.lineTo(plotLeft, opSy);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#f43f5e';
+    ctx.beginPath();
+    ctx.arc(opSx, opSy, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#f43f5e';
+    ctx.fillText(`DUTY POINT (${Qop.toFixed(1)} m³/h, ${Hop.toFixed(1)}m)`, opSx - 40, opSy - 12);
+  }
+
+  // Axes labels
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('0', plotLeft - 15, plotBottom + 12);
+  ctx.fillText(`${maxPlotQ.toFixed(0)} m³/h`, plotRight - 45, plotBottom + 16);
+  ctx.fillText(`${maxPlotH.toFixed(0)}m`, plotLeft - 32, plotTop + 10);
+  ctx.fillText('FLOW RATE Q →', plotLeft + plotW * 0.4, plotBottom + 26);
+
+  // Right schematic: Pump Volute and Rotating Impeller
+  const pumpX = plotRight + (w - plotRight) * 0.5;
+  const pumpY = plotTop + plotH * 0.48;
+  const rVolute = Math.min(65, (w - plotRight) * 0.35);
+
+  // Volute Casing
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.arc(pumpX, pumpY, rVolute, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Discharge Nozzle
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.moveTo(pumpX + rVolute - 2, pumpY);
+  ctx.lineTo(pumpX + rVolute - 2, pumpY - rVolute * 1.3);
+  ctx.stroke();
+
+  // Suction Flange (center)
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath();
+  ctx.arc(pumpX, pumpY, rVolute * 0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Rotating Impeller Blades
+  const bladeAngle = (t * (N * 2 * Math.PI) / 60.0) % (Math.PI * 2);
+  const nBlades = 6;
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 3.5;
+  for (let b = 0; b < nBlades; b++) {
+    const a = bladeAngle + (b * 2 * Math.PI) / nBlades;
+    const x1 = pumpX + Math.cos(a) * (rVolute * 0.3);
+    const y1 = pumpY + Math.sin(a) * (rVolute * 0.3);
+    const x2 = pumpX + Math.cos(a + 0.4) * (rVolute * 0.82);
+    const y2 = pumpY + Math.sin(a + 0.4) * (rVolute * 0.82);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  // Animated Discharge Stream Particles
+  const streamY = pumpY - rVolute * 1.3;
+  ctx.fillStyle = '#38bdf8';
+  for (let i = 0; i < 4; i++) {
+    const pY = streamY - ((t * 120 + i * 20) % 50);
+    ctx.beginPath();
+    ctx.arc(pumpX + rVolute - 2, pY, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`IMPELLER: Ø${D_mm.toFixed(0)}mm`, pumpX - 45, pumpY + rVolute + 25);
+  ctx.fillText(`SPEED: ${N.toFixed(0)} RPM`, pumpX - 45, pumpY + rVolute + 40);
+
+  // Top Telemetry HUD
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(plotLeft, 10, w - plotLeft - 20, 32);
+  ctx.strokeStyle = '#334155';
+  ctx.strokeRect(plotLeft, 10, w - plotLeft - 20, 32);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`Q_DUTY: ${Qop.toFixed(1)} m³/h`, plotLeft + 15, 30);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`H_DUTY: ${Hop.toFixed(1)} m`, plotLeft + 180, 30);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`BHP: ${PshaftKw.toFixed(2)} kW`, plotLeft + 330, 30);
+  ctx.fillStyle = '#ec4899';
+  ctx.fillText(`EFFICIENCY: ${(etaHyd * 100).toFixed(1)}%`, plotLeft + 480, 30);
+}
+
+// ---------------------------------------------------------------------------
+// 9. VAPOR COMPRESSION REFRIGERATION CYCLE RENDERER (ASHRAE 15 / ISO 5149)
+// ---------------------------------------------------------------------------
+export interface RefrigerationParams {
+  evapTemp: number; // °C
+  condTemp: number; // °C
+  subcooling: number; // K
+  superheat: number; // K
+  compressorEff: number; // %
+  coolingCapacityKw: number; // kW
+}
+
+export function renderRefrigerationCycle(rc: RenderContext, p: RefrigerationParams) {
+  const { ctx, w, h, t } = rc;
+  const Tevap = p.evapTemp !== undefined ? p.evapTemp : -5.0;
+  const Tcond = p.condTemp !== undefined ? p.condTemp : 45.0;
+  const dSub = p.subcooling || 5.0;
+  const dSup = p.superheat || 6.0;
+  const etaIsen = (p.compressorEff || 75.0) / 100.0;
+  const Qcap = p.coolingCapacityKw || 10.0;
+
+  const Pevap = Math.exp(10.5 - 2400.0 / (Tevap + 273.15));
+  const Pcond = Math.exp(10.5 - 2400.0 / (Tcond + 273.15));
+
+  const h1 = 398.0 + 0.85 * (Tevap + dSup);
+  const h2s = h1 + 35.0 * Math.pow(Pcond / Math.max(0.1, Pevap), 0.28);
+  const h2 = h1 + (h2s - h1) / etaIsen;
+  const h3 = 200.0 + 1.4 * (Tcond - dSub);
+  const h4 = h3;
+
+  const qEvap = h1 - h4;
+  const wComp = h2 - h1;
+  const copR = Math.max(0.1, qEvap / Math.max(0.1, wComp));
+  const copCarnot = (Tevap + 273.15) / Math.max(1, (Tcond - Tevap));
+  const etaII = (copR / copCarnot) * 100.0;
+  const mFlow = Qcap / Math.max(1, qEvap);
+  const PcompKw = mFlow * wComp;
+
+  // Canvas clear
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  // Left 62% is P-h diagram, Right 38% is animated physical refrigeration circuit
+  const plotLeft = 60;
+  const plotRight = Math.floor(w * 0.62);
+  const plotTop = 50;
+  const plotBottom = h - 50;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBottom - plotTop;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(plotLeft, plotTop, plotW, plotH);
+
+  // Saturation Dome Coordinates (R134a representative P-h dome)
+  const hMin = 150;
+  const hMax = 460;
+  const pMinLog = Math.log(1.0);
+  const pMaxLog = Math.log(30.0);
+
+  const toPx = (hVal: number) => plotLeft + ((hVal - hMin) / (hMax - hMin)) * plotW;
+  const toPy = (pBar: number) => {
+    const lP = Math.log(Math.max(1.0, pBar));
+    return plotBottom - ((lP - pMinLog) / (pMaxLog - pMinLog)) * plotH;
+  };
+
+  // Draw Saturation Dome
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  const domePts = [
+    { h: 180, p: 1.2 }, { h: 200, p: 2.5 }, { h: 220, p: 5.0 }, { h: 245, p: 10.0 },
+    { h: 275, p: 18.0 }, { h: 300, p: 25.0 }, // Critical point
+    { h: 325, p: 23.0 }, { h: 360, p: 18.0 }, { h: 390, p: 10.0 }, { h: 405, p: 5.0 },
+    { h: 418, p: 2.5 }, { h: 425, p: 1.2 }
+  ];
+  for (let i = 0; i < domePts.length; i++) {
+    const sx = toPx(domePts[i].h);
+    const sy = toPy(domePts[i].p);
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // P-h Cycle Loop: 1 -> 2 -> 3 -> 4 -> 1
+  const pt1 = { x: toPx(h1), y: toPy(Pevap) };
+  const pt2 = { x: toPx(h2), y: toPy(Pcond) };
+  const pt3 = { x: toPx(h3), y: toPy(Pcond) };
+  const pt4 = { x: toPx(h4), y: toPy(Pevap) };
+
+  // Evaporation Line (4 -> 1) - Cyan (Heat absorbed)
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(pt4.x, pt4.y);
+  ctx.lineTo(pt1.x, pt1.y);
+  ctx.stroke();
+
+  // Compression Line (1 -> 2) - Rose (Work input)
+  ctx.strokeStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.moveTo(pt1.x, pt1.y);
+  ctx.lineTo(pt2.x, pt2.y);
+  ctx.stroke();
+
+  // Condensation Line (2 -> 3) - Amber (Heat rejected)
+  ctx.strokeStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.moveTo(pt2.x, pt2.y);
+  ctx.lineTo(pt3.x, pt3.y);
+  ctx.stroke();
+
+  // Expansion Valve Throttling (3 -> 4) - Emerald (Isenthalpic drop)
+  ctx.strokeStyle = '#10b981';
+  ctx.beginPath();
+  ctx.moveTo(pt3.x, pt3.y);
+  ctx.lineTo(pt4.x, pt4.y);
+  ctx.stroke();
+
+  // State Point markers
+  const states = [
+    { pt: pt1, lbl: '1: Evap Out', color: '#06b6d4' },
+    { pt: pt2, lbl: '2: Comp Out', color: '#f43f5e' },
+    { pt: pt3, lbl: '3: Cond Out', color: '#f59e0b' },
+    { pt: pt4, lbl: '4: Exp Out', color: '#10b981' }
+  ];
+
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  states.forEach(s => {
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.arc(s.pt.x, s.pt.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillText(s.lbl, s.pt.x + 6, s.pt.y - 4);
+  });
+
+  // Schematic Equipment Loop on right side
+  const schX = plotRight + 25;
+  const schW = w - schX - 25;
+  const schMidX = schX + schW * 0.5;
+
+  const compBoxY = plotTop + 25;
+  const condBoxY = plotTop + plotH * 0.45;
+  const expBoxY = plotTop + plotH * 0.75;
+  const evapBoxY = plotTop + plotH * 0.45;
+
+  // Draw equipment blocks
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+
+  // Compressor (Top)
+  ctx.fillStyle = '#1e1b4b';
+  ctx.strokeStyle = '#818cf8';
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(schMidX - 45, compBoxY - 14, 90, 28);
+  ctx.strokeRect(schMidX - 45, compBoxY - 14, 90, 28);
+  ctx.fillStyle = '#c7d2fe';
+  ctx.fillText('COMPRESSOR', schMidX - 32, compBoxY + 3);
+
+  // Condenser (Right)
+  const condX = schMidX + schW * 0.35;
+  ctx.fillStyle = '#451a03';
+  ctx.strokeStyle = '#f59e0b';
+  ctx.fillRect(condX - 35, condBoxY - 20, 70, 40);
+  ctx.strokeRect(condX - 35, condBoxY - 20, 70, 40);
+  ctx.fillStyle = '#fde68a';
+  ctx.fillText('CONDENSER', condX - 28, condBoxY + 4);
+
+  // Expansion Valve (Bottom)
+  ctx.fillStyle = '#064e3b';
+  ctx.strokeStyle = '#10b981';
+  ctx.fillRect(schMidX - 35, expBoxY - 12, 70, 24);
+  ctx.strokeRect(schMidX - 35, expBoxY - 12, 70, 24);
+  ctx.fillStyle = '#a7f3d0';
+  ctx.fillText('TXV VALVE', schMidX - 26, expBoxY + 4);
+
+  // Evaporator (Left)
+  const evapX = schMidX - schW * 0.35;
+  ctx.fillStyle = '#083344';
+  ctx.strokeStyle = '#06b6d4';
+  ctx.fillRect(evapX - 35, evapBoxY - 20, 70, 40);
+  ctx.strokeRect(evapX - 35, evapBoxY - 20, 70, 40);
+  ctx.fillStyle = '#a5f3fc';
+  ctx.fillText('EVAPORATOR', evapX - 30, evapBoxY + 4);
+
+  // Connect equipment lines with flow pulses
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  // 1 -> Compressor
+  ctx.moveTo(evapX, evapBoxY - 20);
+  ctx.lineTo(evapX, compBoxY);
+  ctx.lineTo(schMidX - 45, compBoxY);
+  // Compressor -> Condenser
+  ctx.moveTo(schMidX + 45, compBoxY);
+  ctx.lineTo(condX, compBoxY);
+  ctx.lineTo(condX, condBoxY - 20);
+  // Condenser -> Expansion
+  ctx.moveTo(condX, condBoxY + 20);
+  ctx.lineTo(condX, expBoxY);
+  ctx.lineTo(schMidX + 35, expBoxY);
+  // Expansion -> Evaporator
+  ctx.moveTo(schMidX - 35, expBoxY);
+  ctx.lineTo(evapX, expBoxY);
+  ctx.lineTo(evapX, evapBoxY + 20);
+  ctx.stroke();
+
+  // Top Telemetry HUD
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(plotLeft, 10, w - plotLeft - 20, 32);
+  ctx.strokeStyle = '#334155';
+  ctx.strokeRect(plotLeft, 10, w - plotLeft - 20, 32);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`COP_R: ${copR.toFixed(2)} (COP_HP: ${(copR + 1).toFixed(2)})`, plotLeft + 15, 30);
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText(`POWER: ${PcompKw.toFixed(2)} kW`, plotLeft + 230, 30);
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText(`CARNOT η_II: ${etaII.toFixed(1)}%`, plotLeft + 380, 30);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`FLOW: ${(mFlow * 3600).toFixed(0)} kg/h`, plotLeft + plotW - 60, 30);
+}
+
+

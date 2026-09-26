@@ -38,7 +38,16 @@ export type SimulatorType =
   | 'otto_cycle'
   | 'projectile'
   | 'photoelectric'
-  | 'bode_plot';
+  | 'bode_plot'
+  | 'transformer_test'
+  | 'dc_motor'
+  | 'induction_motor'
+  | 'solar_pv'
+  | 'centrifugal_pump'
+  | 'refrigeration_cycle'
+  | 'root_locus'
+  | 'batch_pfr'
+  | 'rc_beam';
 
 export interface ParameterDef {
   id: string;

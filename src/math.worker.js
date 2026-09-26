@@ -1274,8 +1274,426 @@ function solveBodePlot(params) {
   };
 }
 
+function solveTransformerTest(params) {
+  const Voc = params.voc || params.vPrimary || 230.0;
+  const Ioc = params.ioc || 1.2;
+  const Poc = params.poc || params.pCoreOc || 85.0;
+  const Vsc = params.vsc || 24.0;
+  const Isc = params.isc || 10.0;
+  const Psc = params.psc || params.pCopperSc || 140.0;
+  const pf = params.loadPowerFactor !== undefined ? params.loadPowerFactor : (params.powerFactor !== undefined ? params.powerFactor : 0.85);
+  const xLoad = params.loadFraction !== undefined ? params.loadFraction : 1.0;
+
+  const S_rated = (params.ratedKva ? params.ratedKva * 1e3 : Voc * Isc);
+  const V1 = Voc;
+  const V2 = params.vSecondary || 115.0;
+
+  const cosPhi0 = Math.min(1.0, Poc / Math.max(1, Voc * Ioc));
+  const sinPhi0 = Math.sqrt(Math.max(0, 1.0 - cosPhi0 * cosPhi0));
+  const Iw = Ioc * cosPhi0;
+  const Im = Ioc * sinPhi0;
+  const Rc = Voc / Math.max(1e-4, Iw);
+  const Xm = Voc / Math.max(1e-4, Im);
+
+  const Zeq = Vsc / Math.max(1e-4, Isc);
+  const Req = Psc / Math.max(1e-4, Isc * Isc);
+  const Xeq = Math.sqrt(Math.max(0, Zeq * Zeq - Req * Req));
+
+  const sinPhi = Math.sqrt(Math.max(0, 1.0 - pf * pf));
+  const Pout = xLoad * S_rated * pf;
+  const Pcu = xLoad * xLoad * Psc;
+  const Ploss = Poc + Pcu;
+  const eta = (Pout / Math.max(1, Pout + Ploss)) * 100.0;
+  const xMaxEta = Math.sqrt(Poc / Math.max(1, Psc));
+  const vRegPct = ((xLoad * (Isc * Req * pf + Isc * Xeq * sinPhi)) / V1) * 100.0;
+
+  const metrics = [
+    { label: 'Operating Efficiency η', value: `${eta.toFixed(2)}%`, unit: '', description: `At ${Math.round(xLoad * 100)}% load, PF = ${pf.toFixed(2)}` },
+    { label: 'Voltage Regulation %VR', value: `${vRegPct.toFixed(2)}%`, unit: '', description: 'Full-load to no-load secondary voltage drop', status: vRegPct > 5.0 ? 'warning' : 'normal' },
+    { label: 'Core / Shunt Branch', value: `Rc=${(Rc).toFixed(0)}Ω, Xm=${(Xm).toFixed(0)}Ω`, unit: '', description: 'Open-circuit excitation parameters' },
+    { label: 'Series Impedance Zeq', value: `${Zeq.toFixed(2)} Ω (Req=${Req.toFixed(2)}Ω)`, unit: '', description: 'Short-circuit winding impedance' },
+  ];
+
+  return {
+    state: { S_rated, V1, V2, I1_rated: Isc, I0: Ioc, Poc, Psc, Req, Xeq, Rc, Xm, eta, vRegPct, xMaxEta, xLoad, pf },
+    metrics,
+  };
+}
+
+function solveDcMotor(params, t) {
+  const Va = params.armatureVoltage || params.vArmature || 220.0;
+  const phiRel = params.fieldCurrentRel !== undefined ? params.fieldCurrentRel : (params.iField !== undefined ? params.iField : 1.0);
+  const TL = params.loadTorque !== undefined ? params.loadTorque : 25.0;
+  const Rext = params.extArmatureR || 0.0;
+  const Ra = (params.rArmature || 0.6) + Rext;
+  const kPhi = params.fluxConstant || 1.05;
+
+  const phi = kPhi * phiRel;
+  const Kt = phi;
+  const Ke = Kt;
+
+  const Ia = TL / Math.max(0.01, Kt);
+  const Eb = Math.max(0, Va - Ia * Ra);
+  const omega = Math.max(0, Eb / Math.max(0.01, Ke));
+  const rpm = (omega * 60.0) / (2.0 * Math.PI);
+  const Pmech = TL * omega;
+  const Pin = Va * Ia + 220.0 * 1.5 * phiRel;
+  const eta = Math.min(99.0, Math.max(0, (Pmech / Math.max(1, Pin)) * 100.0));
+  const noLoadRpm = (Va / Math.max(0.01, Ke)) * (60.0 / (2.0 * Math.PI));
+  const stallTorque = Kt * (Va / Ra);
+
+  const metrics = [
+    { label: 'Rotor Speed N', value: rpm.toFixed(0), unit: 'RPM', description: `Angular velocity ω = ${omega.toFixed(1)} rad/s` },
+    { label: 'Armature Current Ia', value: Ia.toFixed(1), unit: 'A', description: `Back-EMF Eb = ${Eb.toFixed(1)} V` },
+    { label: 'Mechanical Power', value: (Pmech / 1000.0).toFixed(2), unit: 'kW', description: `${(Pmech / 745.7).toFixed(1)} HP at shaft` },
+    { label: 'Motor Efficiency η', value: `${eta.toFixed(1)}%`, unit: '', description: 'Electromechanical conversion efficiency' },
+  ];
+
+  return {
+    state: { Va, phiRel, TL, Ra, Ia, Eb, omega, rpm, noLoadRpm, stallTorque, Pmech, eta },
+    metrics,
+  };
+}
+
+function solveInductionMotor(params) {
+  const VL = params.appliedVoltage || 400.0;
+  const P = Math.round(params.poles || 4);
+  const R1 = params.rStator || 0.4;
+  const X1 = params.xStator || 0.8;
+  const R2 = params.rRotor || 0.35;
+  const X2 = params.xRotor || 0.75;
+  const s = params.slip !== undefined ? params.slip : 0.04;
+
+  const f = 50.0;
+  const Ns = (120.0 * f) / P;
+  const ws = (4.0 * Math.PI * f) / P;
+  const V1ph = VL / Math.sqrt(3.0);
+
+  const Xeq = X1 + X2;
+  const sMax = R2 / Math.sqrt(R1 * R1 + Xeq * Xeq);
+  const Tmax = (3.0 * V1ph * V1ph) / (2.0 * ws * (R1 + Math.sqrt(R1 * R1 + Xeq * Xeq)));
+  const Tstart = (3.0 * V1ph * V1ph * R2) / (ws * (Math.pow(R1 + R2, 2) + Xeq * Xeq));
+
+  const R2_eff = R2 / Math.max(0.0001, s);
+  const I2 = V1ph / Math.sqrt(Math.pow(R1 + R2_eff, 2) + Xeq * Xeq);
+  const T_op = (3.0 * I2 * I2 * R2_eff) / ws;
+  const Nr = Ns * (1.0 - s);
+  const Pmech = (1.0 - s) * ws * T_op;
+
+  const metrics = [
+    { label: 'Rotor Speed Nr', value: Nr.toFixed(0), unit: 'RPM', description: `Synchronous Ns = ${Ns.toFixed(0)} RPM, Slip s = ${(s * 100).toFixed(1)}%` },
+    { label: 'Electromagnetic Torque', value: T_op.toFixed(1), unit: 'Nm', description: `Breakdown Tmax = ${Tmax.toFixed(1)} Nm` },
+    { label: 'Mechanical Power', value: (Pmech / 1000.0).toFixed(1), unit: 'kW', description: `${(Pmech / 745.7).toFixed(1)} BHP mechanical output` },
+    { label: 'Starting Torque Ratio', value: `${(Tstart / Math.max(1, T_op)).toFixed(2)}x`, unit: '', description: `DOL Start Torque = ${Tstart.toFixed(1)} Nm` },
+  ];
+
+  return {
+    state: { Ns, Nr, s, sMax, T_op, Tmax, Tstart, Pmech, I2 },
+    metrics,
+  };
+}
+
+function solveSolarPv(params, t) {
+  const G = params.irradiance || 1000.0;
+  const Tc = params.cellTemp !== undefined ? params.cellTemp : 25.0;
+  const Ns = Math.round(params.seriesCells || 60);
+  const Rs = params.rSeries || 0.008;
+  const Rsh = params.rShunt || 300.0;
+
+  const Tk = Tc + 273.15;
+  const q = 1.602176634e-19;
+  const kB = 1.380649e-23;
+  const A = 1.25;
+  const Vt = (kB * Tk) / q;
+  const Isc0 = 9.2;
+  const Voc0 = 0.65;
+  const alpha_I = 0.0005;
+  const beta_V = -0.0022;
+
+  const Iph = (Isc0 + alpha_I * (Tk - 298.15)) * (G / 1000.0);
+  const I0 = 1.5e-9 * Math.pow(Tk / 298.15, 3) * Math.exp((q * 1.12 / (A * kB)) * (1.0 / 298.15 - 1.0 / Tk));
+  const Voc = Math.max(0, Ns * (Voc0 + beta_V * (Tk - 298.15)) + (Ns * Vt * Math.log(Math.max(1e-3, G / 1000.0))));
+
+  const steps = 60;
+  let Pmax = 0;
+  let Vmpp = 0;
+  let Impp = 0;
+
+  for (let s = 0; s <= steps; s++) {
+    const v = (s / steps) * Voc;
+    const arg = Math.min(50, (v / (Ns * A * Vt)));
+    const i = Math.max(0, Iph - I0 * (Math.exp(arg) - 1.0) - v / Rsh);
+    const p = v * i;
+    if (p > Pmax) {
+      Pmax = p;
+      Vmpp = v;
+      Impp = i;
+    }
+  }
+
+  const FF = (Pmax / Math.max(0.1, Voc * Iph)) * 100.0;
+  const areaM2 = Ns * 0.024;
+  const PinSun = G * areaM2;
+  const moduleEff = (Pmax / Math.max(1, PinSun)) * 100.0;
+
+  const metrics = [
+    { label: 'Peak Power P_max (MPP)', value: Pmax.toFixed(1), unit: 'W', description: `Vmpp = ${Vmpp.toFixed(1)} V, Impp = ${Impp.toFixed(2)} A` },
+    { label: 'Open-Circuit Voltage Voc', value: Voc.toFixed(1), unit: 'V', description: 'Zero current terminal potential' },
+    { label: 'Short-Circuit Current Isc', value: Iph.toFixed(2), unit: 'A', description: 'Zero voltage saturation current' },
+    { label: 'Fill Factor (FF)', value: `${FF.toFixed(1)}%`, unit: '', description: `Module efficiency η = ${moduleEff.toFixed(1)}%` },
+  ];
+
+  return {
+    state: { G, Tc, Ns, Iph, Voc, Vmpp, Impp, Pmax, FF, moduleEff },
+    metrics,
+  };
+}
+
+function solveCentrifugalPump(params) {
+  const N = params.pumpSpeed || 1750.0;
+  const D_mm = params.impellerDia || 220.0;
+  const Hstat = params.staticHead || 15.0;
+  const kPipe = params.systemResistanceK || 0.004;
+
+  const N_ratio = N / 1750.0;
+  const D_ratio = D_mm / 220.0;
+
+  const H0 = 42.0 * Math.pow(N_ratio * D_ratio, 2);
+  const Qmax = 95.0 * N_ratio * Math.pow(D_ratio, 3);
+  const kp = (H0 * 0.75) / Math.pow(Qmax, 2);
+
+  let Qop = 0;
+  let Hop = Hstat;
+  if (H0 > Hstat) {
+    Qop = Math.sqrt((H0 - Hstat) / (kp + kPipe));
+    Hop = Hstat + kPipe * Qop * Qop;
+  }
+
+  const Qbep = Qmax * 0.65;
+  const etaMax = 0.78;
+  const qNorm = Qop / Math.max(1, Qbep);
+  const etaHyd = Math.max(0.1, Math.min(etaMax, 4.0 * etaMax * qNorm * (1.0 - 0.5 * qNorm)));
+  const rho = 1000.0;
+  const g = 9.80665;
+  const PshaftKw = (rho * g * (Qop / 3600.0) * Hop) / (1000.0 * etaHyd);
+  const npshReq = 1.2 + 2.5 * Math.pow(Qop / Math.max(1, Qbep), 2);
+
+  const metrics = [
+    { label: 'Operating Flow Q_duty', value: Qop.toFixed(1), unit: 'm³/h', description: 'System curve intersection operating discharge' },
+    { label: 'Total Dynamic Head H_duty', value: Hop.toFixed(1), unit: 'm', description: `Static lift: ${Hstat.toFixed(1)}m + Friction head` },
+    { label: 'Shaft Brake Power BHP', value: PshaftKw.toFixed(2), unit: 'kW', description: `${(PshaftKw * 1.341).toFixed(1)} HP motor demand` },
+    { label: 'Pump Efficiency η', value: `${(etaHyd * 100).toFixed(1)}%`, unit: '', description: `BEP: ${Qbep.toFixed(0)} m³/h, NPSHr: ${npshReq.toFixed(1)}m` },
+  ];
+
+  return {
+    state: { N, D_mm, H0, Qmax, Qop, Hop, Qbep, etaHyd, PshaftKw, npshReq, Hstat },
+    metrics,
+  };
+}
+
+function solveRefrigerationCycle(params) {
+  const Tevap = params.evapTemp !== undefined ? params.evapTemp : -5.0;
+  const Tcond = params.condTemp !== undefined ? params.condTemp : 45.0;
+  const dSub = params.subcooling || 5.0;
+  const dSup = params.superheat || 6.0;
+  const etaIsen = (params.compressorEff || 75.0) / 100.0;
+  const Qcap = params.coolingCapacityKw || 10.0;
+
+  const Pevap = Math.exp(10.5 - 2400.0 / (Tevap + 273.15));
+  const Pcond = Math.exp(10.5 - 2400.0 / (Tcond + 273.15));
+
+  const h1 = 398.0 + 0.85 * (Tevap + dSup);
+  const h2s = h1 + 35.0 * Math.pow(Pcond / Math.max(0.1, Pevap), 0.28);
+  const h2 = h1 + (h2s - h1) / etaIsen;
+  const h3 = 200.0 + 1.4 * (Tcond - dSub);
+  const h4 = h3;
+
+  const qEvap = h1 - h4;
+  const wComp = h2 - h1;
+  const qCond = h2 - h3;
+
+  const copR = Math.max(0.1, qEvap / Math.max(0.1, wComp));
+  const copHp = copR + 1.0;
+  const copCarnot = (Tevap + 273.15) / Math.max(1, (Tcond - Tevap));
+  const etaII = (copR / copCarnot) * 100.0;
+
+  const mFlow = Qcap / Math.max(1, qEvap);
+  const PcompKw = mFlow * wComp;
+
+  const metrics = [
+    { label: 'Cooling COP (COP_R)', value: copR.toFixed(2), unit: '', description: `Heating COP_HP = ${copHp.toFixed(2)}` },
+    { label: 'Compressor Power', value: PcompKw.toFixed(2), unit: 'kW', description: `Electric input for ${Qcap.toFixed(1)} kW cooling load` },
+    { label: 'Carnot 2nd-Law Efficiency', value: `${etaII.toFixed(1)}%`, unit: '', description: `Carnot ideal limit COP = ${copCarnot.toFixed(2)}` },
+    { label: 'Refrigerant Mass Flow', value: (mFlow * 3600.0).toFixed(1), unit: 'kg/h', description: `Operating pressures: ${Pevap.toFixed(1)} / ${Pcond.toFixed(1)} bar` },
+  ];
+
+  return {
+    state: { Tevap, Tcond, Pevap, Pcond, h1, h2, h3, h4, qEvap, wComp, qCond, copR, copHp, copCarnot, PcompKw, mFlow },
+    metrics,
+  };
+}
+
+function solveRootLocus(params) {
+  const K = params.gainK || 5.0;
+  const p1 = params.pole1 !== undefined ? params.pole1 : 0.0;
+  const p2 = params.pole2 !== undefined ? params.pole2 : -2.0;
+  const p3 = params.pole3 !== undefined ? params.pole3 : -5.0;
+  const z1 = params.zero1 !== undefined ? params.zero1 : -4.0;
+
+  const sigmaA = ((p1 + p2 + p3) - z1) / 2.0;
+
+  const c2 = -(p1 + p2 + p3);
+  const c1 = (p1 * p2 + p2 * p3 + p3 * p1) + K;
+  const c0 = -(p1 * p2 * p3) - K * z1;
+
+  const Q_cardan = (3 * c1 - c2 * c2) / 9.0;
+  const R_cardan = (9 * c2 * c1 - 27 * c0 - 2 * c2 * c2 * c2) / 54.0;
+  const D_cardan = Q_cardan * Q_cardan * Q_cardan + R_cardan * R_cardan;
+
+  let root1 = { re: 0, im: 0 };
+  let root2 = { re: 0, im: 0 };
+  let root3 = { re: 0, im: 0 };
+
+  if (D_cardan >= 0) {
+    const S_val = Math.cbrt(R_cardan + Math.sqrt(D_cardan));
+    const T_val = Math.cbrt(R_cardan - Math.sqrt(D_cardan));
+    root1.re = -c2 / 3.0 + (S_val + T_val);
+    root2.re = -c2 / 3.0 - (S_val + T_val) / 2.0;
+    root2.im = (Math.sqrt(3.0) / 2.0) * (S_val - T_val);
+    root3.re = root2.re;
+    root3.im = -root2.im;
+  } else {
+    const theta_cardan = Math.acos(R_cardan / Math.sqrt(-Q_cardan * Q_cardan * Q_cardan));
+    root1.re = 2 * Math.sqrt(-Q_cardan) * Math.cos(theta_cardan / 3.0) - c2 / 3.0;
+    root2.re = 2 * Math.sqrt(-Q_cardan) * Math.cos((theta_cardan + 2 * Math.PI) / 3.0) - c2 / 3.0;
+    root3.re = 2 * Math.sqrt(-Q_cardan) * Math.cos((theta_cardan + 4 * Math.PI) / 3.0) - c2 / 3.0;
+  }
+
+  const isStable = root1.re < 0 && root2.re < 0 && root3.re < 0;
+  const domWn = Math.sqrt(root2.re * root2.re + root2.im * root2.im);
+  const domZeta = domWn > 0 ? -root2.re / domWn : 1.0;
+
+  const metrics = [
+    { label: 'Closed-Loop Stability', value: isStable ? 'Asymptotically Stable' : 'Unstable (RHP Poles)', unit: '', status: isStable ? 'normal' : 'alert', description: 'All roots Re(s) < 0' },
+    { label: 'Dominant Pole Pair', value: `${root2.re.toFixed(2)} ± j${Math.abs(root2.im).toFixed(2)}`, unit: '', description: `Natural frequency ωn = ${domWn.toFixed(2)} rad/s` },
+    { label: 'Dominant Damping ζ', value: domZeta.toFixed(2), unit: '', description: `Estimated overshoot = ${(Math.exp(-Math.PI * domZeta / Math.sqrt(Math.max(0.01, 1 - domZeta * domZeta))) * 100).toFixed(1)}%` },
+    { label: 'Asymptote Centroid σ_a', value: sigmaA.toFixed(2), unit: '', description: 'Angles = ±90° to infinity' },
+  ];
+
+  return {
+    state: { K, p1, p2, p3, z1, sigmaA, root1, root2, root3, isStable, domZeta, domWn },
+    metrics,
+  };
+}
+
+function solveBatchPfr(params) {
+  const reactorType = Math.round(params.reactorType || 0);
+  const order = Math.round(params.order || 1);
+  const k0 = params.kRate || 0.05;
+  const tempC = params.tempC || 65.0;
+  const Ea = (params.actEnergy || 45.0) * 1e3;
+  const Ca0 = params.ca0 || 2.0;
+  const t_or_V = params.volOrTime || 30.0;
+
+  const R_gas = 8.314462;
+  const T_ref = 323.15;
+  const Tk = tempC + 273.15;
+  const k = k0 * Math.exp((-Ea / R_gas) * (1.0 / Tk - 1.0 / T_ref));
+
+  let Xa = 0;
+  let Ca = 0;
+  let Cb = 0;
+  let rate = 0;
+
+  if (order === 1) {
+    Xa = 1.0 - Math.exp(-k * t_or_V);
+    Ca = Ca0 * (1.0 - Xa);
+    Cb = Ca0 * Xa;
+    rate = k * Ca;
+  } else {
+    Xa = (k * Ca0 * t_or_V) / (1.0 + k * Ca0 * t_or_V);
+    Ca = Ca0 * (1.0 - Xa);
+    Cb = Ca0 * Xa;
+    rate = k * Ca * Ca;
+  }
+
+  const Da = order === 1 ? k * t_or_V : k * Ca0 * t_or_V;
+  const yieldPct = Xa * 100.0;
+
+  const metrics = [
+    { label: 'Fractional Conversion X_A', value: `${yieldPct.toFixed(1)}%`, unit: '', description: `Reactant consumed in ${t_or_V.toFixed(0)} ${reactorType === 0 ? 'min' : 'L'}` },
+    { label: 'Effluent Conc C_A', value: Ca.toFixed(3), unit: 'mol/L', description: `Initial C_A0 = ${Ca0.toFixed(2)} mol/L` },
+    { label: 'Product Conc C_B', value: Cb.toFixed(3), unit: 'mol/L', description: `Reaction rate r_A = ${rate.toFixed(4)} mol/(L·min)` },
+    { label: 'Damköhler Number Da', value: Da.toFixed(2), unit: '', description: `Rate constant k(T) = ${k.toFixed(4)} at ${tempC.toFixed(0)}°C` },
+  ];
+
+  return {
+    state: { reactorType, order, k, Tk, Ca0, t_or_V, Xa, Ca, Cb, rate, Da },
+    metrics,
+  };
+}
+
+function solveRcBeam(params) {
+  const b = params.beamWidth || 300.0;
+  const h = params.beamDepth || 500.0;
+  const cover = params.cover || 40.0;
+  const fc = params.fc || 30.0;
+  const fy = params.fy || 500.0;
+  const nBars = Math.round(params.rebarCount || 4);
+  const dBar = params.barDiameter || 20.0;
+  const Mu = params.appliedMoment || 180.0;
+
+  const d = h - cover - dBar / 2.0;
+  const Ast = nBars * (Math.PI * dBar * dBar / 4.0);
+  const rho = Ast / (b * d);
+
+  const a = (Ast * fy) / (0.85 * fc * b);
+  const beta1 = Math.max(0.65, Math.min(0.85, 0.85 - 0.05 * ((fc - 28.0) / 7.0)));
+  const c = a / beta1;
+
+  const eps_c = 0.003;
+  const eps_t = eps_c * (d - c) / Math.max(1, c);
+  const isTensionControlled = eps_t >= 0.005;
+  const phi = isTensionControlled ? 0.90 : Math.max(0.65, 0.65 + (eps_t - 0.002) * (0.25 / 0.003));
+
+  const Mn = (Ast * fy * (d - a / 2.0)) * 1e-6;
+  const phiMn = phi * Mn;
+  const utilization = (Mu / Math.max(1, phiMn)) * 100.0;
+  const isSafe = utilization <= 100.0;
+
+  const metrics = [
+    { label: 'Design Capacity φMn', value: phiMn.toFixed(1), unit: 'kNm', description: `Nominal Mn = ${Mn.toFixed(1)} kNm, Strength reduction φ = ${phi.toFixed(2)}` },
+    { label: 'Moment Demand Mu', value: Mu.toFixed(1), unit: 'kNm', description: `Section Utilization = ${utilization.toFixed(1)}%`, status: isSafe ? 'normal' : 'alert' },
+    { label: 'Neutral Axis Depth c', value: `${c.toFixed(1)} mm`, unit: '', description: `Whitney block a = ${a.toFixed(1)} mm (d = ${d.toFixed(0)} mm)` },
+    { label: 'Steel Strain ε_t', value: eps_t.toFixed(4), unit: '', description: isTensionControlled ? 'Tension-Controlled Ductile Failure' : 'Transition / Compression Failure', status: isTensionControlled ? 'normal' : 'warning' },
+  ];
+
+  return {
+    state: { b, h, d, Ast, a, c, beta1, eps_t, phi, Mn, phiMn, Mu, utilization, isSafe, isTensionControlled },
+    metrics,
+  };
+}
+
 function computeSimulation(type, params, t, dt) {
   switch (type) {
+    case 'transformer_test':
+      return solveTransformerTest(params);
+    case 'dc_motor':
+      return solveDcMotor(params, t);
+    case 'induction_motor':
+      return solveInductionMotor(params);
+    case 'solar_pv':
+      return solveSolarPv(params, t);
+    case 'centrifugal_pump':
+      return solveCentrifugalPump(params);
+    case 'refrigeration_cycle':
+      return solveRefrigerationCycle(params);
+    case 'root_locus':
+      return solveRootLocus(params);
+    case 'batch_pfr':
+      return solveBatchPfr(params);
+    case 'rc_beam':
+      return solveRcBeam(params);
     case 'op_amp':
       return solveOpAmp(params, t);
     case 'rc_transient':

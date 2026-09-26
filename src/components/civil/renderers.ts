@@ -1132,3 +1132,243 @@ export function renderMohrCircle(rc: RenderContext, p: MohrParams) {
     hudY + 34
   );
 }
+
+// ---------------------------------------------------------------------------
+// 7. REINFORCED CONCRETE (RC) BEAM FLEXURAL DESIGN RENDERER (ACI 318-19 / Eurocode 2)
+// ---------------------------------------------------------------------------
+export interface RcBeamParams {
+  beamWidth?: number; // mm (b)
+  beamDepth?: number; // mm (h)
+  cover?: number; // mm
+  fc?: number; // concrete strength MPa
+  fy?: number; // steel yield MPa
+  rebarCount?: number; // number of bars
+  barDiameter?: number; // mm
+  appliedMoment?: number; // Mu in kNm
+}
+
+export function renderRcBeam(rc: RenderContext, p: RcBeamParams) {
+  const { ctx, w, h } = rc;
+  const b = p.beamWidth || 300.0;
+  const depthH = p.beamDepth || 500.0;
+  const cover = p.cover || 40.0;
+  const fc = p.fc || 30.0;
+  const fy = p.fy || 500.0;
+  const nBars = Math.round(p.rebarCount || 4);
+  const dBar = p.barDiameter || 20.0;
+  const Mu = p.appliedMoment || 180.0;
+
+  const d = depthH - cover - dBar / 2.0;
+  const Ast = nBars * (Math.PI * dBar * dBar / 4.0);
+  const a = (Ast * fy) / (0.85 * fc * b);
+  const beta1 = Math.max(0.65, Math.min(0.85, 0.85 - 0.05 * ((fc - 28.0) / 7.0)));
+  const c = a / beta1;
+
+  const eps_c = 0.003;
+  const eps_t = eps_c * (d - c) / Math.max(1, c);
+  const isTensionControlled = eps_t >= 0.005;
+  const phi = isTensionControlled ? 0.90 : Math.max(0.65, 0.65 + (eps_t - 0.002) * (0.25 / 0.003));
+  const Mn = (Ast * fy * (d - a / 2.0)) * 1e-6;
+  const phiMn = phi * Mn;
+  const utilization = (Mu / Math.max(1, phiMn)) * 100.0;
+  const isSafe = utilization <= 100.0;
+
+  // Background
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, w, h);
+
+  // Layout: 3 Columns
+  // Col 1: Concrete Section (w: 30%)
+  // Col 2: Strain Diagram (w: 30%)
+  // Col 3: Whitney Stress Block & Force Couple (w: 35%)
+  const topY = 65;
+  const botY = h - 60;
+  const viewH = botY - topY;
+
+  // Section scale
+  const scale = viewH / depthH;
+  const secW = b * scale;
+  const secH = depthH * scale;
+
+  // -------------------------------------------------------------
+  // COLUMN 1: Cross-Section b x h
+  // -------------------------------------------------------------
+  const secX = 45;
+  const secY = topY;
+
+  // Concrete fill with subtle grid
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(secX, secY, secW, secH);
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(secX, secY, secW, secH);
+
+  // Stirrup / Tie bar (greenish outline)
+  const stirrupPad = (cover - 10) * scale;
+  ctx.strokeStyle = '#059669';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(secX + stirrupPad, secY + stirrupPad, secW - 2 * stirrupPad, secH - 2 * stirrupPad);
+
+  // Neutral axis dashed line across concrete section
+  const naY = secY + c * scale;
+  ctx.save();
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(secX - 10, naY);
+  ctx.lineTo(secX + secW + 10, naY);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText(`N.A. (c = ${c.toFixed(0)}mm)`, secX + secW + 12, naY + 3);
+
+  // Compression Zone hatched fill
+  ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+  ctx.fillRect(secX, secY, secW, c * scale);
+
+  // Rebar Tension Bars
+  const rebarY = secY + d * scale;
+  const barSpacing = (secW - 2 * cover * scale) / Math.max(1, nBars - 1);
+  ctx.fillStyle = '#38bdf8';
+  for (let i = 0; i < nBars; i++) {
+    const rx = secX + cover * scale + i * barSpacing;
+    ctx.beginPath();
+    ctx.arc(rx, rebarY, (dBar / 2) * scale * 1.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0284c7';
+    ctx.stroke();
+  }
+
+  // Dimension labels
+  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`b = ${b.toFixed(0)}mm`, secX + secW * 0.3, secY - 8);
+  ctx.fillText(`h = ${depthH.toFixed(0)}mm`, secX - 35, secY + secH * 0.5);
+  ctx.fillText(`${nBars}-Ø${dBar.toFixed(0)} (As=${Ast.toFixed(0)}mm²)`, secX, secY + secH + 20);
+
+  // -------------------------------------------------------------
+  // COLUMN 2: Strain Diagram ε
+  // -------------------------------------------------------------
+  const strainX = secX + secW + 130;
+  const zeroStrainX = strainX + 45;
+
+  // Zero axis
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(zeroStrainX, secY);
+  ctx.lineTo(zeroStrainX, secY + secH);
+  ctx.stroke();
+
+  // Strain Profile line
+  const epsTopPx = 45; // corresponds to 0.003
+  const epsBotPx = epsTopPx * (eps_t / eps_c);
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(zeroStrainX - epsTopPx, secY);
+  ctx.lineTo(zeroStrainX + Math.min(80, epsBotPx), rebarY);
+  ctx.stroke();
+
+  // Strain values
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText(`ε_c = 0.003`, zeroStrainX - epsTopPx - 65, secY + 10);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`ε_t = ${eps_t.toFixed(4)}`, zeroStrainX + Math.min(80, epsBotPx) + 8, rebarY + 4);
+
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('STRAIN PROFILE', strainX - 10, secY - 8);
+
+  // -------------------------------------------------------------
+  // COLUMN 3: Whitney Equivalent Stress Block (0.85 f'c) & Forces
+  // -------------------------------------------------------------
+  const stressX = zeroStrainX + 130;
+  const zeroStressX = stressX + 50;
+  const aPx = a * scale;
+
+  // Zero stress line
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(zeroStressX, secY);
+  ctx.lineTo(zeroStressX, secY + secH);
+  ctx.stroke();
+
+  // Whitney Stress Block (Depth a)
+  const stressBlockW = 55;
+  ctx.fillStyle = 'rgba(249, 115, 22, 0.4)';
+  ctx.fillRect(zeroStressX - stressBlockW, secY, stressBlockW, aPx);
+  ctx.strokeStyle = '#f97316';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(zeroStressX - stressBlockW, secY, stressBlockW, aPx);
+
+  // Resultant Compressive Force Arrow Cc (at a/2)
+  const ccY = secY + aPx / 2.0;
+  ctx.strokeStyle = '#f43f5e';
+  ctx.fillStyle = '#f43f5e';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(zeroStressX + 35, ccY);
+  ctx.lineTo(zeroStressX - 10, ccY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(zeroStressX - 10, ccY);
+  ctx.lineTo(zeroStressX - 4, ccY - 4);
+  ctx.lineTo(zeroStressX - 4, ccY + 4);
+  ctx.fill();
+
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText(`Cc = 0.85 f'c b a`, zeroStressX + 42, ccY + 3);
+
+  // Resultant Tensile Force Arrow Ts (at d)
+  ctx.strokeStyle = '#06b6d4';
+  ctx.fillStyle = '#06b6d4';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(zeroStressX - 10, rebarY);
+  ctx.lineTo(zeroStressX + 35, rebarY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(zeroStressX + 35, rebarY);
+  ctx.lineTo(zeroStressX + 29, rebarY - 4);
+  ctx.lineTo(zeroStressX + 29, rebarY + 4);
+  ctx.fill();
+
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`Ts = Ast fy`, zeroStressX + 42, rebarY + 3);
+
+  // Lever Arm jd
+  ctx.strokeStyle = '#94a3b8';
+  ctx.setLineDash([2, 2]);
+  ctx.beginPath();
+  ctx.moveTo(zeroStressX + 25, ccY);
+  ctx.lineTo(zeroStressX + 25, rebarY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillText(`(d - a/2) = ${(d - a/2).toFixed(0)}mm`, zeroStressX + 30, (ccY + rebarY) / 2);
+
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`WHITNEY STRESS BLOCK (a = ${a.toFixed(1)}mm)`, stressX - 15, secY - 8);
+
+  // Top Telemetry HUD
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.fillRect(45, 10, w - 90, 34);
+  ctx.strokeStyle = isSafe ? '#10b981' : '#f43f5e';
+  ctx.strokeRect(45, 10, w - 90, 34);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`φMn = ${phiMn.toFixed(1)} kNm (φ = ${phi.toFixed(2)})`, 60, 31);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`Mu = ${Mu.toFixed(1)} kNm`, 260, 31);
+  ctx.fillStyle = isSafe ? '#10b981' : '#f43f5e';
+  ctx.fillText(`UTILIZATION = ${utilization.toFixed(1)}% (${isSafe ? 'ADEQUATE' : 'OVERLOAD'})`, 420, 31);
+  ctx.fillStyle = isTensionControlled ? '#10b981' : '#f59e0b';
+  ctx.fillText(isTensionControlled ? 'DUCTILE FAILURE (Tension-controlled)' : 'BRITTLE / TRANSITION', w - 340, 31);
+}
+

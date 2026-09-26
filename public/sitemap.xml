@@ -151,6 +151,34 @@
   </url>
 
   <url>
+    <loc>https://livesimulators.com/simulator/transformer-oc-sc-test</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://livesimulators.com/simulator/dc-motor-speed-control</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://livesimulators.com/simulator/induction-motor-torque-slip</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://livesimulators.com/simulator/solar-pv-mppt</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
     <loc>https://livesimulators.com/simulator/four-bar-mechanism</loc>
     <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
@@ -193,6 +221,20 @@
   </url>
 
   <url>
+    <loc>https://livesimulators.com/simulator/centrifugal-pump-curves</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://livesimulators.com/simulator/refrigeration-heat-pump</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
     <loc>https://livesimulators.com/simulator/pid-tuning</loc>
     <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
@@ -228,6 +270,13 @@
   </url>
 
   <url>
+    <loc>https://livesimulators.com/simulator/root-locus-plotter</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
     <loc>https://livesimulators.com/simulator/beam-bending</loc>
     <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
@@ -256,6 +305,13 @@
   </url>
 
   <url>
+    <loc>https://livesimulators.com/simulator/rc-beam-design</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
     <loc>https://livesimulators.com/simulator/cstr-kinetics</loc>
     <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
@@ -278,6 +334,13 @@
 
   <url>
     <loc>https://livesimulators.com/simulator/gas-absorption</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://livesimulators.com/simulator/batch-pfr-kinetics</loc>
     <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
