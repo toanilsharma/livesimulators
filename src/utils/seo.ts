@@ -121,6 +121,32 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
   },
 };
 
+// Founder Schema (Specialized Person entity for rich snippets and E-E-A-T attribution)
+export const FOUNDER_PERSON_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': `${SITE_URL}/#founder`,
+  name: 'Anil Sharma',
+  jobTitle: 'Founder & Lead Computational Modeling Engineer',
+  worksFor: {
+    '@id': `${SITE_URL}/#organization`,
+  },
+  description: 'Founder of LiveSimulators. Specializes in first-principles numerical modeling, 4th-Order Runge-Kutta (RK4) ODE solvers, symplectic physics integration, and interactive engineering pedagogy.',
+  email: '0808miracle@gmail.com',
+  url: 'https://www.linkedin.com/in/toanilsharma/',
+  sameAs: ['https://www.linkedin.com/in/toanilsharma/'],
+  knowsAbout: [
+    'Computational Physics',
+    'Numerical Integration',
+    '4th-Order Runge-Kutta (RK4)',
+    'Electrical & Electronic Systems',
+    'Mechanical & Thermal Engineering',
+    'Structural Analysis & Civil Engineering',
+    'Industrial Control Systems & PID Tuning',
+    'Engineering Pedagogy',
+  ],
+};
+
 // Base Founder & Organization Schema (Validated for Google Rich Results Test)
 export const ORGANIZATION_SCHEMA = {
   '@context': 'https://schema.org',
@@ -133,12 +159,7 @@ export const ORGANIZATION_SCHEMA = {
   image: `${SITE_URL}/og-default.png`,
   description: "Don't just read engineering. See it happen. Interactive first-principles numerical engineering simulations for students, educators, and practicing engineers.",
   founder: {
-    '@type': 'Person',
-    name: 'Anil Sharma',
-    jobTitle: 'Founder & Lead Computational Modeling Engineer',
-    email: '0808miracle@gmail.com',
-    url: 'https://www.linkedin.com/in/toanilsharma/',
-    sameAs: ['https://www.linkedin.com/in/toanilsharma/'],
+    '@id': `${SITE_URL}/#founder`,
   },
   contactPoint: {
     '@type': 'ContactPoint',
@@ -258,6 +279,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         keywords: cfg.keywords,
         jsonLd: [
           ORGANIZATION_SCHEMA,
+          FOUNDER_PERSON_SCHEMA,
           WEBSITE_SCHEMA,
           {
             '@context': 'https://schema.org',
@@ -269,9 +291,20 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           },
           {
             '@context': 'https://schema.org',
+            '@type': 'AboutPage',
+            '@id': `${canonicalUrl}#aboutpage`,
+            name: 'About LiveSimulators & Founder Anil Sharma',
+            description: cfg.description,
+            url: canonicalUrl,
+            mainEntity: {
+              '@id': `${SITE_URL}/#founder`,
+            },
+          },
+          {
+            '@context': 'https://schema.org',
             '@type': 'Article',
             headline: 'About LiveSimulators - The Numerical Pedagogy Revolution',
-            author: { '@type': 'Person', name: 'Anil Sharma' },
+            author: { '@id': `${SITE_URL}/#founder` },
             publisher: { '@id': `${SITE_URL}/#organization` },
             description: 'Why interactive first-principles simulations are replacing static textbook formulas in engineering education.',
             url: canonicalUrl,
@@ -414,10 +447,51 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
 
     case 'department': {
       const dept = DISCIPLINES.find((d) => d.id === route.departmentId) || DISCIPLINES[0];
+      const deptSimulators = ALL_AVAILABLE_SIMULATORS.filter((s) => s.discipline === dept.id);
       const title = `Interactive ${dept.name} Engineering Simulators & Calculators | LiveSimulators`;
       const description = `Interactive ${dept.name} (${dept.code}) engineering simulators and calculators. ${dept.description} Solves first-principles equations governed by ${dept.coreEquation}, covering ${dept.subfields.join(', ')}. Run real-time Float64 physics solvers online.`
         .replace(/\s+/g, ' ')
         .trim();
+
+      const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: dept.name, item: canonicalUrl },
+        ],
+      };
+
+      const collectionSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': `${canonicalUrl}#collection`,
+        name: `${dept.name} Simulators Hub`,
+        description: dept.description,
+        url: canonicalUrl,
+        about: {
+          '@type': 'DefinedTerm',
+          name: dept.name,
+          termCode: dept.code,
+        },
+      };
+
+      const itemListSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        '@id': `${canonicalUrl}#simulators-list`,
+        name: `${dept.name} Engineering Simulators & Virtual Laboratories`,
+        description: `Comprehensive directory of ${deptSimulators.length} interactive ${dept.name} engineering simulators and numerical physics solvers.`,
+        numberOfItems: deptSimulators.length,
+        itemListElement: deptSimulators.map((s, idx) => ({
+          '@type': 'ListItem',
+          position: idx + 1,
+          name: s.title,
+          description: s.description,
+          url: `${SITE_URL}/simulator/${s.id}`,
+        })),
+      };
+
       return {
         title,
         description,
@@ -433,26 +507,9 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         jsonLd: [
           ORGANIZATION_SCHEMA,
           WEBSITE_SCHEMA,
-          {
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-              { '@type': 'ListItem', position: 2, name: dept.name, item: canonicalUrl },
-            ],
-          },
-          {
-            '@context': 'https://schema.org',
-            '@type': 'CollectionPage',
-            name: `${dept.name} Simulators Hub`,
-            description: dept.description,
-            url: canonicalUrl,
-            about: {
-              '@type': 'DefinedTerm',
-              name: dept.name,
-              termCode: dept.code,
-            },
-          },
+          breadcrumbSchema,
+          collectionSchema,
+          itemListSchema,
         ],
       };
     }
@@ -480,6 +537,31 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         ],
       };
 
+      const webApplicationSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        '@id': `${canonicalUrl}#webapplication`,
+        name: `Interactive ${sim.title} Simulator & Calculator`,
+        alternateName: sim.title,
+        description: sim.description,
+        applicationCategory: 'EducationalApplication',
+        operatingSystem: 'Web Browser',
+        browserRequirements: 'Requires HTML5 Canvas and JavaScript support. Runs client-side Float64 numerical physics engine.',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+          availability: 'https://schema.org/InStock',
+        },
+        author: {
+          '@id': `${SITE_URL}/#founder`,
+        },
+        publisher: {
+          '@id': `${SITE_URL}/#organization`,
+        },
+        url: canonicalUrl,
+      };
+
       const learningResourceSchema = {
         '@context': 'https://schema.org',
         '@type': 'LearningResource',
@@ -492,13 +574,51 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         about: [
           sim.disciplineName,
           sim.physicalLaw,
-          sim.standardReference || 'International Engineering Standards',
+          sim.standardReference || 'International Engineering Standards'        ],
+        educationalAlignment: [
+          {
+            '@type': 'AlignmentObject',
+            alignmentType: 'educationalSubject',
+            educationalFramework: 'Engineering Disciplines & First Principles',
+            targetName: sim.disciplineName,
+            targetDescription: `Engineering branch covering ${sim.disciplineName}`,
+          },
+          {
+            '@type': 'AlignmentObject',
+            alignmentType: 'educationalTopic',
+            educationalFramework: 'Physical Laws & Governing Formulations',
+            targetName: sim.physicalLaw,
+            targetDescription: `${sim.equationDescription}: ${sim.governingEquation}`,
+          },
+          {
+            '@type': 'AlignmentObject',
+            alignmentType: 'educationalLevel',
+            educationalFramework: 'Academic Rigor Level',
+            targetName: sim.difficulty,
+            targetDescription: `Engineering rigor level ${sim.difficulty}`,
+          },
+          ...(sim.courseMapping
+            ? sim.courseMapping.split(',').map((c) => ({
+                '@type': 'AlignmentObject',
+                alignmentType: 'courseMapping',
+                educationalFramework: 'University Engineering Curriculum',
+                targetName: c.trim(),
+              }))
+            : []),
+          ...(sim.standardReference
+            ? [
+                {
+                  '@type': 'AlignmentObject',
+                  alignmentType: 'standardVerification',
+                  educationalFramework: 'Industrial Engineering Standards',
+                  targetName: sim.standardReference,
+                },
+              ]
+            : []),
         ],
         teaches: `Governing physical formulation: ${sim.governingEquation}. ${sim.equationDescription}`,
         author: {
-          '@type': 'Person',
-          name: 'Anil Sharma',
-          url: 'https://www.linkedin.com/in/toanilsharma/',
+          '@id': `${SITE_URL}/#founder`,
         },
         publisher: {
           '@id': `${SITE_URL}/#organization`,
@@ -515,8 +635,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         description: sim.analyticalProof || sim.description,
         proficiencyLevel: sim.difficulty,
         author: {
-          '@type': 'Person',
-          name: 'Anil Sharma',
+          '@id': `${SITE_URL}/#founder`,
         },
         publisher: {
           '@id': `${SITE_URL}/#organization`,
@@ -542,8 +661,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           courseMode: 'online',
           courseWorkload: 'PT30M',
           instructor: {
-            '@type': 'Person',
-            name: 'Anil Sharma',
+            '@id': `${SITE_URL}/#founder`,
           },
         },
       };
@@ -596,8 +714,10 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         ],
         jsonLd: [
           ORGANIZATION_SCHEMA,
+          FOUNDER_PERSON_SCHEMA,
           WEBSITE_SCHEMA,
           breadcrumbSchema,
+          webApplicationSchema,
           learningResourceSchema,
           techArticleSchema,
           courseSchema,
@@ -812,12 +932,14 @@ export function applySeoMetadata(route: AppRoute): RouteSeoMetadata {
     }
   }
 
-  // 4. Update JSON-LD Script with @graph format
+  // 4. Update JSON-LD Script with valid Schema.org @graph format strictly in <head>
   let jsonLdEl = document.getElementById('seo-jsonld') as HTMLScriptElement;
   if (!jsonLdEl) {
     jsonLdEl = document.createElement('script');
     jsonLdEl.id = 'seo-jsonld';
     jsonLdEl.type = 'application/ld+json';
+    document.head.appendChild(jsonLdEl);
+  } else if (jsonLdEl.parentElement !== document.head) {
     document.head.appendChild(jsonLdEl);
   }
 
@@ -829,7 +951,7 @@ export function applySeoMetadata(route: AppRoute): RouteSeoMetadata {
     }),
   };
 
-  jsonLdEl.textContent = JSON.stringify(graphData);
+  jsonLdEl.textContent = JSON.stringify(graphData, null, 2);
 
   return meta;
 }

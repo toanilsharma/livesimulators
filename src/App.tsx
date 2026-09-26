@@ -26,6 +26,7 @@ import { SimulatorItem, DisciplineId, AudiencePersona, AppRoute } from './types'
 import { parsePathToRoute, routeToPath, navigateTo } from './utils/routes';
 import { applySeoMetadata } from './utils/seo';
 import { trackSimulatorOpen } from './utils/analytics';
+import { JsonLd } from './components/JsonLd';
 
 export default function App() {
   const [route, setRoute] = useState<AppRoute>(() => {
@@ -159,6 +160,9 @@ export default function App() {
           : 'min-h-screen'
       }`}
     >
+      {/* Dynamic Schema.org JSON-LD Structured Data Injection for Head & Crawlers */}
+      <JsonLd route={route} />
+
       {/* 1. Global Navigation Bar (shown on all pages except full-screen workbench and embed) */}
       {route.view !== 'simulator' && route.view !== 'embed' && (
         <Navbar
