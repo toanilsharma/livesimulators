@@ -812,11 +812,13 @@ async function runPrerender() {
       );
     }
 
-    // 6. Inject Pre-rendered Semantic HTML for search crawlers & LLM indexers inside <div id="seo-fallback">
-    // main.tsx removes #seo-fallback on client-side JS hydration to guarantee a smooth transition
+    // 6. Inject Pre-rendered Semantic HTML for search crawlers inside <noscript>
+    // Keeping <div id="root"></div> clean prevents the browser from flashing raw fallback HTML
+    // to real users when opening livesimulators.com, while main.tsx removes #seo-fallback on hydration
+    // to maintain strictly 1 canonical <h1> for headless crawlers.
     html = html.replace(
       /<div id="root">[\s\S]*?<\/div>(\s*<div id="seo-fallback">[\s\S]*?<\/div>|\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
-      `<div id="root"></div>\n    <div id="seo-fallback">\n${contentHtml}\n    </div>`
+      `<div id="root"></div>\n    <noscript id="seo-fallback">\n${contentHtml}\n    </noscript>`
     );
 
     // 7. Output directory and file
@@ -847,7 +849,7 @@ async function runPrerender() {
   notFoundHtml = setMetaTag(notFoundHtml, 'name', 'twitter:title', notFoundMeta.title);
   notFoundHtml = setMetaTag(notFoundHtml, 'name', 'twitter:image', notFoundMeta.ogImage);
   notFoundHtml = notFoundHtml.replace(
-    /<div id="root">[\s\S]*?<\/div>(\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
+    /<div id="root">[\s\S]*?<\/div>(\s*<div id="seo-fallback">[\s\S]*?<\/div>|\s*<noscript id="seo-fallback">[\s\S]*?<\/noscript>)?/i,
     `<div id="root"></div>\n    <noscript id="seo-fallback">\n${notFoundContent}\n    </noscript>`
   );
   fs.writeFileSync(path.join(distDir, '404.html'), notFoundHtml, 'utf8');
