@@ -33,7 +33,7 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
   const { ctx, w, h, t } = rc;
 
   // Title / Schema header watermark
-  ctx.font = 'bold 11px monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#38bdf8';
   ctx.fillText('AISC 360-16 / EUROCODE 3 • EULER-BERNOULLI BEAM SOLVER', 18, 22);
 
@@ -68,7 +68,7 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
     // Reaction arrow RA
     ctx.strokeStyle = '#38bdf8';
     ctx.fillStyle = '#38bdf8';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(startX, beamY + beamHeight / 2 + 45);
     ctx.lineTo(startX, beamY + beamHeight / 2 + 22);
@@ -76,12 +76,12 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
     // Arrowhead
     ctx.beginPath();
     ctx.moveTo(startX, beamY + beamHeight / 2 + 22);
-    ctx.lineTo(startX - 4, beamY + beamHeight / 2 + 29);
-    ctx.lineTo(startX + 4, beamY + beamHeight / 2 + 29);
+    ctx.lineTo(startX - 5, beamY + beamHeight / 2 + 30);
+    ctx.lineTo(startX + 5, beamY + beamHeight / 2 + 30);
     ctx.closePath();
     ctx.fill();
-    ctx.font = '10px monospace';
-    ctx.fillText(`RA = ${p.reactionA.toFixed(1)} kN`, startX - 25, beamY + beamHeight / 2 + 58);
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillText(`RA = ${p.reactionA.toFixed(1)} kN`, startX - 28, beamY + beamHeight / 2 + 58);
 
     // Right Support: Roller
     ctx.beginPath();
@@ -103,17 +103,19 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
     // Reaction arrow RB
     ctx.strokeStyle = '#38bdf8';
     ctx.fillStyle = '#38bdf8';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(endX, beamY + beamHeight / 2 + 45);
     ctx.lineTo(endX, beamY + beamHeight / 2 + 24);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(endX, beamY + beamHeight / 2 + 24);
-    ctx.lineTo(endX - 4, beamY + beamHeight / 2 + 31);
-    ctx.lineTo(endX + 4, beamY + beamHeight / 2 + 31);
+    ctx.lineTo(endX - 5, beamY + beamHeight / 2 + 32);
+    ctx.lineTo(endX + 5, beamY + beamHeight / 2 + 32);
     ctx.closePath();
     ctx.fill();
-    ctx.fillText(`RB = ${p.reactionB.toFixed(1)} kN`, endX - 25, beamY + beamHeight / 2 + 58);
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillText(`RB = ${p.reactionB.toFixed(1)} kN`, endX - 28, beamY + beamHeight / 2 + 58);
 
   } else if (p.supportType === 'cantilever') {
     // Left Support: Fixed Wall Clamped
@@ -134,7 +136,7 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
 
     // Fixed wall moment & reaction
     ctx.fillStyle = '#38bdf8';
-    ctx.font = '10px monospace';
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
     ctx.fillText(`RA = ${p.reactionA.toFixed(1)} kN`, startX + 6, beamY + 40);
     ctx.fillText(`MA = ${p.maxMomentKnm.toFixed(1)} kN·m`, startX + 6, beamY + 54);
 
@@ -274,18 +276,18 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
 
   // Max deflection marker
   ctx.fillStyle = '#38bdf8';
-  ctx.font = '10px monospace';
-  ctx.fillText(`δ_max = ${p.maxDeflectionMm.toFixed(2)} mm (Allowable L/360: ${p.deflectionLimitAisc.toFixed(1)} mm)`, startX + spanPx * 0.35, beamY + 36);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText(`🟦 δ_max = ${p.maxDeflectionMm.toFixed(2)} mm (Allowable L/360: ${p.deflectionLimitAisc.toFixed(1)} mm)`, startX + spanPx * 0.28, beamY + 36);
 
   // =========================================================================
   // 5. SHEAR FORCE DIAGRAM (SFD)
   // =========================================================================
-  const sfdBaseY = 220;
-  const sfdHeight = 35;
+  const sfdBaseY = 205;
+  const sfdHeight = 32;
   
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = 'bold 10px monospace';
-  ctx.fillText('SHEAR FORCE DIAGRAM V(x) [kN]', startX, sfdBaseY - sfdHeight - 6);
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText('🟩 SHEAR FORCE DIAGRAM V(x) [kN]', startX, sfdBaseY - sfdHeight - 6);
 
   // SFD Zero Baseline
   ctx.strokeStyle = '#475569';
@@ -329,29 +331,29 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
   ctx.closePath();
 
   // SFD Fill & Stroke
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
   ctx.fill();
   ctx.strokeStyle = '#10b981';
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 2;
   ctx.stroke();
 
   // Label V_max
   ctx.fillStyle = '#10b981';
-  ctx.font = '10px monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillText(`+${p.reactionA.toFixed(1)} kN`, startX + 4, sfdBaseY - (p.reactionA / maxVScale) * sfdHeight - 4);
   if (p.supportType === 'simply_supported') {
-    ctx.fillText(`-${p.reactionB.toFixed(1)} kN`, endX - 55, sfdBaseY + (p.reactionB / maxVScale) * sfdHeight + 12);
+    ctx.fillText(`-${p.reactionB.toFixed(1)} kN`, endX - 65, sfdBaseY + (p.reactionB / maxVScale) * sfdHeight + 14);
   }
 
   // =========================================================================
   // 6. BENDING MOMENT DIAGRAM (BMD)
   // =========================================================================
-  const bmdBaseY = 320;
-  const bmdHeight = 40;
+  const bmdBaseY = 295;
+  const bmdHeight = 35;
 
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = 'bold 10px monospace';
-  ctx.fillText('BENDING MOMENT DIAGRAM M(x) [kN·m]', startX, bmdBaseY - bmdHeight - 6);
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText('🟨 BENDING MOMENT DIAGRAM M(x) [kN·m]', startX, bmdBaseY - bmdHeight - 6);
 
   // BMD Zero Baseline
   ctx.strokeStyle = '#475569';
@@ -373,13 +375,11 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
 
     let Mx = 0;
     if (p.supportType === 'simply_supported') {
-      // M(x) = RA * x - q * x^2 / 2 - (P * (x - a) if x > a)
       Mx = p.reactionA * xM - 0.5 * p.udlQ * Math.pow(xM, 2);
       if (xM > p.pointLoadPos) {
         Mx -= p.pointLoadP * (xM - p.pointLoadPos);
       }
     } else if (p.supportType === 'cantilever') {
-      // Cantilever: Hogging moment (negative)
       const distFromTip = p.lengthL - xM;
       Mx = -0.5 * p.udlQ * Math.pow(distFromTip, 2);
       if (p.pointLoadPos >= xM) {
@@ -388,10 +388,9 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
     } else {
       Mx = p.reactionA * xM - 0.5 * p.udlQ * Math.pow(xM, 2);
       if (xM > p.pointLoadPos) Mx -= p.pointLoadP * (xM - p.pointLoadPos);
-      Mx -= 0.15 * p.maxMomentKnm; // fixed end negative moment
+      Mx -= 0.15 * p.maxMomentKnm;
     }
 
-    // Plotted with tension side down (standard structural convention)
     const normY = bmdBaseY + (Mx / maxMScale) * bmdHeight;
     ctx.lineTo(canvasX, normY);
   }
@@ -399,26 +398,42 @@ export function renderBeamBending(rc: RenderContext, p: BeamBendingParams) {
   ctx.closePath();
 
   // BMD Fill & Stroke
-  ctx.fillStyle = 'rgba(245, 158, 11, 0.18)';
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
   ctx.fill();
   ctx.strokeStyle = '#f59e0b';
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 2;
   ctx.stroke();
 
   // Peak moment marker
   ctx.fillStyle = '#f59e0b';
-  ctx.font = 'bold 10px monospace';
-  ctx.fillText(`M_max = ${p.maxMomentKnm.toFixed(1)} kN·m`, startX + spanPx * 0.45, bmdBaseY + bmdHeight + 14);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText(`M_max = ${p.maxMomentKnm.toFixed(1)} kN·m`, startX + spanPx * 0.42, bmdBaseY + bmdHeight + 14);
 
   // Status Chip (AISC Deflection Check)
-  ctx.font = 'bold 10px monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   if (p.isDeflectionPass) {
     ctx.fillStyle = '#10b981';
-    ctx.fillText('✓ AISC L/360 SERVICEABILITY PASS', endX - 220, 22);
+    ctx.fillText('✓ AISC L/360 SERVICEABILITY PASS', endX - 230, 22);
   } else {
     ctx.fillStyle = '#f43f5e';
-    ctx.fillText('⚠ DEFLECTION EXCEEDS AISC L/360', endX - 210, 22);
+    ctx.fillText('⚠ DEFLECTION EXCEEDS AISC L/360', endX - 220, 22);
   }
+
+  // 7. On-Canvas Color Guide Box
+  const legY = Math.min(h - 36, bmdBaseY + bmdHeight + 22);
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.fillRect(startX, legY, spanPx, 30);
+  ctx.strokeRect(startX, legY, spanPx, 30);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('🟦 BLUE = Deflection δ(x)', startX + 12, legY + 19);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('🟩 GREEN = Shear Force V(x)', startX + 220, legY + 19);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('🟨 YELLOW = Bending Moment M(x)', startX + 430, legY + 19);
 }
 
 // =========================================================================
@@ -608,34 +623,35 @@ export function renderTrussAnalysis(rc: RenderContext, p: TrussParams) {
   ctx.closePath();
   ctx.fill();
 
-  ctx.font = 'bold 10px monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillText(`P_live = ${p.liveLoadP} kN`, truckX - 35, truckY - 36);
 
   // 6. Member State Legend & Critical Euler Buckling Inspection Strip
   const legendY = 320;
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(startX, legendY, bridgeSpanPx, 48);
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.fillRect(startX, legendY, bridgeSpanPx, 52);
   ctx.strokeStyle = '#334155';
-  ctx.strokeRect(startX, legendY, bridgeSpanPx, 48);
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(startX, legendY, bridgeSpanPx, 52);
 
   // Legend Items
-  ctx.font = '10px monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   // Tension
   ctx.fillStyle = '#06b6d4';
-  ctx.fillRect(startX + 15, legendY + 12, 14, 4);
-  ctx.fillText(`TENSION (T): Max +${p.maxTensionKn.toFixed(1)} kN`, startX + 36, legendY + 18);
+  ctx.fillRect(startX + 15, legendY + 13, 16, 5);
+  ctx.fillText(`🟦 TENSION (+T): Max +${p.maxTensionKn.toFixed(1)} kN (Elongation Force)`, startX + 38, legendY + 20);
 
   // Compression
   ctx.fillStyle = '#f97316';
-  ctx.fillRect(startX + 15, legendY + 28, 14, 4);
-  ctx.fillText(`COMPRESSION (C): Max -${p.maxCompressionKn.toFixed(1)} kN (Euler P_cr = ${p.eulerCriticalKn.toFixed(1)} kN)`, startX + 36, legendY + 34);
+  ctx.fillRect(startX + 15, legendY + 31, 16, 5);
+  ctx.fillText(`🟧 COMPRESSION (-C): Max -${p.maxCompressionKn.toFixed(1)} kN (Euler P_cr = ${p.eulerCriticalKn.toFixed(1)} kN)`, startX + 38, legendY + 38);
 
-  // Zero-force
-  ctx.fillStyle = '#64748b';
-  ctx.fillText('--- ZERO-FORCE MEMBER', startX + bridgeSpanPx - 160, legendY + 18);
+  // Zero-force and buckling
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('⬜ DASHED: Zero-Force Member', startX + bridgeSpanPx - 240, legendY + 20);
   const bucklingOk = p.maxCompressionKn <= p.eulerCriticalKn;
   ctx.fillStyle = bucklingOk ? '#10b981' : '#f43f5e';
-  ctx.fillText(bucklingOk ? '✓ BUCKLING SAFE' : '⚠ BUCKLING RISK', startX + bridgeSpanPx - 160, legendY + 34);
+  ctx.fillText(bucklingOk ? '✓ BUCKLING SAFE' : '⚠ BUCKLING COLLAPSE RISK', startX + bridgeSpanPx - 240, legendY + 38);
 }
 
 // =========================================================================

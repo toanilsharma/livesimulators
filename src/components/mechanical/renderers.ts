@@ -294,14 +294,14 @@ export function renderHarmonicOscillator(rc: RenderContext, p: HarmonicParams) {
   ctx.lineTo(springX, springBottomY);
   ctx.stroke();
 
-  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#06b6d4';
-  ctx.fillText(`k = ${stiffness} N/m`, springX - 25, ceilingY + 45);
+  ctx.fillText(`k = ${stiffness} N/m (Spring)`, springX - 35, ceilingY + 45);
 
   // 2. Viscous Dashpot Damper on Right Side
   const damperX = rigX + rigW * 0.72;
-  const cylW = 24;
-  const cylH = 75;
+  const cylW = 28;
+  const cylH = 80;
   const cylY = ceilingY + 35;
 
   // Damper Outer Cylinder (Oil filled)
@@ -330,9 +330,9 @@ export function renderHarmonicOscillator(rc: RenderContext, p: HarmonicParams) {
   ctx.lineTo(damperX, massY);
   ctx.stroke();
 
-  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#f59e0b';
-  ctx.fillText(`c = ${dampingC} N·s/m`, damperX - 15, cylY + 50);
+  ctx.fillText(`c = ${dampingC} N·s/m (Damper)`, damperX - 30, cylY + 60);
 
   // 3. Vibrating Seismic Mass
   const massGrad = ctx.createLinearGradient(massX, massY, massX, massY + massH);
@@ -346,19 +346,19 @@ export function renderHarmonicOscillator(rc: RenderContext, p: HarmonicParams) {
   ctx.fill();
   ctx.stroke();
 
-  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 13px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(`MASS m = ${mass} kg`, massX + 14, massY + 28);
+  ctx.fillText(`MASS m = ${mass} kg`, massX + 16, massY + 28);
 
   // Right Section: Phase Plane & Resonance Spectrum (if screen wide enough)
   if (w > 540) {
-    const specX = w * 0.45;
-    const specY = 55;
-    const specW = w - specX - 30;
-    const specH = h - 85;
+    const specX = w * 0.42;
+    const specY = 45;
+    const specW = w - specX - 25;
+    const specH = h - 65;
 
     // Background container
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -366,19 +366,23 @@ export function renderHarmonicOscillator(rc: RenderContext, p: HarmonicParams) {
     ctx.fill();
     ctx.stroke();
 
-    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#f472b6';
+    ctx.fillText('🟪 PINK: FREQUENCY RESPONSE AMPLIFICATION M(r)', specX + 16, specY + 24);
+
+    ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText('FREQUENCY RESPONSE AMPLIFICATION CURVE M(r)', specX + 16, specY + 22);
+    ctx.fillText('[Magnification factor M shows how violently the mass oscillates relative to static deflection]', specX + 16, specY + 40);
 
     // Plot Frequency Curve
-    const plotX = specX + 35;
-    const plotY = specY + 40;
-    const plotW = specW - 60;
-    const plotH = specH - 65;
+    const plotX = specX + 45;
+    const plotY = specY + 55;
+    const plotW = specW - 75;
+    const plotH = specH - 120;
 
     // Axes
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(plotX, plotY + plotH);
     ctx.lineTo(plotX + plotW, plotY + plotH);
@@ -386,9 +390,26 @@ export function renderHarmonicOscillator(rc: RenderContext, p: HarmonicParams) {
     ctx.lineTo(plotX, plotY + plotH);
     ctx.stroke();
 
+    // Axis Labels
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.textAlign = 'center';
+    ctx.fillText('Frequency Ratio r = ω / ω_n (Drive / Natural) ►', plotX + plotW / 2, plotY + plotH + 28);
+
+    ctx.save();
+    ctx.translate(plotX - 30, plotY + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = '#f472b6';
+    ctx.fillText('Amplification M (x-fold) ►', 0, 0);
+    ctx.restore();
+
+    ctx.textAlign = 'left';
+
     // M(r) Curve
     ctx.strokeStyle = '#ec4899';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ec4899';
+    ctx.shadowBlur = 8;
     ctx.beginPath();
     for (let px = 0; px <= plotW; px++) {
       const rVal = (px / plotW) * 2.5;
@@ -399,6 +420,7 @@ export function renderHarmonicOscillator(rc: RenderContext, p: HarmonicParams) {
       else ctx.lineTo(plotX + px, py);
     }
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // Current Operating Point Marker
     const curPx = (r / 2.5) * plotW;
@@ -406,29 +428,44 @@ export function renderHarmonicOscillator(rc: RenderContext, p: HarmonicParams) {
       const curPy = plotY + plotH - Math.min(plotH - 5, (M / 5) * plotH);
       ctx.fillStyle = '#38bdf8';
       ctx.beginPath();
-      ctx.arc(plotX + curPx, curPy, 6, 0, Math.PI * 2);
+      ctx.arc(plotX + curPx, curPy, 7, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+      ctx.font = 'bold 12px "IBM Plex Mono", monospace';
       ctx.fillStyle = '#38bdf8';
-      ctx.fillText(`OPERATING (r = ${r.toFixed(2)}, M = ${M.toFixed(2)}x)`, plotX + curPx - 50, curPy - 12);
+      ctx.fillText(`● OPERATING POINT (r = ${r.toFixed(2)}, M = ${M.toFixed(2)}x)`, plotX + Math.min(plotW - 220, Math.max(0, curPx - 60)), curPy - 14);
     }
 
     // Resonance peak vertical line at r = 1.0
     const resPx = (1.0 / 2.5) * plotW;
-    ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
-    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(plotX + resPx, plotY);
     ctx.lineTo(plotX + resPx, plotY + plotH);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.font = '9px "IBM Plex Mono", monospace';
+
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
     ctx.fillStyle = '#ef4444';
-    ctx.fillText('Resonance (r = 1.0)', plotX + resPx + 4, plotY + 15);
+    ctx.fillText('🔴 Natural Resonance (r = 1.0)', plotX + resPx + 6, plotY + 18);
+
+    // Bottom Legend Inside Box
+    const legY = specY + specH - 42;
+    ctx.fillStyle = 'rgba(8, 14, 27, 0.9)';
+    ctx.fillRect(specX + 15, legY, specW - 30, 32);
+    ctx.strokeStyle = '#334155';
+    ctx.strokeRect(specX + 15, legY, specW - 30, 32);
+
+    ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
+    ctx.fillStyle = '#f472b6';
+    ctx.fillText('🟪 Pink Curve = Amplification M(r)', specX + 25, legY + 20);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillText(': Multiplier of static force displacement. Peaks when exciter matches ω_n = √(k/m).', specX + 245, legY + 20);
   }
 }
 

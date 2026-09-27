@@ -195,21 +195,21 @@ export function renderDistillationColumn(rc: RenderContext, p: DistillationParam
     ctx.lineTo(mRight, gy);
     ctx.stroke();
 
-    ctx.font = '8px "IBM Plex Mono", monospace';
-    ctx.fillStyle = '#64748b';
-    ctx.fillText((g / 10).toFixed(1), gx - 8, mBottom + 12);
-    ctx.fillText((g / 10).toFixed(1), mLeft - 22, gy + 3);
+    ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText((g / 10).toFixed(1), gx - 8, mBottom + 14);
+    ctx.fillText((g / 10).toFixed(1), mLeft - 26, gy + 4);
   }
   ctx.setLineDash([]);
 
   // Axis Labels
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText('Liquid Mole Fraction x (Light Key)', mLeft + mSize / 2 - 80, mBottom + 26);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('Liquid Mole Fraction x (Light Key) ►', mLeft + mSize / 2 - 95, mBottom + 28);
   ctx.save();
-  ctx.translate(mLeft - 28, mTop + mSize / 2 + 35);
+  ctx.translate(mLeft - 32, mTop + mSize / 2 + 50);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText('Vapor Mole Fraction y', 0, 0);
+  ctx.fillText('Vapor Mole Fraction y ►', 0, 0);
   ctx.restore();
 
   // 45-degree diagonal line (y = x)
@@ -224,7 +224,7 @@ export function renderDistillationColumn(rc: RenderContext, p: DistillationParam
   const vleY = (xVal: number) => (alpha * xVal) / (1 + (alpha - 1) * xVal);
 
   ctx.strokeStyle = '#c084fc';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   for (let i = 0; i <= 60; i++) {
     const xVal = i / 60;
@@ -266,7 +266,7 @@ export function renderDistillationColumn(rc: RenderContext, p: DistillationParam
 
   // Rectifying Operating Line from (xD, xD) through (xq, yq)
   ctx.strokeStyle = '#06b6d4';
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(mLeft + xD * mSize, mBottom - xD * mSize);
   ctx.lineTo(mLeft + xq * mSize, mBottom - yq * mSize);
@@ -274,7 +274,7 @@ export function renderDistillationColumn(rc: RenderContext, p: DistillationParam
 
   // Stripping Operating Line from (xB, xB) to (xq, yq)
   ctx.strokeStyle = '#10b981';
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(mLeft + xB * mSize, mBottom - xB * mSize);
   ctx.lineTo(mLeft + xq * mSize, mBottom - yq * mSize);
@@ -282,7 +282,7 @@ export function renderDistillationColumn(rc: RenderContext, p: DistillationParam
 
   // Stepped Equilibrium Stages (McCabe-Thiele Staircase)
   ctx.strokeStyle = '#ec4899';
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 2;
   let curX = xD;
   let curY = xD;
   let stageCount = 0;
@@ -313,20 +313,41 @@ export function renderDistillationColumn(rc: RenderContext, p: DistillationParam
   const rMin = Math.max(0.2, (xD - yq) / Math.max(0.01, yq - xq));
 
   // Telemetry HUD overlay in top-right of plot
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
   ctx.strokeStyle = '#334155';
-  ctx.fillRect(plotX + plotW - 170, plotY + 10, 160, 68);
-  ctx.strokeRect(plotX + plotW - 170, plotY + 10, 160, 68);
+  ctx.lineWidth = 1.2;
+  ctx.fillRect(plotX + plotW - 195, plotY + 10, 185, 82);
+  ctx.strokeRect(plotX + plotW - 195, plotY + 10, 185, 82);
 
-  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#ec4899';
-  ctx.fillText(`Stages N: ${stageCount} trays`, plotX + plotW - 160, plotY + 26);
+  ctx.fillText(`Stages N: ${stageCount} trays`, plotX + plotW - 185, plotY + 28);
   ctx.fillStyle = '#06b6d4';
-  ctx.fillText(`Reflux R: ${R.toFixed(2)} (Rmin: ${rMin.toFixed(2)})`, plotX + plotW - 160, plotY + 42);
+  ctx.fillText(`Reflux R: ${R.toFixed(2)} (Rmin: ${rMin.toFixed(2)})`, plotX + plotW - 185, plotY + 44);
   ctx.fillStyle = '#c084fc';
-  ctx.fillText(`Ratio R/Rmin: ${(R / rMin).toFixed(2)}x`, plotX + plotW - 160, plotY + 58);
+  ctx.fillText(`Ratio R/Rmin: ${(R / rMin).toFixed(2)}x`, plotX + plotW - 185, plotY + 60);
   ctx.fillStyle = '#10b981';
-  ctx.fillText(`Bottoms xB: ${(xB * 100).toFixed(0)}%`, plotX + plotW - 160, plotY + 72);
+  ctx.fillText(`Distillate xD: ${(xD * 100).toFixed(0)}% | xB: ${(xB * 100).toFixed(0)}%`, plotX + plotW - 185, plotY + 76);
+
+  // Bottom Color Guide Box for McCabe-Thiele
+  const mcLegY = plotY + plotH - 32;
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.fillRect(mLeft, mcLegY, mSize, 26);
+  ctx.strokeRect(mLeft, mcLegY, mSize, 26);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#c084fc';
+  ctx.fillText('🟪 VLE Curve', mLeft + 6, mcLegY + 16);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('🟨 Feed q-Line', mLeft + 85, mcLegY + 16);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('🟦 Rectifying', mLeft + 180, mcLegY + 16);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('🟩 Stripping', mLeft + 270, mcLegY + 16);
+  ctx.fillStyle = '#ec4899';
+  ctx.fillText('🌸 Stages', mLeft + 355, mcLegY + 16);
 }
 
 // ---------------------------------------------------------------------------
@@ -466,10 +487,10 @@ export function renderHeatExchanger(rc: RenderContext, p: HeatExchangerParams) {
   }
 
   // Shell & Tube Nozzle Tags
-  ctx.font = '8px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#f43f5e';
   ctx.fillText(`Hot In: ${ThIn.toFixed(0)}°C`, shellX - 25, shellY - 14);
-  ctx.fillText(`Hot Out: ${ThOut.toFixed(0)}°C`, shellX + shellW - 10, shellY + shellH + 24);
+  ctx.fillText(`Hot Out: ${ThOut.toFixed(0)}°C`, shellX + shellW - 15, shellY + shellH + 24);
   ctx.fillStyle = '#06b6d4';
   ctx.fillText(`Cold In: ${TcIn.toFixed(0)}°C`, shellX + 8, shellY + shellH + 24);
   ctx.fillText(`Cold Out: ${TcOut.toFixed(0)}°C`, shellX + shellW - 25, shellY - 14);
@@ -490,9 +511,9 @@ export function renderHeatExchanger(rc: RenderContext, p: HeatExchangerParams) {
 
   // Graph Bounds
   const gLeft = plotX + 45;
-  const gBottom = plotY + plotH - 35;
+  const gBottom = plotY + plotH - 38;
   const gWidth = plotW - 65;
-  const gHeight = plotH - 55;
+  const gHeight = plotH - 58;
   const gTop = gBottom - gHeight;
 
   // Axis lines
@@ -506,8 +527,8 @@ export function renderHeatExchanger(rc: RenderContext, p: HeatExchangerParams) {
 
   // Y-axis temperature scale
   const maxTempScale = Math.max(200, ThIn + 20);
-  ctx.font = '8px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
   for (let tempVal = 0; tempVal <= maxTempScale; tempVal += 50) {
     const gy = gBottom - (tempVal / maxTempScale) * gHeight;
     ctx.strokeStyle = 'rgba(51, 65, 85, 0.4)';
@@ -516,13 +537,13 @@ export function renderHeatExchanger(rc: RenderContext, p: HeatExchangerParams) {
     ctx.moveTo(gLeft, gy);
     ctx.lineTo(gLeft + gWidth, gy);
     ctx.stroke();
-    ctx.fillText(`${tempVal}°C`, gLeft - 32, gy + 3);
+    ctx.fillText(`${tempVal}°C`, gLeft - 36, gy + 4);
   }
   ctx.setLineDash([]);
 
   // Plot Hot Fluid Curve Th(z) (Ruby Red)
   ctx.strokeStyle = '#f43f5e';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   for (let z = 0; z <= 50; z++) {
     const zFrac = z / 50;
@@ -536,7 +557,7 @@ export function renderHeatExchanger(rc: RenderContext, p: HeatExchangerParams) {
 
   // Plot Cold Fluid Curve Tc(z) (Cyan)
   ctx.strokeStyle = '#06b6d4';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   for (let z = 0; z <= 50; z++) {
     const zFrac = z / 50;
@@ -549,25 +570,40 @@ export function renderHeatExchanger(rc: RenderContext, p: HeatExchangerParams) {
   ctx.stroke();
 
   // Labels on axes
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText('Normalized Exchanger Axial Length z / L', gLeft + gWidth / 2 - 90, gBottom + 22);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.fillText('Normalized Exchanger Axial Length z / L ►', gLeft + gWidth / 2 - 120, gBottom + 24);
 
   // Telemetry Box
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
   ctx.strokeStyle = '#334155';
-  ctx.fillRect(plotX + plotW - 180, plotY + 10, 170, 72);
-  ctx.strokeRect(plotX + plotW - 180, plotY + 10, 170, 72);
+  ctx.lineWidth = 1.2;
+  ctx.fillRect(plotX + plotW - 195, plotY + 10, 185, 82);
+  ctx.strokeRect(plotX + plotW - 195, plotY + 10, 185, 82);
 
-  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#ec4899';
-  ctx.fillText(`Heat Duty Q: ${(Q_kW / 1000).toFixed(2)} MW`, plotX + plotW - 170, plotY + 26);
+  ctx.fillText(`Heat Duty Q: ${(Q_kW / 1000).toFixed(2)} MW`, plotX + plotW - 185, plotY + 28);
   ctx.fillStyle = '#06b6d4';
-  ctx.fillText(`Effectiveness ε: ${(eff * 100).toFixed(1)}%`, plotX + plotW - 170, plotY + 42);
+  ctx.fillText(`Effectiveness ε: ${(eff * 100).toFixed(1)}%`, plotX + plotW - 185, plotY + 44);
   ctx.fillStyle = '#f59e0b';
-  ctx.fillText(`NTU Units: ${NTU.toFixed(2)}`, plotX + plotW - 170, plotY + 58);
+  ctx.fillText(`NTU Units: ${NTU.toFixed(2)}`, plotX + plotW - 185, plotY + 60);
   ctx.fillStyle = '#10b981';
-  ctx.fillText(`Cap Ratio Cr: ${Cr.toFixed(2)}`, plotX + plotW - 170, plotY + 74);
+  ctx.fillText(`Cap Ratio Cr: ${Cr.toFixed(2)}`, plotX + plotW - 185, plotY + 76);
+
+  // Bottom Color Guide Box for Temperature Profiles
+  const exLegY = plotY + plotH - 32;
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.fillRect(gLeft, exLegY, gWidth, 26);
+  ctx.strokeRect(gLeft, exLegY, gWidth, 26);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText('🟥 RED LINE = Hot Fluid Th(z)', gLeft + 12, exLegY + 17);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('🟦 BLUE LINE = Cold Fluid Tc(z)', gLeft + 220, exLegY + 17);
 }
 
 // ---------------------------------------------------------------------------

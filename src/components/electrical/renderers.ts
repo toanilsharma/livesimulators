@@ -87,46 +87,46 @@ export function renderRlcCircuit(rc: RenderContext, p: RlcParams) {
   ctx.quadraticCurveTo(loopX + 4, srcY + 8, loopX + 8, srcY);
   ctx.stroke();
 
-  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#06b6d4';
-  ctx.fillText(`v(t) ${f}Hz`, loopX - 22, srcY - 20);
+  ctx.fillText(`AC Source: ${f} Hz`, loopX - 25, srcY - 24);
 
   // 2. Resistor R (Top branch)
   const rX = loopX + loopW * 0.3;
   ctx.fillStyle = '#1e293b';
-  ctx.fillRect(rX - 16, loopY - 8, 32, 16);
+  ctx.fillRect(rX - 18, loopY - 10, 36, 20);
   ctx.strokeStyle = '#f59e0b';
   ctx.lineWidth = 2;
-  ctx.strokeRect(rX - 16, loopY - 8, 32, 16);
-  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.strokeRect(rX - 18, loopY - 10, 36, 20);
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#f59e0b';
-  ctx.fillText(`R: ${R}Ω`, rX - 14, loopY - 14);
+  ctx.fillText(`R = ${R} Ω`, rX - 16, loopY - 16);
 
   // 3. Inductor L (Top branch right)
   const lX = loopX + loopW * 0.72;
   ctx.strokeStyle = '#a855f7';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.arc(lX - 8, loopY, 6, Math.PI, 0);
-  ctx.arc(lX + 4, loopY, 6, Math.PI, 0);
+  ctx.arc(lX - 8, loopY, 7, Math.PI, 0);
+  ctx.arc(lX + 6, loopY, 7, Math.PI, 0);
   ctx.stroke();
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#a855f7';
-  ctx.fillText(`L: ${inductance}mH`, lX - 16, loopY - 14);
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#c084fc';
+  ctx.fillText(`L = ${inductance} mH`, lX - 20, loopY - 16);
 
   // 4. Capacitor C (Right branch)
   const capY = loopY + loopH / 2;
   ctx.strokeStyle = '#ec4899';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 3.5;
   ctx.beginPath();
-  ctx.moveTo(loopX + loopW - 12, capY - 10);
-  ctx.lineTo(loopX + loopW + 12, capY - 10);
-  ctx.moveTo(loopX + loopW - 12, capY + 10);
-  ctx.lineTo(loopX + loopW + 12, capY + 10);
+  ctx.moveTo(loopX + loopW - 14, capY - 12);
+  ctx.lineTo(loopX + loopW + 14, capY - 12);
+  ctx.moveTo(loopX + loopW - 14, capY + 12);
+  ctx.lineTo(loopX + loopW + 14, capY + 12);
   ctx.stroke();
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#ec4899';
-  ctx.fillText(`C: ${capacitance}µF`, loopX + loopW - 20, capY + 28);
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f472b6';
+  ctx.fillText(`C = ${capacitance} µF`, loopX + loopW - 22, capY + 34);
 
   // Dynamic Current Charge Particles moving around the loop
   const currentSpeed = I_peak * 80;
@@ -262,17 +262,33 @@ export function renderRlcCircuit(rc: RenderContext, p: RlcParams) {
       ctx.lineTo(pDialX + Math.cos(iAng) * pDialR * 0.7, pDialY - Math.sin(iAng) * pDialR * 0.7);
       ctx.stroke();
 
-      ctx.font = '9px "IBM Plex Mono", monospace';
+      ctx.font = 'bold 11px "IBM Plex Mono", monospace';
       ctx.fillStyle = '#94a3b8';
-      ctx.fillText('PHASOR', pDialX - 18, pDialY + pDialR + 15);
+      ctx.textAlign = 'center';
+      ctx.fillText('PHASOR RADAR', pDialX, pDialY + pDialR + 18);
+      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillText(`Δθ = ${(phi * 180 / Math.PI).toFixed(1)}°`, pDialX, pDialY + pDialR + 32);
     }
 
-    // Oscilloscope Legends
-    ctx.font = '10px "IBM Plex Mono", monospace';
+    // Oscilloscope Legends Header Box
+    ctx.fillStyle = 'rgba(8, 14, 27, 0.92)';
+    ctx.fillRect(scopeX + 10, scopeY + 8, Math.min(scopeW - 20, 480), 32);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(scopeX + 10, scopeY + 8, Math.min(scopeW - 20, 480), 32);
+
+    ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'left';
     ctx.fillStyle = '#06b6d4';
-    ctx.fillText('CH1: v(t) Generator', scopeX + 16, scopeY + 20);
+    ctx.fillText('🟦 BLUE: CH1 Generator v(t)', scopeX + 18, scopeY + 28);
     ctx.fillStyle = '#f59e0b';
-    ctx.fillText(`CH2: i(t) Loop [Lag: ${(phi * 180 / Math.PI).toFixed(1)}°]`, scopeX + 180, scopeY + 20);
+    ctx.fillText(`🟨 YELLOW: CH2 Loop Current i(t) [Lag: ${(phi * 180 / Math.PI).toFixed(1)}°]`, scopeX + 225, scopeY + 28);
+
+    // Axis indicator
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('Time t (seconds) ►', scopeX + waveW - 120, scopeH + scopeY - 12);
   }
 }
 
@@ -380,19 +396,19 @@ export function renderThreePhase(rc: RenderContext, p: ThreePhaseParams) {
     ctx.arc(bVecX, bVecY, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
     ctx.fillStyle = '#10b981';
-    ctx.fillText('B_net (MMF)', dialCenterX - 32, dialCenterY + dialRadius + 22);
+    ctx.fillText('🟩 B_net: Revolving MMF Vector', dialCenterX - 65, dialCenterY + dialRadius + 22);
   }
 
   // Legend
-  ctx.font = '11px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#ef4444';
-  ctx.fillText('■ Phase R (Red)', 40, 36);
+  ctx.fillText('🟥 Phase R (0° Ref)', 40, 36);
   ctx.fillStyle = '#eab308';
-  ctx.fillText('■ Phase Y (Yellow)', 175, 36);
-  ctx.fillStyle = '#2563eb';
-  ctx.fillText('■ Phase B (Blue)', 330, 36);
+  ctx.fillText('🟨 Phase Y (-120° Lag)', 220, 36);
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('🟦 Phase B (-240° Lag)', 420, 36);
 }
 
 // ---------------------------------------------------------------------------
@@ -409,52 +425,88 @@ export function renderBuckBoost(rc: RenderContext, p: BuckBoostParams) {
   const { ctx, w, h, t } = rc;
   const { dutyCycle, inputVoltage, switchingFreq, inductance } = p;
 
-  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#06b6d4';
-  ctx.fillText('IEEE PES • SYNCHRONOUS BUCK-BOOST PWM SWITCHING TOPOLOGY', 18, 22);
+  ctx.fillStyle = '#070b14';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.font = 'bold 13px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('IEEE PES • SYNCHRONOUS BUCK-BOOST DC-DC CONVERTER (PWM DYNAMICS)', 24, 26);
 
   const D = dutyCycle;
-  const midY1 = h * 0.32;
-  const midY2 = h * 0.72;
+  const midY1 = h * 0.28;
+  const midY2 = h * 0.62;
 
   // Waveform 1: MOSFET Gate Drive PWM
-  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#06b6d4';
-  ctx.fillText(`MOSFET GATE DRIVE PWM (D = ${(D * 100).toFixed(0)}%, f_sw = ${switchingFreq} kHz)`, 35, midY1 - 42);
+  ctx.fillText(`🟦 BLUE: MOSFET Gate Drive PWM (D = ${(D * 100).toFixed(0)}%, f_sw = ${switchingFreq} kHz)`, 24, midY1 - 42);
+
+  ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`[HIGH = Switch Closed (Inductor Charges from Vin = ${inputVoltage}V) | LOW = Switch Open]`, 24, midY1 - 25);
 
   ctx.strokeStyle = '#06b6d4';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 6;
   ctx.beginPath();
-  const periodW = Math.min(90, w / 6);
-  for (let x = 30; x < w - 30; x++) {
-    const phase = ((x - 30 + t * 80) % periodW) / periodW;
-    const y = phase < D ? midY1 - 30 : midY1 + 10;
-    if (x === 30) ctx.moveTo(x, y);
+  const periodW = Math.min(100, (w - 60) / 5);
+  for (let x = 24; x < w - 24; x++) {
+    const phase = ((x - 24 + t * 80) % periodW) / periodW;
+    const y = phase < D ? midY1 - 18 : midY1 + 18;
+    if (x === 24) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
   ctx.stroke();
+  ctx.shadowBlur = 0;
 
   // Waveform 2: Triangular Inductor Current i_L(t)
-  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#f59e0b';
-  ctx.fillText('INDUCTOR CURRENT i_L(t) [CONTINUOUS CONDUCTION MODE CCM]', 35, midY2 - 42);
+  ctx.fillText(`🟨 YELLOW: Inductor Current i_L(t) [Continuous Conduction Mode CCM]`, 24, midY2 - 42);
+
+  ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`[Ramps UP storing magnetic energy (di/dt = Vin/L) | Ramps DOWN delivering energy to load]`, 24, midY2 - 25);
 
   ctx.strokeStyle = '#f59e0b';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#f59e0b';
+  ctx.shadowBlur = 6;
   ctx.beginPath();
-  for (let x = 30; x < w - 30; x++) {
-    const phase = ((x - 30 + t * 80) % periodW) / periodW;
+  for (let x = 24; x < w - 24; x++) {
+    const phase = ((x - 24 + t * 80) % periodW) / periodW;
     let ramp = 0;
     if (phase < D) {
-      ramp = (phase / D) * 40;
+      ramp = (phase / D) * 44;
     } else {
-      ramp = 40 - ((phase - D) / (1 - D)) * 40;
+      ramp = 44 - ((phase - D) / (1 - D)) * 44;
     }
-    const y = midY2 + 15 - ramp;
-    if (x === 30) ctx.moveTo(x, y);
+    const y = midY2 + 20 - ramp;
+    if (x === 24) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
   ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Bottom Legend & Operation Card
+  const legY = h - 50;
+  ctx.fillStyle = 'rgba(8, 14, 27, 0.95)';
+  ctx.fillRect(24, legY, w - 48, 42);
+  ctx.strokeStyle = '#0284c7';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(24, legY, w - 48, 42);
+
+  ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('🟦 BLUE = Gate PWM Signal', 36, legY + 18);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillText(': Controls switch ON/OFF ratio.', 195, legY + 18);
+
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('🟨 YELLOW = Inductor Current', 36, legY + 34);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillText(': Energy storage choke (L = ' + inductance + ' µH). Triangular waveform confirms Continuous Conduction Mode (CCM).', 215, legY + 34);
 }
 
 // ---------------------------------------------------------------------------
@@ -1241,37 +1293,56 @@ export function renderRcTransient(rc: RenderContext, p: RcTransientParams) {
   // 63.2% tau marker line
   const tauX = oscX + (tau / period) * oscW;
   if (tauX < oscX + oscW * 0.48) {
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
-    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
     ctx.beginPath();
     ctx.moveTo(tauX, pTop); ctx.lineTo(tauX, pBot);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.font = '9px "IBM Plex Mono", monospace';
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
     ctx.fillStyle = '#f59e0b';
-    ctx.fillText(`τ = ${(tau * 1e3).toFixed(2)}ms (63.2%)`, tauX + 4, pTop + 14);
+    ctx.fillText(`τ = ${(tau * 1e3).toFixed(2)}ms (63.2%)`, tauX + 4, pTop + 16);
   }
 
   // Active time probe line
   const curProbeX = oscX + (cycleTime / period) * oscW;
   ctx.strokeStyle = '#f43f5e';
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(curProbeX, pTop);
   ctx.lineTo(curProbeX, pBot);
   ctx.stroke();
 
   // Header telemetry bar
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-  ctx.fillRect(oscX + 10, oscY + 8, oscW - 20, 32);
-  ctx.strokeRect(oscX + 10, oscY + 8, oscW - 20, 32);
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.fillRect(oscX + 10, oscY + 8, oscW - 20, 34);
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(oscX + 10, oscY + 8, oscW - 20, 34);
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`🟦 V(t): ${(circuitType === 0 ? (isCharging ? V0 * (1 - expTerm) : V0 * expTerm) : 0).toFixed(2)} V`, oscX + 20, oscY + 30);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`🟩 i(t): ${(Imax * expTerm * 1e3).toFixed(1)} mA`, oscX + 220, oscY + 30);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText(`🟨 τ = ${(tau * 1e3).toFixed(2)} ms`, oscX + oscW - 160, oscY + 30);
+
+  // Bottom Color Legend Strip
+  const rcLegY = oscY + oscH - 30;
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.fillRect(oscX + 10, rcLegY, oscW - 20, 24);
+  ctx.strokeRect(oscX + 10, rcLegY, oscW - 20, 24);
+
   ctx.font = 'bold 10px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#06b6d4';
-  ctx.fillText(`V(t) [Cyan]: ${(circuitType === 0 ? (isCharging ? V0 * (1 - expTerm) : V0 * expTerm) : 0).toFixed(2)} V`, oscX + 20, oscY + 28);
+  ctx.fillText('🟦 BLUE = Voltage V(t)', oscX + 20, rcLegY + 16);
   ctx.fillStyle = '#10b981';
-  ctx.fillText(`i(t) [Emerald]: ${(Imax * expTerm * 1e3).toFixed(1)} mA`, oscX + 220, oscY + 28);
+  ctx.fillText('🟩 GREEN = Current i(t)', oscX + 200, rcLegY + 16);
   ctx.fillStyle = '#f59e0b';
-  ctx.fillText(`τ = ${(tau * 1e3).toFixed(2)} ms`, oscX + oscW - 140, oscY + 28);
+  ctx.fillText('🟨 DASHED = Time Constant τ (63.2% rise)', oscX + 380, rcLegY + 16);
 
   ctx.restore();
 }
@@ -1858,7 +1929,7 @@ export function renderSolarPv(rc: RenderContext, p: SolarPvParams) {
   let Pmax = 0;
   let Vmpp = 0;
   let Impp = 0;
-  const steps = 60;
+  const steps = 80;
   for (let s = 0; s <= steps; s++) {
     const v = (s / steps) * Voc;
     const i = calcI(v);
@@ -1870,76 +1941,287 @@ export function renderSolarPv(rc: RenderContext, p: SolarPvParams) {
     }
   }
 
-  ctx.fillStyle = '#090d16';
+  // Deep tech background
+  ctx.fillStyle = '#070b14';
   ctx.fillRect(0, 0, w, h);
 
-  const plotLeft = 55;
-  const plotRight = w - 35;
-  const plotTop = 45;
-  const plotBottom = h - 45;
-  const plotW = plotRight - plotLeft;
-  const plotH = plotBottom - plotTop;
+  // Responsive plotting frame
+  const isCompact = w < 650;
+  const plotLeft = isCompact ? 60 : 75;
+  const plotRight = isCompact ? w - 60 : w - 80;
+  const plotTop = 75;
+  // Leave room for the bottom legend card
+  const legendH = isCompact ? 80 : 65;
+  const plotBottom = h - legendH - 45;
+  const plotW = Math.max(100, plotRight - plotLeft);
+  const plotH = Math.max(100, plotBottom - plotTop);
 
-  // Grid
-  ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
+  // 1. Grid Background & Axes
+  ctx.fillStyle = '#0a101d';
+  ctx.fillRect(plotLeft, plotTop, plotW, plotH);
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1.5;
   ctx.strokeRect(plotLeft, plotTop, plotW, plotH);
 
-  // Curve 1: Current vs Voltage (Cyan #06b6d4)
+  // Sub-grid divisions (5 vertical, 4 horizontal)
+  ctx.strokeStyle = 'rgba(51, 65, 85, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+
+  // Horizontal ticks & values (Current on left, Power on right)
+  const maxI = Iph * 1.15;
+  const maxP = Pmax * 1.25;
+
+  for (let g = 0; g <= 4; g++) {
+    const gy = plotBottom - (g / 4) * plotH;
+    ctx.beginPath();
+    ctx.moveTo(plotLeft, gy);
+    ctx.lineTo(plotRight, gy);
+    ctx.stroke();
+
+    // Left Y-Axis Ticks: Current (Cyan)
+    const iVal = (g / 4) * maxI;
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#38bdf8';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${iVal.toFixed(1)} A`, plotLeft - 8, gy + 4);
+
+    // Right Y-Axis Ticks: Power (Amber)
+    const pVal = (g / 4) * maxP;
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${pVal.toFixed(0)} W`, plotRight + 8, gy + 4);
+  }
+
+  // Vertical ticks & values (Voltage along bottom)
+  for (let vStep = 0; vStep <= 5; vStep++) {
+    const vx = plotLeft + (vStep / 5) * plotW;
+    ctx.beginPath();
+    ctx.moveTo(vx, plotTop);
+    ctx.lineTo(vx, plotBottom);
+    ctx.stroke();
+
+    const vVal = (vStep / 5) * Voc;
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${vVal.toFixed(0)} V`, vx, plotBottom + 18);
+  }
+  ctx.setLineDash([]);
+
+  // 2. Bold Axis Labels with Explicit Color References
+  // Left Axis Title: Current
+  ctx.save();
+  ctx.translate(plotLeft - 48, plotTop + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = 'bold 12px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#06b6d4';
+  ctx.textAlign = 'center';
+  ctx.fillText('◄ CURRENT I (Amperes) [BLUE LINE]', 0, 0);
+  ctx.restore();
+
+  // Right Axis Title: Power
+  ctx.save();
+  ctx.translate(plotRight + 52, plotTop + plotH / 2);
+  ctx.rotate(Math.PI / 2);
+  ctx.font = 'bold 12px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#f59e0b';
+  ctx.textAlign = 'center';
+  ctx.fillText('POWER P (Watts) [YELLOW LINE] ►', 0, 0);
+  ctx.restore();
+
+  // Bottom Axis Title: Voltage
+  ctx.font = 'bold 12px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#e2e8f0';
+  ctx.textAlign = 'center';
+  ctx.fillText('OUTPUT TERMINAL VOLTAGE V (Volts) ►', plotLeft + plotW / 2, plotBottom + 35);
+
+  // 3. CURVE 1: Blue/Cyan Line (I-V Current vs Voltage)
   ctx.strokeStyle = '#06b6d4';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3.5;
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 8;
   ctx.beginPath();
   for (let s = 0; s <= steps; s++) {
     const v = (s / steps) * Voc;
     const i = calcI(v);
     const sx = plotLeft + (v / Voc) * plotW;
-    const sy = plotBottom - (i / (Iph * 1.15)) * plotH;
+    const sy = plotBottom - (i / maxI) * plotH;
     if (s === 0) ctx.moveTo(sx, sy);
     else ctx.lineTo(sx, sy);
   }
   ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  // Curve 2: Power vs Voltage (Amber #f59e0b)
+  // Direct Inline Callout on Blue Curve
+  const ivLabelX = plotLeft + plotW * 0.22;
+  const ivLabelY = plotBottom - (calcI(Voc * 0.22) / maxI) * plotH - 14;
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(ivLabelX - 6, ivLabelY - 14, 155, 20, 4);
+  ctx.fill();
+  ctx.stroke();
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.textAlign = 'left';
+  ctx.fillText('● BLUE: I-V Current Curve', ivLabelX, ivLabelY);
+
+  // 4. CURVE 2: Yellow/Amber Line (P-V Power vs Voltage)
   ctx.strokeStyle = '#f59e0b';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3.5;
+  ctx.shadowColor = '#f59e0b';
+  ctx.shadowBlur = 8;
   ctx.beginPath();
   for (let s = 0; s <= steps; s++) {
     const v = (s / steps) * Voc;
     const i = calcI(v);
     const pow = v * i;
     const sx = plotLeft + (v / Voc) * plotW;
-    const sy = plotBottom - (pow / (Pmax * 1.25)) * plotH;
+    const sy = plotBottom - (pow / maxP) * plotH;
     if (s === 0) ctx.moveTo(sx, sy);
     else ctx.lineTo(sx, sy);
   }
   ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  // Maximum Power Point Marker
+  // Direct Inline Callout on Yellow Curve
+  const pvLabelX = plotLeft + plotW * 0.42;
+  const pvLabelY = plotBottom - ((Voc * 0.42 * calcI(Voc * 0.42)) / maxP) * plotH - 16;
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(pvLabelX - 6, pvLabelY - 14, 160, 20, 4);
+  ctx.fill();
+  ctx.stroke();
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'left';
+  ctx.fillText('● YELLOW: P-V Power Curve', pvLabelX, pvLabelY);
+
+  // 5. MAXIMUM POWER POINT (MPP) HIGHLIGHT
   const mppSx = plotLeft + (Vmpp / Voc) * plotW;
-  const mppSy = plotBottom - (Pmax / (Pmax * 1.25)) * plotH;
+  const mppSy = plotBottom - (Pmax / maxP) * plotH;
+
+  // Vertical guideline from MPP to X-axis
+  ctx.strokeStyle = 'rgba(244, 63, 94, 0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(mppSx, mppSy);
+  ctx.lineTo(mppSx, plotBottom);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Pulsing Outer Reticle Ring
+  ctx.strokeStyle = '#f43f5e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(mppSx, mppSy, 10, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Solid Center Dot
   ctx.fillStyle = '#f43f5e';
   ctx.beginPath();
-  ctx.arc(mppSx, mppSy, 6, 0, Math.PI * 2);
+  ctx.arc(mppSx, mppSy, 5, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  // MPP Callout Badge Box
+  const badgeW = 210;
+  const badgeH = 46;
+  const badgeX = Math.min(plotRight - badgeW, Math.max(plotLeft + 10, mppSx - badgeW / 2));
+  const badgeY = Math.max(plotTop + 10, mppSy - 58);
+
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.96)';
+  ctx.strokeStyle = '#f43f5e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#f43f5e';
-  ctx.fillText(`MPPT: ${Pmax.toFixed(0)}W (${Vmpp.toFixed(1)}V, ${Impp.toFixed(1)}A)`, mppSx - 60, mppSy - 12);
+  ctx.textAlign = 'left';
+  ctx.fillText('🔴 MAXIMUM POWER POINT (MPP)', badgeX + 10, badgeY + 18);
 
-  // Telemetry HUD Bar at top
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-  ctx.fillRect(plotLeft, 10, plotW, 30);
-  ctx.strokeStyle = '#334155';
-  ctx.strokeRect(plotLeft, 10, plotW, 30);
-
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#f59e0b';
-  ctx.fillText(`IRRADIANCE G: ${G.toFixed(0)} W/m²`, plotLeft + 15, 28);
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(`P_max: ${Pmax.toFixed(1)}W`, badgeX + 10, badgeY + 36);
   ctx.fillStyle = '#38bdf8';
-  ctx.fillText(`CELL TEMP: ${Tc.toFixed(0)}°C`, plotLeft + 220, 28);
+  ctx.fillText(`@ ${Vmpp.toFixed(1)}V, ${Impp.toFixed(2)}A`, badgeX + 115, badgeY + 36);
+
+  // 6. TOP TELEMETRY RIBBON
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+  ctx.fillRect(plotLeft, 14, plotW, 46);
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(plotLeft, 14, plotW, 46);
+
+  const colW = plotW / 4;
+  // Box 1: Solar Irradiance
+  ctx.font = 'bold 12px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#f59e0b';
+  ctx.textAlign = 'left';
+  ctx.fillText('☀️ IRRADIANCE G', plotLeft + 12, 34);
+  ctx.font = 'bold 13px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(`${G.toFixed(0)} W/m²`, plotLeft + 12, 52);
+
+  // Box 2: Temperature
+  ctx.font = 'bold 12px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('🌡️ CELL TEMP Tc', plotLeft + colW + 12, 34);
+  ctx.font = 'bold 13px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(`${Tc.toFixed(0)} °C`, plotLeft + colW + 12, 52);
+
+  // Box 3: Limits (Voc, Isc)
+  ctx.font = 'bold 12px "Inter", "IBM Plex Mono", sans-serif';
   ctx.fillStyle = '#06b6d4';
-  ctx.fillText(`Voc: ${Voc.toFixed(1)}V | Isc: ${Iph.toFixed(2)}A`, plotLeft + 370, 28);
+  ctx.fillText('⚡ LIMITS (Voc / Isc)', plotLeft + colW * 2 + 12, 34);
+  ctx.font = 'bold 13px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(`${Voc.toFixed(1)}V | ${Iph.toFixed(2)}A`, plotLeft + colW * 2 + 12, 52);
+
+  // Box 4: Peak Wattage
+  ctx.font = 'bold 12px "Inter", "IBM Plex Mono", sans-serif';
   ctx.fillStyle = '#10b981';
-  ctx.fillText(`P_MPP: ${Pmax.toFixed(1)}W`, plotLeft + plotW - 130, 28);
+  ctx.fillText('🟢 PEAK HARVEST (P_MPP)', plotLeft + colW * 3 + 12, 34);
+  ctx.font = 'bold 14px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#34d399';
+  ctx.fillText(`${Pmax.toFixed(1)} Watts`, plotLeft + colW * 3 + 12, 52);
+
+  // 7. COMPREHENSIVE ON-CANVAS DIAGRAM GUIDE & COLOR LEGEND
+  const legY = h - legendH - 10;
+  ctx.fillStyle = 'rgba(8, 14, 27, 0.95)';
+  ctx.fillRect(plotLeft, legY, plotW, legendH);
+  ctx.strokeStyle = '#0284c7';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(plotLeft, legY, plotW, legendH);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.textAlign = 'left';
+  ctx.fillText('📖 DIAGRAM GUIDE & COLOR IDENTIFIER (What do the lines mean?):', plotLeft + 12, legY + 18);
+
+  ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
+
+  // Item 1: Blue Line
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('🟦 BLUE LINE = I-V Curve (Current vs Voltage)', plotLeft + 12, legY + 36);
+  ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillText(': Generated DC Current (Amperes). Flat until the knee voltage, then drops to 0 at Voc.', plotLeft + 335, legY + 36);
+
+  // Item 2: Yellow Line
+  ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('🟨 YELLOW LINE = P-V Curve (Power vs Voltage)', plotLeft + 12, legY + 54);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillText(': Usable Electrical Power (Watts = Volts × Amps). Peaks at the Maximum Power Point (MPP).', plotLeft + 335, legY + 54);
 }
 
 

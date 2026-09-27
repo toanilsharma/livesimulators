@@ -58,13 +58,13 @@ export function renderCurrentLoop(
   ctx.fillRect(16, txY + 41, 33, 123);
 
   ctx.fillStyle = '#38bdf8';
-  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillText(`P = ${processPressure.toFixed(1)} bar`, 10, txY + 28);
 
   // Transmitter Body Enclosure (Heavy industrial explosion-proof housing)
   ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
   ctx.strokeStyle = isComplianceVoltageHealthy ? '#06b6d4' : '#ef4444';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.roundRect(txX, txY, txW, txH, 12);
   ctx.fill();
@@ -75,71 +75,79 @@ export function renderCurrentLoop(
   ctx.strokeStyle = '#1e293b';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.roundRect(txX + 15, txY + 15, txW - 30, 78, 6);
+  ctx.roundRect(txX + 15, txY + 15, txW - 30, 80, 6);
   ctx.fill();
   ctx.stroke();
 
   // Digital LCD Display Inside Transmitter
   ctx.fillStyle = '#38bdf8';
-  ctx.font = 'bold 17px "IBM Plex Mono", monospace';
-  ctx.fillText(`${calculatedCurrent.toFixed(2)} mA`, txX + 28, txY + 44);
+  ctx.font = 'bold 18px "IBM Plex Mono", monospace';
+  ctx.fillText(`${calculatedCurrent.toFixed(2)} mA`, txX + 24, txY + 44);
 
-  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#94a3b8';
-  ctx.fillText(`PV: ${processPressure.toFixed(2)} bar (${pressurePercent.toFixed(1)}%)`, txX + 28, txY + 62);
-  ctx.fillText(`RANGE: ${lrv} - ${urv} bar`, txX + 28, txY + 77);
+  ctx.fillText(`PV: ${processPressure.toFixed(2)} bar (${pressurePercent.toFixed(1)}%)`, txX + 24, txY + 64);
+  ctx.fillText(`RANGE: ${lrv} - ${urv} bar`, txX + 24, txY + 80);
 
   // Internal Sensor Cell & V/I Regulator
   ctx.fillStyle = '#0f172a';
   ctx.strokeStyle = '#334155';
-  ctx.strokeRect(txX + 20, txY + 105, 75, 45);
+  ctx.strokeRect(txX + 16, txY + 105, 82, 45);
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText('SENSOR CELL', txX + 20, txY + 124);
+  ctx.font = '10px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#64748b';
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillText('SENSOR CELL', txX + 24, txY + 122);
-  ctx.fillText('PIEZO PILLAR', txX + 24, txY + 135);
+  ctx.fillText('PIEZO PILLAR', txX + 20, txY + 138);
 
-  ctx.strokeRect(txX + 115, txY + 105, 80, 45);
-  ctx.fillText('4-20mA V/I', txX + 120, txY + 122);
-  ctx.fillText('REGULATOR', txX + 120, txY + 135);
+  ctx.strokeRect(txX + 108, txY + 105, 88, 45);
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText('4-20mA V/I', txX + 114, txY + 124);
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('REGULATOR', txX + 114, txY + 138);
 
   // Transmitter Terminal Screws (+) and (-)
   const termPlusY = txY + 172;
-  const termMinusY = txY + 188;
+  const termMinusY = txY + 192;
   ctx.fillStyle = '#f59e0b';
   ctx.beginPath();
-  ctx.arc(txX + txW, termPlusY, 5, 0, Math.PI * 2);
-  ctx.arc(txX + txW, termMinusY, 5, 0, Math.PI * 2);
+  ctx.arc(txX + txW, termPlusY, 6, 0, Math.PI * 2);
+  ctx.arc(txX + txW, termMinusY, 6, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = '#f59e0b';
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
-  ctx.fillText(`(+) ${transmitterTerminalVoltage.toFixed(1)}V`, txX + txW - 65, termPlusY + 3);
-  ctx.fillText(`(-) 0.0V`, txX + txW - 50, termMinusY + 3);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText(`(+) ${transmitterTerminalVoltage.toFixed(1)}V`, txX + txW - 74, termPlusY + 4);
+  ctx.fillText(`(-) 0.0V`, txX + txW - 58, termMinusY + 4);
 
   // Field Cable Run & DCS I/O
-  const dcsX = w - 170;
+  const dcsX = w - 175;
   const dcsY = 55;
-  const dcsW = 140;
+  const dcsW = 145;
   const dcsH = 205;
 
+  // Top Wire: Positive Supply & Signal Loop
   ctx.strokeStyle = isComplianceVoltageHealthy ? '#38bdf8' : '#ef4444';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(txX + txW, termPlusY);
   ctx.lineTo(dcsX, termPlusY);
   ctx.stroke();
 
+  // Bottom Wire: Negative Common Return
   ctx.strokeStyle = '#0284c7';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(txX + txW, termMinusY);
   ctx.lineTo(dcsX, termMinusY);
   ctx.stroke();
 
-  ctx.fillStyle = '#64748b';
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillText(`Twisted Shielded Pair (R_wire = ${wireResistance} Ω)`, txX + txW + 30, termPlusY - 10);
-  ctx.fillText(`ΔV_wire = ${wireVoltage.toFixed(2)} V`, txX + txW + 30, termMinusY + 18);
+  // Cable Annotation
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText(`Twisted Shielded Pair (R_wire = ${wireResistance} Ω, ΔV = ${wireVoltage.toFixed(2)}V)`, txX + txW + 20, termPlusY - 12);
 
   // Traveling Current Particles
   if (calculatedCurrent > 0.1) {
@@ -150,38 +158,47 @@ export function renderCurrentLoop(
       const pxTop = dcsX - p.pos * currentDistance;
       ctx.fillStyle = '#38bdf8';
       ctx.beginPath();
-      ctx.arc(pxTop, termPlusY, 2.5, 0, Math.PI * 2);
+      ctx.arc(pxTop, termPlusY, 3.5, 0, Math.PI * 2);
       ctx.fill();
 
       const pxBottom = (txX + txW) + p.pos * currentDistance;
       ctx.fillStyle = '#06b6d4';
       ctx.beginPath();
-      ctx.arc(pxBottom, termMinusY, 2.5, 0, Math.PI * 2);
+      ctx.arc(pxBottom, termMinusY, 3.5, 0, Math.PI * 2);
       ctx.fill();
     });
   }
 
-  // HART FSK Waveform
+  // HART FSK Waveform (Bell 202 Superimposed)
   if (hartActive && calculatedCurrent > 0.1) {
     data.hartWavePhase += dt * 8;
-    ctx.strokeStyle = 'rgba(234, 179, 8, 0.75)';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    const hartStart = txX + txW + 20;
-    const hartEnd = dcsX - 20;
+    const hartStart = txX + txW + 15;
+    const hartEnd = dcsX - 15;
     for (let hx = hartStart; hx < hartEnd; hx += 3) {
-      const phaseMod = Math.sin((hx - hartStart) * 0.15 + data.hartWavePhase);
-      const hy = termPlusY + phaseMod * 5;
+      const phaseMod = Math.sin((hx - hartStart) * 0.18 + data.hartWavePhase);
+      const hy = termPlusY + phaseMod * 7;
       if (hx === hartStart) ctx.moveTo(hx, hy);
       else ctx.lineTo(hx, hy);
     }
     ctx.stroke();
-    ctx.fillStyle = '#eab308';
-    ctx.font = '9px "IBM Plex Mono", monospace';
-    ctx.fillText('HART 1200/2200 Hz FSK BURST ACTIVE', txX + txW + 50, termPlusY + 12);
+
+    // Callout Badge for HART
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(txX + txW + 25, termPlusY + 10, 260, 20, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillText('🟨 HART 1200/2200 Hz FSK ACTIVE (Bell 202)', txX + txW + 30, termPlusY + 24);
   }
 
-  // DCS Box
+  // DCS Box (Right side)
   ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
   ctx.strokeStyle = '#10b981';
   ctx.lineWidth = 2;
@@ -191,34 +208,37 @@ export function renderCurrentLoop(
   ctx.stroke();
 
   ctx.fillStyle = '#10b981';
-  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
-  ctx.fillText('PLC / DCS I/O', dcsX + 15, dcsY + 25);
-  ctx.fillStyle = '#64748b';
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillText('ANALOG INPUT CH1', dcsX + 15, dcsY + 38);
+  ctx.font = 'bold 13px "IBM Plex Mono", monospace';
+  ctx.fillText('PLC / DCS I/O', dcsX + 14, dcsY + 24);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillText('ANALOG INPUT CH1', dcsX + 14, dcsY + 38);
 
-  const shuntY = dcsY + 70;
-  ctx.strokeStyle = '#e2e8f0';
+  const shuntY = dcsY + 68;
+  ctx.strokeStyle = '#38bdf8';
   ctx.lineWidth = 1.5;
-  ctx.strokeRect(dcsX + 25, shuntY, 85, 36);
+  ctx.strokeRect(dcsX + 15, shuntY, 115, 42);
   ctx.fillStyle = '#f8fafc';
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillText(`R_load: ${loadResistance} Ω`, dcsX + 30, shuntY + 18);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText(`R_load: ${loadResistance} Ω`, dcsX + 22, shuntY + 18);
   ctx.fillStyle = '#38bdf8';
-  ctx.fillText(`V_in: ${loadVoltage.toFixed(3)} V`, dcsX + 30, shuntY + 30);
+  ctx.fillText(`V_adc: ${loadVoltage.toFixed(3)} V`, dcsX + 22, shuntY + 34);
 
-  const psuY = dcsY + 135;
-  ctx.strokeRect(dcsX + 25, psuY, 85, 36);
+  const psuY = dcsY + 130;
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(dcsX + 15, psuY, 115, 42);
   ctx.fillStyle = '#10b981';
-  ctx.fillText(`+24 VDC PSU`, dcsX + 32, psuY + 18);
-  ctx.fillStyle = '#64748b';
-  ctx.fillText(`LOOP POWER`, dcsX + 32, psuY + 30);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText(`+24 VDC PSU`, dcsX + 24, psuY + 18);
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`LOOP POWER`, dcsX + 24, psuY + 34);
 
-  // Bottom Scope / Signal Strip
-  const scopeX = 40;
-  const scopeY = 280;
-  const scopeW = w - 80;
-  const scopeH = h - scopeY - 20;
+  // Bottom Scope / Signal Strip & Diagram Color Guide
+  const scopeX = 25;
+  const scopeY = 275;
+  const scopeW = w - 50;
+  const scopeH = Math.max(90, h - scopeY - 15);
 
   ctx.fillStyle = '#020614';
   ctx.strokeStyle = '#1e293b';
@@ -228,40 +248,37 @@ export function renderCurrentLoop(
   ctx.fill();
   ctx.stroke();
 
-  ctx.strokeStyle = 'rgba(51, 65, 85, 0.4)';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([2, 4]);
-  for (let gx = scopeX + 60; gx < scopeX + scopeW; gx += 60) {
-    ctx.beginPath();
-    ctx.moveTo(gx, scopeY);
-    ctx.lineTo(gx, scopeY + scopeH);
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
-
-  ctx.fillStyle = '#64748b';
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillText('LOOP CURRENT COMPLIANCE & VOLTAGE BURDEN STRIP', scopeX + 15, scopeY + 20);
+  // Compliance Bar
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText('⚡ 4-20mA LOOP COMPLIANCE & VOLTAGE BURDEN STRIP (IEC 60381-1):', scopeX + 15, scopeY + 18);
 
   const complianceRatio = Math.min(1.0, transmitterTerminalVoltage / 12.0);
-  const barW = (scopeW - 30) * complianceRatio;
+  const barW = Math.max(20, (scopeW - 30) * complianceRatio);
   ctx.fillStyle = isComplianceVoltageHealthy ? '#10b981' : '#ef4444';
-  ctx.fillRect(scopeX + 15, scopeY + 32, barW, 14);
+  ctx.fillRect(scopeX + 15, scopeY + 26, barW, 16);
 
   ctx.fillStyle = '#f8fafc';
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillText(
-    `V_tx = ${transmitterTerminalVoltage.toFixed(2)} V ${isComplianceVoltageHealthy ? '(COMPLIANT ≥ 10.5V)' : '(COMPLIANCE COLLAPSE)'}`,
+    `V_tx = ${transmitterTerminalVoltage.toFixed(2)} V ${isComplianceVoltageHealthy ? '(HEALTHY COMPLIANCE ≥ 10.5V)' : '(BURDEN OVERLOAD: TRANSMITTER SHUTDOWN)'}`,
     scopeX + 22,
-    scopeY + 43
+    scopeY + 38
   );
 
-  ctx.font = '10px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#94a3b8';
+  // Explanatory Color Key & Legend
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('🟦 BLUE LINE = (+) 4-20mA Loop Current', scopeX + 15, scopeY + 60);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText('🟨 YELLOW WAVE = HART FSK Digital Signal (1.2/2.2 kHz)', scopeX + 310, scopeY + 60);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f8fafc';
   ctx.fillText(
-    `NAMUR STATUS: ${calculatedCurrent <= 3.6 ? 'NE 43 FAIL LOW' : calculatedCurrent >= 21.0 ? 'NE 43 FAIL HIGH' : 'NORMAL IN-SPEC'} | CURRENT: ${calculatedCurrent.toFixed(2)} mA | BURDEN: ${(wireResistance + loadResistance)} Ω`,
+    `NAMUR NE 43: ${calculatedCurrent <= 3.6 ? '🚨 SENSOR FAULT (NE43 LOW)' : calculatedCurrent >= 21.0 ? '🚨 SENSOR FAULT (NE43 HIGH)' : '✅ NORMAL MEASUREMENT'} | CURRENT: ${calculatedCurrent.toFixed(2)} mA | TOTAL LOOP BURDEN: ${(wireResistance + loadResistance)} Ω`,
     scopeX + 15,
-    scopeY + 70
+    scopeY + 80
   );
 }
 
@@ -714,8 +731,8 @@ export function renderPidLoop(
   // Setpoint Dotted Line
   const spY = tankY + tankH - (setpoint / 100.0) * (tankH - 20);
   ctx.strokeStyle = '#10b981';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([5, 4]);
   ctx.beginPath();
   ctx.moveTo(tankX, spY);
   ctx.lineTo(tankX + tankW, spY);
@@ -723,17 +740,17 @@ export function renderPidLoop(
   ctx.setLineDash([]);
 
   ctx.fillStyle = '#10b981';
-  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
-  ctx.fillText(`SP: ${setpoint}%`, tankX + tankW + 8, spY + 3);
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillText(`SP: ${setpoint}%`, tankX + tankW + 8, spY + 4);
 
   ctx.fillStyle = '#38bdf8';
-  ctx.fillText(`PV: ${pidState.pv.toFixed(1)}%`, tankX + tankW + 8, liquidY + 3);
+  ctx.fillText(`PV: ${pidState.pv.toFixed(1)}%`, tankX + tankW + 8, liquidY + 4);
 
   // Right Side: Strip Chart Recorder
   const chartX = 230;
-  const chartY = 50;
-  const chartW = w - chartX - 35;
-  const chartH = 210;
+  const chartY = 45;
+  const chartW = w - chartX - 30;
+  const chartH = 215;
 
   ctx.fillStyle = '#020614';
   ctx.strokeStyle = '#1e293b';
@@ -748,25 +765,25 @@ export function renderPidLoop(
   ctx.lineWidth = 0.8;
   ctx.setLineDash([2, 4]);
   for (let gy = 0; gy <= 4; gy++) {
-    const py = chartY + 20 + gy * ((chartH - 40) / 4);
+    const py = chartY + 28 + gy * ((chartH - 52) / 4);
     ctx.beginPath();
     ctx.moveTo(chartX, py);
     ctx.lineTo(chartX + chartW, py);
     ctx.stroke();
 
-    ctx.fillStyle = '#64748b';
-    ctx.font = '9px "IBM Plex Mono", monospace';
-    ctx.fillText(`${100 - gy * 25}%`, chartX + 8, py - 3);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillText(`${100 - gy * 25}%`, chartX + 8, py + 4);
   }
   ctx.setLineDash([]);
 
   // Plot SP (Green)
   ctx.strokeStyle = '#10b981';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   pidState.historySp.forEach((spVal, idx) => {
-    const px = chartX + 45 + (idx / (pidState.historySp.length - 1)) * (chartW - 55);
-    const py = chartY + 20 + (1.0 - spVal / 100.0) * (chartH - 40);
+    const px = chartX + 48 + (idx / (pidState.historySp.length - 1)) * (chartW - 60);
+    const py = chartY + 28 + (1.0 - spVal / 100.0) * (chartH - 52);
     if (idx === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   });
@@ -774,11 +791,11 @@ export function renderPidLoop(
 
   // Plot PV (Cyan)
   ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   pidState.historyPv.forEach((pvVal, idx) => {
-    const px = chartX + 45 + (idx / (pidState.historyPv.length - 1)) * (chartW - 55);
-    const py = chartY + 20 + (1.0 - pvVal / 100.0) * (chartH - 40);
+    const px = chartX + 48 + (idx / (pidState.historyPv.length - 1)) * (chartW - 60);
+    const py = chartY + 28 + (1.0 - pvVal / 100.0) * (chartH - 52);
     if (idx === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   });
@@ -786,38 +803,56 @@ export function renderPidLoop(
 
   // Plot MV (Amber)
   ctx.strokeStyle = '#f59e0b';
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   pidState.historyMv.forEach((mvVal, idx) => {
-    const px = chartX + 45 + (idx / (pidState.historyMv.length - 1)) * (chartW - 55);
-    const py = chartY + 20 + (1.0 - mvVal / 100.0) * (chartH - 40);
+    const px = chartX + 48 + (idx / (pidState.historyMv.length - 1)) * (chartW - 60);
+    const py = chartY + 28 + (1.0 - mvVal / 100.0) * (chartH - 52);
     if (idx === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   });
   ctx.stroke();
 
-  // Legend
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  // Legend Header with clear color indicators
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#10b981';
-  ctx.fillText('— SP (Setpoint)', chartX + 50, chartY + 16);
+  ctx.fillText('🟩 GREEN: SP (Target)', chartX + 48, chartY + 18);
   ctx.fillStyle = '#38bdf8';
-  ctx.fillText('— PV (Process Level)', chartX + 180, chartY + 16);
+  ctx.fillText('🟦 BLUE: PV (Actual Level)', chartX + 225, chartY + 18);
   ctx.fillStyle = '#f59e0b';
-  ctx.fillText('— MV (Valve Output)', chartX + 330, chartY + 16);
+  ctx.fillText('🟨 AMBER: MV (Valve %)', chartX + 420, chartY + 18);
 
-  // Bottom Status Bar
-  const btmY = 280;
-  ctx.fillStyle = '#0f172a';
+  // Bottom Status Bar & Diagram Guide
+  const btmY = 275;
+  const btmH = Math.max(90, h - btmY - 15);
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
   ctx.strokeStyle = '#334155';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(40, btmY, w - 80, h - btmY - 15);
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.roundRect(25, btmY, w - 50, btmH, 8);
+  ctx.fill();
+  ctx.stroke();
 
-  ctx.fillStyle = '#f8fafc';
-  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillText(
-    `PID GAINS: Kp = ${kp.toFixed(2)} | Ti = ${ti.toFixed(1)}s | Td = ${td.toFixed(2)}s | MV = ${mv.toFixed(1)}% | ANTI-WINDUP: ACTIVE`,
-    55,
-    btmY + 24
+    `PID CONTROLLER STATE: Kp = ${kp.toFixed(2)} | Ti = ${ti.toFixed(1)}s | Td = ${td.toFixed(2)}s | Error e(t) = ${(setpoint - pidState.pv).toFixed(2)}% | MV Output = ${mv.toFixed(1)}%`,
+    40,
+    btmY + 22
+  );
+
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '11px "Inter", "IBM Plex Mono", sans-serif';
+  ctx.fillText(
+    '📖 HOW TO READ: The PID algorithm continuously calculates Error e(t) = SP - PV and adjusts Valve MV (🟨 amber) to guide Actual Level PV (🟦 blue) to match Desired Setpoint SP (🟩 green).',
+    40,
+    btmY + 44
+  );
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(
+    'Anti-Windup Clamping prevents integral saturation during massive setpoint steps or high inflow disturbances.',
+    40,
+    btmY + 64
   );
 }
 
@@ -1736,9 +1771,9 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
   for (let db = -40; db <= 40; db += 20) {
     const y = magBot - ((db - dbMin) / (dbMax - dbMin)) * magH;
     ctx.beginPath(); ctx.moveTo(bodeLeft, y); ctx.lineTo(bodeRight, y); ctx.stroke();
-    ctx.font = '9px "IBM Plex Mono", monospace';
-    ctx.fillStyle = '#64748b';
-    ctx.fillText(`${db > 0 ? '+' : ''}${db}dB`, 10, y + 3);
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(`${db > 0 ? '+' : ''}${db}dB`, 6, y + 4);
   }
 
   // Frequency Decade grid lines
@@ -1758,17 +1793,18 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
 
   // 0 dB reference line
   const zeroDbY = magBot - ((0 - dbMin) / (dbMax - dbMin)) * magH;
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.7)';
-  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
   ctx.beginPath(); ctx.moveTo(bodeLeft, zeroDbY); ctx.lineTo(bodeRight, zeroDbY); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#f59e0b';
-  ctx.fillText('0 dB (Unity Gain)', bodeLeft + 8, zeroDbY - 4);
+  ctx.fillText('🟨 0 dB UNITY GAIN (Phase Margin Frequency Crossover)', bodeLeft + 10, zeroDbY - 6);
 
   // Draw Magnitude curve
   ctx.strokeStyle = '#10b981';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   const plotSteps = 120;
   for (let s = 0; s <= plotSteps; s++) {
@@ -1799,24 +1835,25 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
     const y = phaseBot - ((deg - degMin) / (degMax - degMin)) * phaseH;
     ctx.strokeStyle = 'rgba(30, 41, 59, 0.6)';
     ctx.beginPath(); ctx.moveTo(bodeLeft, y); ctx.lineTo(bodeRight, y); ctx.stroke();
-    ctx.font = '9px "IBM Plex Mono", monospace';
-    ctx.fillStyle = '#64748b';
-    ctx.fillText(`${deg}°`, 10, y + 3);
+    ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(`${deg}°`, 6, y + 4);
   }
 
   // -180° reference line
   const m180Y = phaseBot - ((-180 - degMin) / (degMax - degMin)) * phaseH;
-  ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 4]);
   ctx.beginPath(); ctx.moveTo(bodeLeft, m180Y); ctx.lineTo(bodeRight, m180Y); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#ef4444';
-  ctx.fillText('-180° (Instability Limit)', bodeLeft + 8, m180Y - 4);
+  ctx.fillText('🟥 -180° CRITICAL PHASE LIMIT (Gain Margin Crossover)', bodeLeft + 10, m180Y - 6);
 
   // Draw Phase curve
   ctx.strokeStyle = '#06b6d4';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   for (let s = 0; s <= plotSteps; s++) {
     const logOm = logWMin + (s / plotSteps) * (logWMax - logWMin);
@@ -1851,17 +1888,17 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
     ctx.lineTo(gcX, phiGcY);
     ctx.stroke();
 
-    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.font = 'bold 11px "IBM Plex Mono", monospace';
     ctx.fillStyle = '#10b981';
-    ctx.fillText(`PM = ${pm_deg.toFixed(1)}°`, gcX + 6, (m180Y + phiGcY) / 2);
+    ctx.fillText(`PM = ${pm_deg.toFixed(1)}°`, gcX + 8, (m180Y + phiGcY) / 2);
   }
 
   // Titles for Bode plots
-  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#10b981';
-  ctx.fillText('BODE MAGNITUDE |G(jω)| (dB)', bodeLeft, magTop - 8);
+  ctx.fillText('🟩 BODE MAGNITUDE |G(jω)| (dB)', bodeLeft, magTop - 8);
   ctx.fillStyle = '#06b6d4';
-  ctx.fillText('BODE PHASE ∠G(jω) (deg)', bodeLeft, phaseTop - 8);
+  ctx.fillText('🟦 BODE PHASE ∠G(jω) (deg)', bodeLeft, phaseTop - 8);
 
   ctx.restore();
 
@@ -1878,9 +1915,9 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
   ctx.strokeRect(nyqX, nyqY, nyqW, nyqH);
 
   // Title
-  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#a855f7';
-  ctx.fillText('POLAR NYQUIST DIAGRAM & CAUCHY STABILITY', nyqX + 14, nyqY + 24);
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#c084fc';
+  ctx.fillText('🟪 POLAR NYQUIST DIAGRAM & CAUCHY STABILITY', nyqX + 14, nyqY + 24);
 
   const nyqCx = nyqX + nyqW * 0.58;
   const nyqCy = nyqY + nyqH * 0.52;
@@ -1894,11 +1931,11 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
   ctx.moveTo(nyqCx, nyqY + 40); ctx.lineTo(nyqCx, nyqY + nyqH - 30); // Imag axis
   ctx.stroke();
 
-  ctx.font = '9px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
   ctx.fillStyle = '#94a3b8';
-  ctx.fillText('Re G(jω)', nyqX + nyqW - 70, nyqCy - 6);
-  ctx.fillText('+Im', nyqCx + 6, nyqY + 52);
-  ctx.fillText('–Im', nyqCx + 6, nyqY + nyqH - 36);
+  ctx.fillText('Re G(jω)', nyqX + nyqW - 74, nyqCy - 6);
+  ctx.fillText('+Im', nyqCx + 8, nyqY + 54);
+  ctx.fillText('–Im', nyqCx + 8, nyqY + nyqH - 36);
 
   // Unit Circle (|G| = 1)
   ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
@@ -1907,6 +1944,7 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
   ctx.arc(nyqCx, nyqCy, nyqScale, 0, Math.PI * 2);
   ctx.stroke();
   ctx.setLineDash([]);
+  ctx.font = '10px "IBM Plex Mono", monospace';
   ctx.fillText('|G|=1', nyqCx + nyqScale * 0.7, nyqCy - nyqScale * 0.7);
 
   // Critical Stability Point: (-1, j0)
@@ -1914,14 +1952,19 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
   const critY = nyqCy;
   ctx.fillStyle = '#ef4444';
   ctx.beginPath();
-  ctx.arc(critX, critY, 5, 0, Math.PI * 2);
+  ctx.arc(critX, critY, 6, 0, Math.PI * 2);
   ctx.fill();
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
-  ctx.fillText('(-1, j0)', critX - 52, critY - 8);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText('🔴 CRITICAL (-1, j0)', critX - 68, critY - 10);
 
   // Draw Nyquist Contour G(jw) for w: 0.05 -> 150
-  ctx.strokeStyle = '#a855f7';
-  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#c084fc';
+  ctx.lineWidth = 3;
   ctx.beginPath();
   const nyqSteps = 160;
   for (let s = 0; s <= nyqSteps; s++) {
@@ -1935,7 +1978,7 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
   ctx.stroke();
 
   // Draw Negative Frequency Conjugate locus (faint dashed)
-  ctx.strokeStyle = 'rgba(168, 85, 247, 0.35)';
+  ctx.strokeStyle = 'rgba(192, 132, 252, 0.35)';
   ctx.setLineDash([2, 3]);
   ctx.beginPath();
   for (let s = 0; s <= nyqSteps; s++) {
@@ -1955,23 +1998,24 @@ export function renderBodePlot(rc: RenderContext, p: BodePlotParams) {
   const probePy = nyqCy - probeG.im * nyqScale;
   ctx.fillStyle = '#f59e0b';
   ctx.beginPath();
-  ctx.arc(probePx, probePy, 5.5, 0, Math.PI * 2);
+  ctx.arc(probePx, probePy, 6, 0, Math.PI * 2);
   ctx.fill();
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillText(`ω=${wProbe.toFixed(1)}`, probePx + 8, probePy + 3);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillText(`ω=${wProbe.toFixed(1)} rad/s`, probePx + 8, probePy + 4);
 
   // Stability Verdict Card at bottom
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-  ctx.fillRect(nyqX + 15, nyqY + nyqH - 52, nyqW - 30, 40);
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.fillRect(nyqX + 12, nyqY + nyqH - 56, nyqW - 24, 46);
   ctx.strokeStyle = isStable ? '#10b981' : '#ef4444';
-  ctx.strokeRect(nyqX + 15, nyqY + nyqH - 52, nyqW - 30, 40);
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(nyqX + 12, nyqY + nyqH - 56, nyqW - 24, 46);
 
-  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
   ctx.fillStyle = isStable ? '#10b981' : '#ef4444';
-  ctx.fillText(isStable ? '✓ CLOSED-LOOP SYSTEM ASYMPTOTICALLY STABLE' : '⚠ SYSTEM CLOSED-LOOP UNSTABLE / OSCILLATORY', nyqX + 25, nyqY + nyqH - 32);
-  ctx.font = '9px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText(`PM = ${pm_deg !== null ? pm_deg.toFixed(1) + '°' : '>180°'} | GM = ${gm_db !== null ? gm_db.toFixed(1) + ' dB' : '∞'} | N = 0 Encirclements`, nyqX + 25, nyqY + nyqH - 18);
+  ctx.fillText(isStable ? '✓ SYSTEM ASYMPTOTICALLY STABLE' : '⚠ UNSTABLE / CAUCHY ENCIRCLEMENT', nyqX + 22, nyqY + nyqH - 34);
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillText(`PM = ${pm_deg !== null ? pm_deg.toFixed(1) + '°' : '>180°'} | GM = ${gm_db !== null ? gm_db.toFixed(1) + ' dB' : '∞'} | N = 0 Encirclements`, nyqX + 22, nyqY + nyqH - 18);
 
   ctx.restore();
 }
