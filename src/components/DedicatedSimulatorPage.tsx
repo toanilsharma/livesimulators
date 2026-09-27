@@ -37,7 +37,8 @@ import {
   ExternalLink,
   Copy,
   Check,
-  Tv
+  Tv,
+  Network
 } from 'lucide-react';
 import { SimulatorItem, DisciplineId } from '../types';
 import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
@@ -55,6 +56,8 @@ import { WhyItHappenedCard } from './WhyItHappenedCard';
 import { EngineeringTheoryFormulas } from './EngineeringTheoryFormulas';
 import { getLiveResultSummary, getDetailedWhyItHappened } from '../utils/simulatorExplanations';
 import { MathWorkerBridge, SimulationMetric } from '../utils/mathWorkerBridge';
+import { RelatedPhysicsConcepts } from './RelatedPhysicsConcepts';
+import { getCrossDisciplineEquivalents } from '../data/crossDisciplineEquivalents';
 
 interface DedicatedSimulatorPageProps {
   simulator: SimulatorItem;
@@ -85,7 +88,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'telemetry' | 'derivation' | 'standards' | 'insights' | 'curriculum' | 'experiments'>('telemetry');
-  const [activeIntelTab, setActiveIntelTab] = useState<'insight' | 'theory' | 'telemetry' | 'standards' | 'curriculum'>('insight');
+  const [activeIntelTab, setActiveIntelTab] = useState<'insight' | 'theory' | 'equivalents' | 'telemetry' | 'standards' | 'curriculum'>('insight');
   const [snapshotToast, setSnapshotToast] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [peerDropdownOpen, setPeerDropdownOpen] = useState<boolean>(false);
@@ -120,6 +123,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
 
   const liveResult = getLiveResultSummary(simulator.type, params);
   const whyDetail = getDetailedWhyItHappened(simulator.type, params);
+  const crossEquivalents = getCrossDisciplineEquivalents(simulator.id);
 
   // CRT Phosphor Glow Mode (authentic green phosphor persistence and scanlines)
   const [isCrtMode, setIsCrtMode] = useState<boolean>(() => {
@@ -2802,6 +2806,26 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                   <span>Why?</span>
                   <ArrowRight className="w-2.5 h-2.5" />
                 </button>
+
+                {/* Related Physics Cross-Discipline Link in Canvas HUD */}
+                {crossEquivalents.length > 0 && (
+                  <a
+                    href={`/simulator/${crossEquivalents[0].targetSimulatorId}`}
+                    onClick={(e) => {
+                      const target = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === crossEquivalents[0].targetSimulatorId);
+                      if (!e.ctrlKey && !e.metaKey && !e.shiftKey && onSelectSimulator && target) {
+                        e.preventDefault();
+                        onSelectSimulator(target);
+                      }
+                    }}
+                    className="hidden xl:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/50 text-[10px] font-mono text-cyan-300 hover:text-white transition-colors shrink-0 truncate max-w-[240px]"
+                    title={crossEquivalents[0].tooltipText}
+                  >
+                    <Network className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
+                    <span className="truncate">{crossEquivalents[0].anchorText}</span>
+                    <ArrowRight className="w-2 h-2 text-cyan-400 shrink-0" />
+                  </a>
+                )}
               </div>
 
               {/* Real-time Telemetry Readouts (Live Ticker) */}
@@ -2978,6 +3002,21 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                   <span>Theory</span>
                 </button>
 
+                {crossEquivalents.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveIntelTab('equivalents')}
+                    className={`px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all shrink-0 ${
+                      activeIntelTab === 'equivalents'
+                        ? 'bg-sky-500/20 text-sky-300 border border-sky-500/50 shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Network className="w-3 h-3 text-sky-400" />
+                    <span>Equivalents</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setActiveIntelTab('telemetry')}
@@ -3119,6 +3158,16 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
 
                     {/* Compact Technical Formulation Guide */}
                     <EngineeringTheoryFormulas compact simulator={simulator} />
+
+                    {/* Cross-Discipline Mathematical Equivalents in Theory Tab */}
+                    <RelatedPhysicsConcepts compact currentSimulatorId={simulator.id} onSelectSimulator={onSelectSimulator} />
+                  </div>
+                )}
+
+                {/* Tab: Equivalents */}
+                {activeIntelTab === 'equivalents' && (
+                  <div className="space-y-2.5 animate-in fade-in duration-150">
+                    <RelatedPhysicsConcepts compact currentSimulatorId={simulator.id} onSelectSimulator={onSelectSimulator} />
                   </div>
                 )}
 
