@@ -304,6 +304,189 @@ const MicroSimulatorCanvas: React.FC<{
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
+
+      } else if (type === 'transformer_test') {
+        // Magnetic Hysteresis Loop (B-H Curve) with rotating Steinmetz flux
+        const bCx = w * 0.5;
+        const bCy = midY;
+        const bW = w * 0.28;
+        const bH = h * 0.36;
+
+        ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(bCx - bW - 12, bCy); ctx.lineTo(bCx + bW + 12, bCy);
+        ctx.moveTo(bCx, bCy - bH - 8); ctx.lineTo(bCx, bCy + bH + 8);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        const loopSteps = 50;
+        for (let i = 0; i <= loopSteps; i++) {
+          const theta = (i / loopSteps) * Math.PI;
+          const hVal = Math.cos(theta);
+          const bVal = Math.tanh(hVal * 1.8) + 0.18 * Math.sin(theta);
+          const px = bCx + hVal * bW;
+          const py = bCy - bVal * bH;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        for (let i = 0; i <= loopSteps; i++) {
+          const theta = Math.PI + (i / loopSteps) * Math.PI;
+          const hVal = Math.cos(theta);
+          const bVal = Math.tanh(hVal * 1.8) - 0.18 * Math.sin(theta);
+          const px = bCx + hVal * bW;
+          const py = bCy - bVal * bH;
+          ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        const loopPhase = t * 2.5;
+        const ptH = Math.cos(loopPhase);
+        const ptB = Math.tanh(ptH * 1.8) + (Math.sin(loopPhase) > 0 ? 0.18 : -0.18) * Math.abs(Math.sin(loopPhase));
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(bCx + ptH * bW, bCy - ptB * bH, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (type === 'dc_motor') {
+        // Rotating 2-pole DC armature & commutator with magnetic poles
+        const mCx = w * 0.5;
+        const mCy = midY;
+        const mR = Math.min(30, h * 0.38);
+
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+        ctx.fillRect(mCx - mR - 38, mCy - 20, 24, 40);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 10px monospace';
+        ctx.fillText('N', mCx - mR - 30, mCy + 4);
+
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.4)';
+        ctx.fillRect(mCx + mR + 14, mCy - 20, 24, 40);
+        ctx.fillStyle = '#06b6d4';
+        ctx.fillText('S', mCx + mR + 22, mCy + 4);
+
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(mCx, mCy, mR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        const rot = t * 4;
+        for (let c = 0; c < 4; c++) {
+          const ang = rot + (c * Math.PI) / 2;
+          const cx = mCx + Math.cos(ang) * (mR * 0.65);
+          const cy = mCy + Math.sin(ang) * (mR * 0.65);
+          ctx.fillStyle = c % 2 === 0 ? '#f59e0b' : '#38bdf8';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.arc(mCx, mCy, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (type === 'induction_motor') {
+        // Kloss Torque-Slip Curve T(s) with breakdown torque T_max
+        const gLeft = 24;
+        const gRight = w - 24;
+        const gW = gRight - gLeft;
+        const gBot = h - 16;
+        const gH = h * 0.68;
+
+        ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(gLeft, gBot); ctx.lineTo(gRight, gBot);
+        ctx.stroke();
+
+        const sm = 0.25;
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (let x = gLeft; x <= gRight; x++) {
+          const s = Math.max(0.005, (x - gLeft) / gW);
+          const tNorm = (2 * (s / sm)) / (1 + Math.pow(s / sm, 2));
+          const y = gBot - tNorm * gH;
+          if (x === gLeft) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        const peakX = gLeft + sm * gW;
+        const peakY = gBot - gH;
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        ctx.arc(peakX, peakY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        const loadSlip = 0.05 + 0.12 * (0.5 + 0.5 * Math.sin(t * 2));
+        const loadTNorm = (2 * (loadSlip / sm)) / (1 + Math.pow(loadSlip / sm, 2));
+        const loadX = gLeft + loadSlip * gW;
+        const loadY = gBot - loadTNorm * gH;
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(loadX, loadY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (type === 'solar_pv') {
+        // Dual I-V and P-V curve with glowing Maximum Power Point (MPP)
+        const gLeft = 20;
+        const gRight = w - 20;
+        const gW = gRight - gLeft;
+        const gBot = h - 16;
+        const gH = h * 0.72;
+
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (let x = gLeft; x <= gRight; x++) {
+          const vFrac = (x - gLeft) / gW;
+          const iNorm = Math.max(0, 1 - Math.exp(12 * (vFrac - 0.95)));
+          const y = gBot - iNorm * (gH * 0.88);
+          if (x === gLeft) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        let mppX = gLeft;
+        let mppY = gBot;
+        let maxP = 0;
+        for (let x = gLeft; x <= gRight; x++) {
+          const vFrac = (x - gLeft) / gW;
+          const iNorm = Math.max(0, 1 - Math.exp(12 * (vFrac - 0.95)));
+          const pNorm = vFrac * iNorm * 1.35;
+          const y = gBot - pNorm * gH;
+          if (pNorm > maxP) {
+            maxP = pNorm;
+            mppX = x;
+            mppY = y;
+          }
+          if (x === gLeft) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        ctx.arc(mppX, mppY, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        const pulseR = 4.5 + Math.sin(t * 5) * 3;
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(mppX, mppY, pulseR, 0, Math.PI * 2);
+        ctx.stroke();
       }
 
       animRef.current = requestAnimationFrame(render);
