@@ -6,6 +6,7 @@ import { getEngineeringTheory } from '../utils/engineeringTheory';
 
 interface EngineeringTheoryFormulasProps {
   simulator: SimulatorItem;
+  compact?: boolean;
 }
 
 /**
@@ -13,7 +14,7 @@ interface EngineeringTheoryFormulasProps {
  * Semantic HTML (<article>, <h2>, <h3>, <section>) fully optimized for
  * 'calculator', 'formula', and 'theory' search intent and LLM retrieval.
  */
-export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps> = ({ simulator }) => {
+export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps> = ({ simulator, compact = false }) => {
   const theory = getEngineeringTheory(simulator);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -26,7 +27,9 @@ export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps>
   return (
     <article
       id="engineering-theory-formulas"
-      className="engineering-theory-formulas my-6 rounded-2xl border border-slate-800 bg-slate-900/95 shadow-2xl overflow-hidden"
+      className={`engineering-theory-formulas rounded-xl border border-slate-800 bg-slate-900/95 shadow-md overflow-hidden ${
+        compact ? 'my-0 text-xs' : 'my-6 rounded-2xl shadow-2xl'
+      }`}
       itemScope
       itemType="https://schema.org/TechArticle"
     >
@@ -34,20 +37,22 @@ export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps>
       <meta itemProp="proficiencyLevel" content={simulator.difficulty} />
 
       <details open className="group">
-        <summary className="px-4 py-3.5 bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border-b border-slate-800/80 cursor-pointer select-none flex items-center justify-between text-cyan-300 hover:text-cyan-200 transition-colors">
-          <div className="flex items-center gap-2.5">
-            <BookOpen className="w-5 h-5 text-cyan-400 shrink-0" />
-            <h2 className="text-sm sm:text-base font-bold font-mono tracking-tight text-slate-100 flex items-center gap-2">
-              <span>Engineering Theory, Governing Formulas &amp; Step-by-Step Calculation Guide</span>
-              <span className="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/50">
-                FORMULA &amp; CALCULATOR GUIDE
+        <summary className={`bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border-b border-slate-800/80 cursor-pointer select-none flex items-center justify-between text-cyan-300 hover:text-cyan-200 transition-colors ${
+          compact ? 'px-3 py-2' : 'px-4 py-3.5'
+        }`}>
+          <div className="flex items-center gap-2">
+            <BookOpen className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-cyan-400 shrink-0`} />
+            <h2 className={`${compact ? 'text-xs' : 'text-sm sm:text-base'} font-bold font-mono tracking-tight text-slate-100 flex items-center gap-1.5`}>
+              <span>Engineering Theory &amp; Calculation Guide</span>
+              <span className="hidden sm:inline-block text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/50">
+                FORMULAS
               </span>
             </h2>
           </div>
-          <ChevronDown className="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180 shrink-0" />
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180 shrink-0" />
         </summary>
 
-        <div className="p-4 sm:p-6 space-y-8 text-slate-200 text-sm leading-relaxed">
+        <div className={`space-y-4 text-slate-200 leading-relaxed ${compact ? 'p-3 text-xs' : 'p-4 sm:p-6 space-y-8 text-sm'}`}>
           {/* SECTION 1: GOVERNING EQUATIONS */}
           <section aria-labelledby="section-governing-equations" className="space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">

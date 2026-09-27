@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft,
+  ArrowRight,
   RotateCcw,
   Play,
   Pause,
@@ -52,6 +53,7 @@ import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel, renderPhoto
 import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare } from '../utils/analytics';
 import { WhyItHappenedCard } from './WhyItHappenedCard';
 import { EngineeringTheoryFormulas } from './EngineeringTheoryFormulas';
+import { getLiveResultSummary, getDetailedWhyItHappened } from '../utils/simulatorExplanations';
 import { MathWorkerBridge, SimulationMetric } from '../utils/mathWorkerBridge';
 
 interface DedicatedSimulatorPageProps {
@@ -83,6 +85,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'telemetry' | 'derivation' | 'standards' | 'insights' | 'curriculum' | 'experiments'>('telemetry');
+  const [activeIntelTab, setActiveIntelTab] = useState<'insight' | 'theory' | 'telemetry' | 'standards' | 'curriculum'>('insight');
   const [snapshotToast, setSnapshotToast] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [peerDropdownOpen, setPeerDropdownOpen] = useState<boolean>(false);
@@ -91,6 +94,20 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const [showEmbedModal, setShowEmbedModal] = useState<boolean>(false);
   const [embedCopied, setEmbedCopied] = useState<boolean>(false);
   const [embedHeight, setEmbedHeight] = useState<string>('650');
+
+  const getStatusBadgeStyle = (statusType?: string) => {
+    switch (statusType) {
+      case 'critical':
+        return 'bg-rose-500/15 border-rose-500/40 text-rose-400';
+      case 'warning':
+        return 'bg-amber-500/15 border-amber-500/40 text-amber-300';
+      case 'optimal':
+        return 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400';
+      case 'info':
+      default:
+        return 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400';
+    }
+  };
   const [selectedExperiment, setSelectedExperiment] = useState<GuidedExperiment | null>(null);
   const [probeCoord, setProbeCoord] = useState<{ x: number; y: number } | null>(null);
   const [shareMenuOpen, setShareMenuOpen] = useState<boolean>(false);
@@ -100,6 +117,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const [cursor1Ratio, setCursor1Ratio] = useState<number>(0.28);
   const [cursor2Ratio, setCursor2Ratio] = useState<number>(0.72);
   const draggingCursorRef = useRef<'c1' | 'c2' | null>(null);
+
+  const liveResult = getLiveResultSummary(simulator.type, params);
+  const whyDetail = getDetailedWhyItHappened(simulator.type, params);
 
   // CRT Phosphor Glow Mode (authentic green phosphor persistence and scanlines)
   const [isCrtMode, setIsCrtMode] = useState<boolean>(() => {
@@ -2605,33 +2625,6 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
         </div>
       )}
 
-      {/* 2. Compact Benchmark Presets & Standards Strip (h-9 / ~36px shrink-0) */}
-      <div className="px-3 sm:px-5 py-1 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between gap-2 shrink-0 overflow-x-auto custom-scrollbar">
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-[11px] font-mono font-bold text-slate-400 uppercase flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-cyan-400" />
-            <span className="hidden sm:inline">Benchmarks:</span>
-          </span>
-          {simulator.presetNames?.map((preset, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleApplyPreset(preset.values)}
-              className="px-2 py-0.5 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 text-[11px] font-semibold text-slate-300 hover:text-cyan-300 transition-colors whitespace-nowrap"
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 text-[11px] font-mono">
-          <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-            <CheckCircle2 className="w-3 h-3" />
-            <span className="hidden md:inline">{simulator.standardReference || simulator.badge}</span>
-            <span className="md:hidden">100% Physics</span>
-          </span>
-        </div>
-      </div>
-
       {/* Mobile-only Segmented Control (< lg) */}
       <div className="lg:hidden flex items-center bg-slate-950 border-b border-slate-800 p-1 shrink-0">
         <button
@@ -2662,175 +2655,112 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               : 'text-slate-400 hover:text-white'
           }`}
         >
-          Telemetry & Theory
+          Theory &amp; Insights
         </button>
       </div>
 
-      {/* 3. Main Workbench Workspace (Fits 100% of remaining screen height) */}
-      <main className="flex-1 min-h-0 w-full p-2 sm:p-3 overflow-hidden">
-        <div className="h-full w-full grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-3 overflow-hidden">
-          {/* LEFT DESK: Parameter Control Desk (Desktop: 4 cols, Mobile: conditioned on mobileTab) */}
+      {/* 3. Main Workbench Workspace (Fits 100% of remaining screen height, Zero page scroll) */}
+      <main className="flex-1 min-h-0 w-full p-1.5 sm:p-2.5 overflow-hidden">
+        <div className="h-full w-full grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5 overflow-hidden">
+          
+          {/* PRIMARY WORKBENCH STAGE: Giant Interactive Simulation Canvas (Desktop: 7 cols, ~58.3% width) */}
           <div
-            className={`lg:col-span-4 xl:col-span-3 h-full flex flex-col min-h-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-xl overflow-hidden ${
-              mobileTab === 'parameters' ? 'block' : 'hidden lg:flex'
+            className={`lg:col-span-7 xl:col-span-7 2xl:col-span-7 h-full flex flex-col min-h-0 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl relative ${
+              mobileTab === 'parameters' || mobileTab === 'analysis' ? 'hidden lg:flex' : 'flex'
             }`}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800 shrink-0">
-              <h2 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider font-mono">
-                <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Parameter Desk</span>
-              </h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-cyan-300">
-                Live Sliders
-              </span>
+            {/* Canvas Header Strip */}
+            <div className="h-7 px-3 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="flex items-center gap-1.5 text-cyan-400 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  <span>60 FPS FIRST-PRINCIPLES SOLVER</span>
+                </span>
+                <span className="text-slate-600 hidden sm:inline">|</span>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-slate-400">
+                  <Crosshair className="w-3 h-3 text-cyan-400" />
+                  <span>Hover canvas for probe</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {!isMuted && (
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+                    <Volume2 className="w-3 h-3" />
+                    <span>Acoustics Active</span>
+                  </span>
+                )}
+                <span className="truncate max-w-[200px] sm:max-w-none text-slate-400">
+                  {simulator.physicalLaw}
+                </span>
+              </div>
             </div>
 
-            {/* Scrollable Parameter List */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1 pt-2 space-y-2.5 custom-scrollbar">
-              {simulator.parameters.map((p) => {
-                const val = params[p.id] ?? p.default;
-                return (
-                  <div
-                    key={p.id}
-                    className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/90 space-y-1.5 shadow-inner"
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-200 truncate pr-2">
-                        {p.name} <span className="font-mono text-cyan-400 text-[11px]">({p.symbol})</span>
-                      </span>
-                      <span className="font-mono text-cyan-300 font-bold bg-slate-900 px-2 py-0.5 rounded text-xs shrink-0 border border-slate-800">
-                        {val} {p.unit}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() =>
-                          handleParamChange(
-                            p.id,
-                            Math.max(p.min, parseFloat((val - p.step).toFixed(3)))
-                          )
-                        }
-                        className="w-6 h-6 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 transition-colors"
-                        title="Nudge decrement"
-                      >
-                        –
-                      </button>
-
-                      <input
-                        type="range"
-                        id={`param-slider-${p.id}`}
-                        min={p.min}
-                        max={p.max}
-                        step={p.step}
-                        value={val}
-                        onChange={(e) => handleParamChange(p.id, parseFloat(e.target.value))}
-                        className="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-                        aria-label={`${p.name} (${p.symbol}) in ${p.unit}`}
-                        aria-valuenow={val}
-                        aria-valuemin={p.min}
-                        aria-valuemax={p.max}
-                        aria-valuetext={`${val} ${p.unit}`}
-                      />
-
-                      <button
-                        onClick={() =>
-                          handleParamChange(
-                            p.id,
-                            Math.min(p.max, parseFloat((val + p.step).toFixed(3)))
-                          )
-                        }
-                        className="w-6 h-6 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 transition-colors"
-                        title="Nudge increment"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
-                      <span>{p.min}</span>
-                      <span className="truncate max-w-[140px] text-slate-400" title={p.description}>
-                        {p.description}
-                      </span>
-                      <span>{p.max}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* RIGHT DESK: 60 FPS Interactive Canvas & Telemetry Desk (Desktop: 8-9 cols, Mobile: workbench/analysis) */}
-          <div
-            className={`lg:col-span-8 xl:col-span-9 h-full flex flex-col min-h-0 gap-2.5 overflow-hidden ${
-              mobileTab === 'parameters' ? 'hidden lg:flex' : 'flex'
-            }`}
-          >
-            {/* Upper: Interactive Vector Canvas Stage (Takes flexible remaining height) */}
+            {/* FULL-SIZE CANVAS VIEWPORT (Takes 100% of remaining vertical & horizontal space!) */}
             <div
-              className={`flex-1 min-h-0 relative rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden flex flex-col shadow-xl ${
-                mobileTab === 'analysis' ? 'hidden lg:flex' : 'flex'
+              ref={canvasContainerRef}
+              className={`flex-1 min-h-0 relative w-full h-full transition-colors duration-300 ${
+                isCrtMode ? 'bg-[#021006] shadow-[inset_0_0_80px_rgba(34,197,94,0.12)]' : 'bg-[#060b13]'
               }`}
             >
-              {/* Canvas Header Strip */}
-              <div className="h-6 px-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-400 shrink-0">
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1.5 text-cyan-400 font-bold">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                    <span>60 FPS FIRST-PRINCIPLES SOLVER</span>
-                  </span>
-                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-slate-500">
-                    <Crosshair className="w-3 h-3 text-cyan-400" />
-                    <span>Interactive Probe: Hover canvas</span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!isMuted && (
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                      <Volume2 className="w-3 h-3" />
-                      <span>Audio Active</span>
-                    </span>
-                  )}
-                  <span className="truncate max-w-[200px] sm:max-w-none text-slate-400">
-                    {simulator.physicalLaw}
-                  </span>
-                </div>
-              </div>
-
-              {/* Dynamic Resizing Canvas Wrapper */}
-              <div
-                ref={canvasContainerRef}
-                className={`flex-1 min-h-0 relative w-full h-full transition-colors duration-300 ${
-                  isCrtMode ? 'bg-[#021006] shadow-[inset_0_0_80px_rgba(34,197,94,0.12)]' : 'bg-[#060b13]'
-                }`}
-              >
-                <canvas
-                  ref={canvasRef}
-                  width={1200}
-                  height={675}
-                  style={{ aspectRatio: '16 / 9' }}
-                  className="interactive-canvas w-full h-full block absolute inset-0 cursor-crosshair touch-none aspect-[16/9]"
-                  onMouseDown={(e) => {
+              <canvas
+                ref={canvasRef}
+                className="interactive-canvas w-full h-full block absolute inset-0 cursor-crosshair touch-none"
+                onMouseDown={(e) => {
+                  if (showDualCursors) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const c1X = rect.width * cursor1Ratio;
+                    const c2X = rect.width * cursor2Ratio;
+                    if (Math.abs(x - c1X) <= 18) {
+                      draggingCursorRef.current = 'c1';
+                    } else if (Math.abs(x - c2X) <= 18) {
+                      draggingCursorRef.current = 'c2';
+                    }
+                  }
+                }}
+                onMouseUp={() => {
+                  draggingCursorRef.current = null;
+                }}
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  if (showDualCursors && draggingCursorRef.current === 'c1') {
+                    const r = Math.max(0.02, Math.min(cursor2Ratio - 0.03, x / rect.width));
+                    setCursor1Ratio(r);
+                  } else if (showDualCursors && draggingCursorRef.current === 'c2') {
+                    const r = Math.max(cursor1Ratio + 0.03, Math.min(0.98, x / rect.width));
+                    setCursor2Ratio(r);
+                  } else {
+                    setProbeCoord({ x, y });
+                  }
+                }}
+                onMouseLeave={() => {
+                  draggingCursorRef.current = null;
+                  setProbeCoord(null);
+                }}
+                onTouchStart={(e) => {
+                  if (e.touches.length > 0) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.touches[0].clientX - rect.left;
+                    const y = e.touches[0].clientY - rect.top;
                     if (showDualCursors) {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const x = e.clientX - rect.left;
                       const c1X = rect.width * cursor1Ratio;
                       const c2X = rect.width * cursor2Ratio;
-                      if (Math.abs(x - c1X) <= 18) {
+                      if (Math.abs(x - c1X) <= 22) {
                         draggingCursorRef.current = 'c1';
-                      } else if (Math.abs(x - c2X) <= 18) {
+                      } else if (Math.abs(x - c2X) <= 22) {
                         draggingCursorRef.current = 'c2';
                       }
                     }
-                  }}
-                  onMouseUp={() => {
-                    draggingCursorRef.current = null;
-                  }}
-                  onMouseMove={(e) => {
+                    setProbeCoord({ x, y });
+                  }
+                }}
+                onTouchMove={(e) => {
+                  if (e.touches.length > 0) {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
+                    const x = e.touches[0].clientX - rect.left;
+                    const y = e.touches[0].clientY - rect.top;
                     if (showDualCursors && draggingCursorRef.current === 'c1') {
                       const r = Math.max(0.02, Math.min(cursor2Ratio - 0.03, x / rect.width));
                       setCursor1Ratio(r);
@@ -2840,477 +2770,481 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                     } else {
                       setProbeCoord({ x, y });
                     }
+                  }
+                }}
+                onTouchEnd={() => {
+                  draggingCursorRef.current = null;
+                  setProbeCoord(null);
+                }}
+              />
+            </div>
+
+            {/* Canvas Bottom Live HUD Strip (Dynamic State + Real-time Telemetry Ticker) */}
+            <div className="h-10 px-3 bg-slate-900/95 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0 z-10 text-xs">
+              {/* Dynamic Status Interpretation */}
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase shrink-0 border ${getStatusBadgeStyle(liveResult.statusType)}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                  <span>{liveResult.badgeLabel}</span>
+                </span>
+                <span className="text-xs font-semibold text-slate-200 truncate hidden sm:inline" title={liveResult.headline}>
+                  {liveResult.headline}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveIntelTab('insight');
+                    if (mobileTab === 'workbench') setMobileTab('analysis');
                   }}
-                  onMouseLeave={() => {
-                    draggingCursorRef.current = null;
-                    setProbeCoord(null);
-                  }}
-                  onTouchStart={(e) => {
-                    if (e.touches.length > 0) {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const x = e.touches[0].clientX - rect.left;
-                      const y = e.touches[0].clientY - rect.top;
-                      if (showDualCursors) {
-                        const c1X = rect.width * cursor1Ratio;
-                        const c2X = rect.width * cursor2Ratio;
-                        if (Math.abs(x - c1X) <= 22) {
-                          draggingCursorRef.current = 'c1';
-                        } else if (Math.abs(x - c2X) <= 22) {
-                          draggingCursorRef.current = 'c2';
-                        }
-                      }
-                      setProbeCoord({ x, y });
-                    }
-                  }}
-                  onTouchMove={(e) => {
-                    if (e.touches.length > 0) {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const x = e.touches[0].clientX - rect.left;
-                      const y = e.touches[0].clientY - rect.top;
-                      if (showDualCursors && draggingCursorRef.current === 'c1') {
-                        const r = Math.max(0.02, Math.min(cursor2Ratio - 0.03, x / rect.width));
-                        setCursor1Ratio(r);
-                      } else if (showDualCursors && draggingCursorRef.current === 'c2') {
-                        const r = Math.max(cursor1Ratio + 0.03, Math.min(0.98, x / rect.width));
-                        setCursor2Ratio(r);
-                      } else {
-                        setProbeCoord({ x, y });
-                      }
-                    }
-                  }}
-                  onTouchEnd={() => {
-                    draggingCursorRef.current = null;
-                    setProbeCoord(null);
-                  }}
-                />
+                  className="text-[10px] font-mono font-bold text-cyan-400 hover:text-cyan-300 underline underline-offset-2 shrink-0 flex items-center gap-0.5"
+                  title="View in-depth physics explanation in inspector"
+                >
+                  <span>Why?</span>
+                  <ArrowRight className="w-2.5 h-2.5" />
+                </button>
+              </div>
+
+              {/* Real-time Telemetry Readouts (Live Ticker) */}
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 overflow-x-auto custom-scrollbar">
+                {effectiveMetrics.slice(0, 4).map((m, idx) => (
+                  <div key={idx} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono shrink-0 shadow-inner">
+                    <span className="text-slate-400 text-[10px]">{m.label.split(' ')[0]}:</span>
+                    <span className={`font-bold ${
+                      m.status === 'alert' ? 'text-rose-400' : m.status === 'warning' ? 'text-amber-400' : 'text-cyan-300'
+                    }`}>
+                      {m.value}
+                    </span>
+                    <span className="text-slate-500 text-[9px]">{m.unit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT DESK: INSPECTOR & INTELLIGENCE CONSOLE (Desktop: 5 cols, ~41.7% width - 15% wider for readable text) */}
+          <div
+            className={`lg:col-span-5 xl:col-span-5 2xl:col-span-5 h-full flex flex-col min-h-0 gap-2 overflow-hidden ${
+              mobileTab === 'workbench' ? 'hidden lg:flex' : 'flex'
+            }`}
+          >
+            {/* Top Deck: Parameter Controls */}
+            <div
+              className={`flex flex-col min-h-0 bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 shadow-lg overflow-hidden shrink-0 ${
+                mobileTab === 'analysis' ? 'hidden' : 'flex max-h-[46%]'
+              }`}
+            >
+              {/* Parameters Header */}
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 shrink-0">
+                <h2 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider font-mono">
+                  <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Parameters</span>
+                </h2>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleResetDefaults}
+                    className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                    title="Reset parameters to default"
+                  >
+                    <RotateCcw className="w-3 h-3 text-amber-400" />
+                  </button>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-cyan-300">
+                    Live Sliders
+                  </span>
+                </div>
+              </div>
+
+              {/* Presets Bar */}
+              {simulator.presetNames && simulator.presetNames.length > 0 && (
+                <div className="pt-1.5 pb-1 shrink-0 overflow-x-auto custom-scrollbar flex items-center gap-1">
+                  {simulator.presetNames.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleApplyPreset(preset.values)}
+                      className="px-2 py-0.5 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 text-[10px] font-semibold text-slate-300 hover:text-cyan-300 transition-colors whitespace-nowrap shrink-0"
+                      title={preset.label}
+                    >
+                      {preset.label.split('(')[0].trim()}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Scrollable Parameter List */}
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1 pt-1.5 space-y-2 custom-scrollbar">
+                {simulator.parameters.map((p) => {
+                  const val = params[p.id] ?? p.default;
+                  return (
+                    <div
+                      key={p.id}
+                      className="p-2 rounded-lg bg-slate-950/80 border border-slate-800/90 space-y-1 shadow-inner"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-200 truncate pr-1">
+                          {p.name} <span className="font-mono text-cyan-400 text-[10px]">({p.symbol})</span>
+                        </span>
+                        <span className="font-mono text-cyan-300 font-bold bg-slate-900 px-1.5 py-0.2 rounded text-[11px] shrink-0 border border-slate-800">
+                          {val} {p.unit}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() =>
+                            handleParamChange(
+                              p.id,
+                              Math.max(p.min, parseFloat((val - p.step).toFixed(3)))
+                            )
+                          }
+                          className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 transition-colors"
+                          title="Nudge decrement"
+                        >
+                          –
+                        </button>
+
+                        <input
+                          type="range"
+                          id={`param-slider-${p.id}`}
+                          min={p.min}
+                          max={p.max}
+                          step={p.step}
+                          value={val}
+                          onChange={(e) => handleParamChange(p.id, parseFloat(e.target.value))}
+                          className="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                          aria-label={`${p.name} (${p.symbol}) in ${p.unit}`}
+                          aria-valuenow={val}
+                          aria-valuemin={p.min}
+                          aria-valuemax={p.max}
+                          aria-valuetext={`${val} ${p.unit}`}
+                        />
+
+                        <button
+                          onClick={() =>
+                            handleParamChange(
+                              p.id,
+                              Math.min(p.max, parseFloat((val + p.step).toFixed(3)))
+                            )
+                          }
+                          className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center justify-center text-xs shrink-0 transition-colors"
+                          title="Nudge increment"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
+                        <span>{p.min}</span>
+                        <span className="truncate max-w-[120px] text-slate-400" title={p.description}>
+                          {p.description}
+                        </span>
+                        <span>{p.max}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Live Result & "Want to see why it happened?" Hub Card */}
-            <WhyItHappenedCard
-              simulatorType={simulator.type}
-              parameters={params}
-              onApplyParameters={handleApplyPreset}
-            />
-
-            {/* Reusable Engineering Theory & Formulas Component */}
-            <EngineeringTheoryFormulas simulator={simulator} />
-
-            {/* Lower: Telemetry & Analysis Console with Native HTML <details> and <summary> for SEO & LLM discovery */}
+            {/* Bottom Deck: Tabbed Intelligence & Theory Console */}
             <div
-              className={`shrink-0 bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex flex-col min-h-0 shadow-lg ${
-                mobileTab === 'workbench'
-                  ? 'h-44 sm:h-48 lg:h-56 xl:h-64'
-                  : mobileTab === 'analysis'
-                  ? 'flex-1 h-full'
-                  : 'h-52 lg:h-60'
+              className={`flex-1 min-h-0 flex flex-col bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden shadow-lg ${
+                mobileTab === 'parameters' ? 'hidden' : 'flex'
               }`}
             >
-              {/* Quick Navigation Strip */}
-              <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-800 shrink-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto custom-scrollbar text-xs">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider hidden sm:inline">
-                    Jump:
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById('details-equations') as HTMLDetailsElement | null;
-                      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0"
-                  >
-                    <BookOpen className="w-3 h-3 text-cyan-400" />
-                    <span>Equations</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById('details-standards') as HTMLDetailsElement | null;
-                      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0"
-                  >
-                    <Award className="w-3 h-3 text-emerald-400" />
-                    <span>Standards</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById('details-theory') as HTMLDetailsElement | null;
-                      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0"
-                  >
-                    <Sparkles className="w-3 h-3 text-amber-400" />
-                    <span>Theory</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById('details-curriculum') as HTMLDetailsElement | null;
-                      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-purple-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0"
-                  >
-                    <GraduationCap className="w-3 h-3 text-purple-400" />
-                    <span>Curriculum</span>
-                  </button>
-                </div>
+              {/* Tab Bar */}
+              <div className="shrink-0 px-1.5 pt-1.5 pb-1 border-b border-slate-800 bg-slate-950 flex items-center gap-1 overflow-x-auto no-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => setActiveIntelTab('insight')}
+                  className={`px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all shrink-0 ${
+                    activeIntelTab === 'insight'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>Insight</span>
+                </button>
 
-                <span className="text-[10px] font-mono text-cyan-400 font-bold hidden md:inline-flex items-center gap-1 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span>CRAWLER-DISCOVERABLE DOM</span>
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveIntelTab('theory')}
+                  className={`px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all shrink-0 ${
+                    activeIntelTab === 'theory'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <BookOpen className="w-3 h-3 text-cyan-400" />
+                  <span>Theory</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveIntelTab('telemetry')}
+                  className={`px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all shrink-0 ${
+                    activeIntelTab === 'telemetry'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Activity className="w-3 h-3 text-emerald-400" />
+                  <span>Telemetry</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveIntelTab('standards')}
+                  className={`px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all shrink-0 ${
+                    activeIntelTab === 'standards'
+                      ? 'bg-blue-500/20 text-blue-300 border border-blue-500/50 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Award className="w-3 h-3 text-blue-400" />
+                  <span>Standards</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveIntelTab('curriculum')}
+                  className={`px-2 py-0.5 rounded-md text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all shrink-0 ${
+                    activeIntelTab === 'curriculum'
+                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <GraduationCap className="w-3 h-3 text-purple-400" />
+                  <span>Curriculum</span>
+                </button>
               </div>
 
-              {/* Scrollable Container with Always-Rendered Native <details> and <summary> */}
-              <div className="flex-1 min-h-0 overflow-y-auto pt-2 custom-scrollbar space-y-2.5">
-                {/* 1. Real-Time Telemetry Readouts (Always in DOM) */}
-                <div className="space-y-1">
-                  <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Activity className="w-3 h-3 text-cyan-400" />
-                    <span>Live 60 FPS Telemetry Readouts</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {effectiveMetrics.map((m, i) => (
-                      <div
-                        key={i}
-                        className="p-2 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between shadow-inner"
-                      >
-                        <span className="text-[10px] font-mono text-slate-400 truncate">
-                          {m.label}
+              {/* Tab Content (Internally scrollable, never pushes page down!) */}
+              <div className="flex-1 min-h-0 overflow-y-auto p-2.5 sm:p-3 custom-scrollbar space-y-2.5 text-xs">
+                {/* Tab 1: Insight */}
+                {activeIntelTab === 'insight' && (
+                  <div className="space-y-2.5 animate-in fade-in duration-150">
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold uppercase border ${getStatusBadgeStyle(liveResult.statusType)}`}>
+                          {liveResult.badgeLabel}
                         </span>
-                        <div className="my-0.5 flex items-baseline gap-1">
-                          <span
-                            className={`text-base sm:text-lg xl:text-xl font-mono font-black ${
-                              m.status === 'alert'
-                                ? 'text-rose-400'
-                                : m.status === 'warning'
-                                ? 'text-amber-400'
-                                : 'text-cyan-300'
-                            }`}
-                          >
-                            {m.value}
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-400 font-bold">
-                            {m.unit}
-                          </span>
+                        <span className="text-[10px] font-mono text-cyan-400 font-bold">
+                          {liveResult.primaryMetric}
+                        </span>
+                      </div>
+                      <h3 className="text-xs font-bold text-white pt-1">
+                        {liveResult.headline}
+                      </h3>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        {liveResult.summary}
+                      </p>
+                    </div>
+
+                    {whyDetail.simpleExplanation && whyDetail.simpleExplanation.length > 0 && (
+                      <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/90 space-y-1.5">
+                        <div className="text-[10px] font-mono uppercase text-amber-400 font-bold flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-amber-400" />
+                          <span>Physical Mechanism</span>
                         </div>
-                        <p className="text-[9px] text-slate-500 truncate" title={m.description}>
-                          {m.description}
+                        <ul className="space-y-1 text-[11px] text-slate-300 leading-relaxed list-disc pl-4">
+                          {whyDetail.simpleExplanation.map((exp, i) => (
+                            <li key={i}>{exp}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {whyDetail.realWorldImpact && (
+                      <div className="p-2.5 rounded-lg bg-amber-950/20 border border-amber-800/40 space-y-1">
+                        <div className="text-[10px] font-mono uppercase text-amber-400 font-bold flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3 text-amber-400" />
+                          <span>Industrial Reality</span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 leading-relaxed">
+                          {whyDetail.realWorldImpact}
                         </p>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    )}
 
-                {/* 2. Governing Equations & Mathematical Formulation (Native <details> & <summary>) */}
-                <details
-                  id="details-equations"
-                  open
-                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
-                >
-                  <summary className="px-3 py-2 text-xs font-mono font-bold text-cyan-300 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Governing Equations &amp; Mathematical Formulation</span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                    {whyDetail.interactiveChallenges && whyDetail.interactiveChallenges.length > 0 && (
+                      <div className="space-y-1 pt-1">
+                        <div className="text-[10px] font-mono uppercase text-cyan-400 font-bold">
+                          Try In Simulator:
+                        </div>
+                        {whyDetail.interactiveChallenges.map((ch, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleApplyPreset(ch.targetParams)}
+                            className="w-full text-left p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 transition-colors flex items-center justify-between group"
+                          >
+                            <div>
+                              <div className="text-xs font-semibold text-slate-200 group-hover:text-cyan-300">{ch.label}</div>
+                              <div className="text-[10px] text-slate-400">{ch.actionText}</div>
+                            </div>
+                            <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-cyan-400 shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab 2: Theory & Math */}
+                {activeIntelTab === 'theory' && (
+                  <div className="space-y-2.5 animate-in fade-in duration-150">
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 space-y-1.5">
                       <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
                         Governing Formulation ({simulator.physicalLaw}):
                       </div>
-                      <div className="my-1.5 text-cyan-300 py-1 overflow-x-auto">
+                      <div className="my-1 text-cyan-300 py-1 overflow-x-auto text-xs">
                         <MathView math={simulator.governingEquation} block />
                       </div>
-                      <p className="text-slate-300 text-xs leading-relaxed">
+                      <p className="text-slate-300 text-[11px] leading-relaxed">
                         {simulator.equationDescription}
                       </p>
                     </div>
 
                     {simulator.analyticalProof && (
-                      <div className="p-3 rounded-xl bg-slate-900/60 border border-cyan-900/40 space-y-1.5">
-                        <div className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <BookOpen className="w-3.5 h-3.5" />
-                          <span>Analytical First-Principles Proof &amp; Derivation:</span>
+                      <div className="p-2.5 rounded-lg bg-slate-950/70 border border-cyan-900/40 space-y-1">
+                        <div className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                          <BookOpen className="w-3 h-3" />
+                          <span>First-Principles Analytical Derivation:</span>
                         </div>
-                        <p className="text-slate-200 text-xs leading-relaxed">
+                        <p className="text-slate-300 text-[11px] leading-relaxed">
                           {simulator.analyticalProof}
                         </p>
                       </div>
                     )}
 
-                    {simulator.validationTest && (
-                      <div className="p-3 rounded-xl bg-slate-900/60 border border-emerald-900/40 space-y-1.5">
-                        <div className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Numerical Validation Benchmark (Error &lt; 0.2%):</span>
-                        </div>
-                        <p className="text-slate-300 text-xs leading-relaxed font-mono">
-                          {simulator.validationTest}
-                        </p>
-                      </div>
-                    )}
+                    {/* Compact Technical Formulation Guide */}
+                    <EngineeringTheoryFormulas compact simulator={simulator} />
                   </div>
-                </details>
+                )}
 
-                {/* 3. Referenced Engineering Standards & Compliance (Native <details> & <summary>) */}
-                <details
-                  id="details-standards"
-                  open
-                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
-                >
-                  <summary className="px-3 py-2 text-xs font-mono font-bold text-emerald-300 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
-                    <div className="flex items-center gap-2">
-                      <Award className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Referenced Engineering Standards &amp; Verification</span>
+                {/* Tab 3: Telemetry */}
+                {activeIntelTab === 'telemetry' && (
+                  <div className="space-y-2 animate-in fade-in duration-150">
+                    <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <Activity className="w-3 h-3 text-emerald-400" />
+                      <span>Real-Time Sensor &amp; Solver Telemetry</span>
                     </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
-                    <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/60 flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <Award className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <div>
-                          <div className="font-mono font-bold text-white text-xs">
-                            Standard: {simulator.standardReference || simulator.badge}
-                          </div>
-                          <div className="text-[11px] text-emerald-300/80 mt-0.5">
-                            Published By (Reference): {simulator.standardBody || 'ISO / IEC / IEEE / AISC'}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-900/60 border border-emerald-700/60 text-[10px] font-mono font-bold text-emerald-300 uppercase shrink-0">
-                        Reference Model
-                      </span>
-                    </div>
-
-                    {simulator.colorStandardRule && (
-                      <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                        <div className="text-[10px] font-mono text-slate-400 uppercase">
-                          Standard Waveform &amp; Color Topology:
-                        </div>
-                        <p className="text-slate-300 text-xs font-mono">
-                          {simulator.colorStandardRule}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start gap-2 text-[10px] text-slate-400 font-sans">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                      <span className="leading-relaxed">
-                        <strong className="text-slate-200">Reference Standards Notice:</strong> Mathematical formulations reference published engineering literature and fundamental physical laws for educational exploration. LiveSimulators is an independent educational platform and is not endorsed by, affiliated with, certified by, or officially linked with any international standards organization.
-                      </span>
-                    </div>
-                  </div>
-                </details>
-
-                {/* 4. Engineering Theory & Physical Law (Native <details> & <summary>) */}
-                <details
-                  id="details-theory"
-                  open
-                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
-                >
-                  <summary className="px-3 py-2 text-xs font-mono font-bold text-amber-300 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Engineering Theory, Physical Law &amp; Field Rules</span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-                      <div className="text-[10px] font-mono uppercase text-cyan-400 font-bold flex items-center gap-1">
-                        <Info className="w-3.5 h-3.5" />
-                        <span>Physical Principle &amp; Operating Mechanism:</span>
-                      </div>
-                      <p className="text-slate-200 text-xs leading-relaxed">
-                        {simulator.description}
-                      </p>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-900/60 border border-cyan-500/30 space-y-1.5">
-                      <div className="text-[10px] font-mono uppercase text-cyan-400 font-bold flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Live Machine State Evaluation:</span>
-                      </div>
-                      <p className="text-slate-200 text-xs leading-relaxed">
-                        {getDynamicPhysicsExplanation(simulator.type, params)}
-                      </p>
-                    </div>
-
-                    {simulator.fieldInsights && (
-                      <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-800/50 space-y-1.5">
-                        <div className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <TrendingUp className="w-3.5 h-3.5" />
-                          <span>Industrial Field Engineering Rules &amp; Failure Modes:</span>
-                        </div>
-                        <p className="text-slate-200 text-xs leading-relaxed">
-                          {simulator.fieldInsights}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </details>
-
-                {/* 5. Curriculum Alignment & Technical FAQs (Native <details> & <summary>) */}
-                <details
-                  id="details-curriculum"
-                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
-                >
-                  <summary className="px-3 py-2 text-xs font-mono font-bold text-purple-300 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
-                      <span>Curriculum Mapping, Textbooks &amp; Technical FAQs</span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="p-3 border-t border-slate-800/80 space-y-3 text-xs">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                      <div className="p-3 rounded-xl bg-slate-900/60 border border-purple-900/40 space-y-1.5">
-                        <div className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <GraduationCap className="w-3.5 h-3.5" />
-                          <span>University Course Alignment:</span>
-                        </div>
-                        <p className="text-slate-200 text-xs leading-relaxed font-mono">
-                          {simulator.courseMapping || 'ENG-101 / General Engineering Fundamentals & Virtual Laboratory Core'}
-                        </p>
-                      </div>
-
-                      <div className="p-3 rounded-xl bg-slate-900/60 border border-cyan-900/40 space-y-1.5">
-                        <div className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <BookOpen className="w-3.5 h-3.5" />
-                          <span>Standard Textbook References:</span>
-                        </div>
-                        <p className="text-slate-200 text-xs leading-relaxed">
-                          {simulator.textbookReferences || 'First-Principles Engineering Curriculum Standard References'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Embedded in LMS CTA Card */}
-                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-950/30 via-slate-950 to-slate-950 border border-purple-800/40 flex items-center justify-between gap-3">
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                          <Code className="w-3.5 h-3.5 text-purple-400" />
-                          <span>Embed in Canvas, Moodle, Blackboard or Notion</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">
-                          Generate an iframe embed snippet for virtual laboratory assignments and syllabus handouts.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowEmbedModal(true)}
-                        className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-colors shrink-0 shadow-sm"
-                      >
-                        Get Embed Code
-                      </button>
-                    </div>
-
-                    {/* Frequently Asked Technical Questions (FAQs) */}
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
-                        Technical &amp; Theoretical FAQs:
-                      </div>
-                      <div className="space-y-2">
-                        {((simulator.faqs && simulator.faqs.length > 0) ? simulator.faqs : [
-                          {
-                            question: `What is the physical principle underlying the ${simulator.title}?`,
-                            answer: `The simulation numerically models ${simulator.physicalLaw} governed by ${simulator.governingEquation}. Dynamic 60 FPS integration visualizes real-time transient and steady-state responses as parameters vary.`
-                          },
-                          {
-                            question: `How is numerical accuracy verified against theoretical benchmarks?`,
-                            answer: `${simulator.validationTest || 'All computational routines are tested against exact analytical first-principles solutions to ensure numerical errors remain below 0.2% across normal parameter domains.'}`
-                          }
-                        ]).map((faq, idx) => (
-                          <div key={idx} className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                            <div className="font-bold text-slate-200 text-xs flex items-start gap-2">
-                              <span className="text-purple-400 font-mono font-bold text-[11px]">Q{idx + 1}:</span>
-                              <span>{faq.question}</span>
-                            </div>
-                            <p className="text-slate-400 text-xs pl-5 leading-relaxed">
-                              {faq.answer}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </details>
-
-                {/* 6. Guided Experiments (Native <details> & <summary>) */}
-                <details
-                  id="details-experiments"
-                  className="group rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden transition-all"
-                >
-                  <summary className="px-3 py-2 text-xs font-mono font-bold text-amber-400 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/80 cursor-pointer select-none">
-                    <div className="flex items-center gap-2">
-                      <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Guided Laboratory Investigations ({(SIMULATOR_EXPERIMENTS[simulator.type] || []).length})</span>
-                    </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="p-3 border-t border-slate-800/80 space-y-2.5 text-xs">
-                    <div className="flex items-center justify-between pb-1 border-b border-slate-800">
-                      <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5 font-mono">
-                        <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
-                        <span>FIRST-PRINCIPLES LABORATORY CURRICULUM</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowExperimentsModal(true)}
-                        className="text-[11px] font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-                      >
-                        <span>Open Full Lab Manual</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {(SIMULATOR_EXPERIMENTS[simulator.type] || []).map((exp) => (
+                    <div className="space-y-1.5">
+                      {effectiveMetrics.map((m, i) => (
                         <div
-                          key={exp.id}
-                          className="p-3 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-amber-500/40 transition-colors flex flex-col justify-between gap-2 shadow-inner"
+                          key={i}
+                          className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between shadow-inner"
                         >
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs text-white">{exp.title}</span>
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300">
-                                Guided Lab
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-300 line-clamp-2">{exp.goal}</p>
-                            <p className="text-[10px] text-slate-500 line-clamp-2">{exp.description}</p>
+                          <div className="min-w-0 pr-2">
+                            <div className="text-xs font-semibold text-slate-200 truncate">{m.label}</div>
+                            <div className="text-[10px] text-slate-400 truncate" title={m.description}>{m.description}</div>
                           </div>
-
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                            <span className="text-[10px] font-mono text-cyan-400 truncate max-w-[160px]">
-                              {exp.expectedObservation}
+                          <div className="text-right shrink-0">
+                            <span className={`text-sm font-mono font-bold ${
+                              m.status === 'alert' ? 'text-rose-400' : m.status === 'warning' ? 'text-amber-400' : 'text-cyan-300'
+                            }`}>
+                              {m.value}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleApplyPreset(exp.parameters);
-                                setSelectedExperiment(exp);
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] transition-colors flex items-center gap-1 shadow shrink-0"
-                            >
-                              <span>Run Lab</span>
-                              <ChevronRight className="w-3 h-3" />
-                            </button>
+                            <span className="text-[10px] font-mono text-slate-400 font-bold ml-1">{m.unit}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                </details>
+                )}
+
+                {/* Tab 4: Standards */}
+                {activeIntelTab === 'standards' && (
+                  <div className="space-y-2.5 animate-in fade-in duration-150">
+                    <div className="p-2.5 rounded-lg bg-blue-950/20 border border-blue-800/40 space-y-1">
+                      <div className="flex items-center gap-1.5 text-blue-400 font-bold font-mono text-[10px] uppercase">
+                        <Award className="w-3.5 h-3.5" />
+                        <span>Published Engineering Standard</span>
+                      </div>
+                      <div className="text-xs font-bold text-white">
+                        {simulator.standardReference || simulator.badge}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        Published By: {simulator.standardBody || 'ISO / IEC / IEEE / AISC Standards'}
+                      </div>
+                    </div>
+
+                    {simulator.validationTest && (
+                      <div className="p-2.5 rounded-lg bg-slate-950 border border-emerald-900/40 space-y-1">
+                        <div className="text-[10px] font-mono font-bold text-emerald-400 uppercase flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Numerical Benchmark (Error &lt; 0.2%)</span>
+                        </div>
+                        <p className="text-slate-300 text-[11px] font-mono leading-relaxed">
+                          {simulator.validationTest}
+                        </p>
+                      </div>
+                    )}
+
+                    {simulator.colorStandardRule && (
+                      <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                        <div className="text-[10px] font-mono text-slate-400 uppercase">
+                          Waveform &amp; Color Topology Rule:
+                        </div>
+                        <p className="text-slate-300 text-[11px] font-mono">
+                          {simulator.colorStandardRule}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab 5: Curriculum */}
+                {activeIntelTab === 'curriculum' && (
+                  <div className="space-y-2.5 animate-in fade-in duration-150">
+                    <div className="p-2.5 rounded-lg bg-purple-950/20 border border-purple-800/40 space-y-1">
+                      <div className="text-[10px] font-mono font-bold text-purple-400 uppercase flex items-center gap-1">
+                        <GraduationCap className="w-3.5 h-3.5" />
+                        <span>University Course Alignment</span>
+                      </div>
+                      <p className="text-xs font-mono text-slate-200">
+                        {simulator.courseMapping || 'ENG-101 / Engineering Core Curriculum'}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                      <div className="text-[10px] font-mono font-bold text-cyan-400 uppercase flex items-center gap-1">
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Standard Textbook References</span>
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        {simulator.textbookReferences || 'First-Principles Engineering Curriculum Standard References'}
+                      </p>
+                    </div>
+
+                    {/* FAQs */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+                        Frequently Asked Questions:
+                      </div>
+                      {(simulator.faqs && simulator.faqs.length > 0 ? simulator.faqs : [
+                        {
+                          question: `What is the physical principle underlying ${simulator.title}?`,
+                          answer: `The simulation numerically models ${simulator.physicalLaw} governed by ${simulator.governingEquation}. Dynamic 60 FPS integration visualizes real-time transient and steady-state responses as parameters vary.`
+                        }
+                      ]).map((faq, idx) => (
+                        <details key={idx} className="p-2 rounded-lg bg-slate-950 border border-slate-800 group">
+                          <summary className="font-semibold text-slate-200 text-xs cursor-pointer select-none flex items-center justify-between">
+                            <span>{faq.question}</span>
+                            <ChevronDown className="w-3 h-3 text-slate-500 group-open:rotate-180 transition-transform shrink-0" />
+                          </summary>
+                          <p className="text-slate-400 text-[11px] mt-1.5 pl-1 leading-relaxed border-t border-slate-800 pt-1.5">
+                            {faq.answer}
+                          </p>
+                        </details>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
         </div>
       </main>
 

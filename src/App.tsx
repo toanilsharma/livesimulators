@@ -172,6 +172,14 @@ export default function App() {
           }}
           onQuickLaunch={handleQuickLaunch}
           onSelectDiscipline={(discId) => handleSelectDepartment(discId as DisciplineId)}
+          onLaunchSimulator={(simId) => {
+            const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === simId);
+            if (sim) {
+              handleLaunchSimulator(sim);
+            } else {
+              navigateTo(`/simulator/${simId}`);
+            }
+          }}
           onGoHome={handleBackToHome}
           onNavigateToAbout={handleNavigateToAbout}
           onNavigateToContact={handleNavigateToContact}

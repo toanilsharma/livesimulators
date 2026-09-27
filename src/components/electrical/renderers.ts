@@ -42,10 +42,10 @@ export function renderRlcCircuit(rc: RenderContext, p: RlcParams) {
 
   // Left Section: Interactive Physical Schematic
   const hasSplit = w > 620;
-  const schemX = 30;
-  const schemY = 45;
-  const schemW = hasSplit ? Math.min(260, w * 0.35) : w - 60;
-  const schemH = hasSplit ? h - 75 : Math.min(120, h * 0.35);
+  const schemX = 20;
+  const schemY = 40;
+  const schemW = hasSplit ? Math.min(320, Math.max(240, w * 0.36)) : w - 40;
+  const schemH = hasSplit ? Math.min(h - 55, 420) : Math.min(180, h * 0.4);
 
   // Schematic Enclosure Box
   ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
@@ -60,11 +60,11 @@ export function renderRlcCircuit(rc: RenderContext, p: RlcParams) {
   ctx.fillStyle = '#94a3b8';
   ctx.fillText('CIRCUIT TOPOLOGY', schemX + 14, schemY + 18);
 
-  // Draw Series Circuit Loop
-  const loopX = schemX + 25;
-  const loopY = schemY + 35;
-  const loopW = schemW - 50;
-  const loopH = schemH - 60;
+  // Draw Series Circuit Loop (Proportional and centered)
+  const loopW = schemW - 44;
+  const loopH = Math.min(220, Math.max(120, schemH - 60));
+  const loopX = schemX + 22;
+  const loopY = schemY + 28 + Math.max(0, (schemH - 45 - loopH) / 2);
 
   ctx.strokeStyle = '#475569';
   ctx.lineWidth = 2.5;
