@@ -57,6 +57,14 @@ function generateLlmsTxt(): { summary: string; full: string } {
   summaryLines.push('Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference the methodologies of API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) publications for educational and preliminary design purposes.');
 
   summaryLines.push('');
+  summaryLines.push('## Cornerstone Engineering Educational Guides');
+  summaryLines.push('- [RLC Resonance Explained](https://livesimulators.com/guides/rlc-resonance-explained.html): Complete engineering guide covering 2nd-order RLC frequency response, damping ratio, quality factor, and transient impedance.');
+  summaryLines.push('- [Rankine Cycle T-s Diagram](https://livesimulators.com/guides/rankine-cycle-ts-diagram.html): Complete thermodynamic guide to steam power cycles, superheat expansion, pump work, and condenser backpressure on T-s diagrams.');
+  summaryLines.push('- [PID Tuning Step-by-Step](https://livesimulators.com/guides/pid-tuning-step-by-step.html): Complete guide to tuning industrial proportional, integral, and derivative loops with anti-windup clamping.');
+  summaryLines.push('- [Beam Deflection Euler-Bernoulli](https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html): Complete structural guide to Euler-Bernoulli 4th-order beam deflection, shear force, bending moments, and AISC L/360 limits.');
+  summaryLines.push('- [Four-Bar Mechanism Kinematics](https://livesimulators.com/guides/four-bar-mechanism-kinematics.html): Complete kinematic guide to planar 4-bar link inversions, Grashof mobility, transmission angle limits, and coupler curves.');
+
+  summaryLines.push('');
   summaryLines.push('## Companion Engineering Portals');
   summaryLines.push('- [DesignCalculators.co.in](https://designcalculators.co.in): Free multi-disciplinary engineering calculators (Electrical, Mechanical, Instrumentation) referencing published standards (IEEE, IEC, ASME, API, ISA).');
   summaryLines.push('- [ReliabilityTools.co.in](https://reliabilitytools.co.in): Free plant reliability, asset uptime analytics, 2P/3P Weibull failure modeling, MTBF/MTTR, RCA, and IEC 61508/61511 SIL verification.');
@@ -922,12 +930,29 @@ async function runPrerender() {
   </url>`;
   }).join('\n\n');
 
+  // Cornerstone Educational Guides
+  const guideUrls = [
+    '/guides/rlc-resonance-explained.html',
+    '/guides/rankine-cycle-ts-diagram.html',
+    '/guides/pid-tuning-step-by-step.html',
+    '/guides/beam-deflection-euler-bernoulli.html',
+    '/guides/four-bar-mechanism-kinematics.html',
+  ];
+  const guideSitemapEntries = guideUrls.map((p) => `  <url>
+    <loc>${SITE_URL}${p}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`).join('\n\n');
+
   const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   
 ${sitemapEntries}
+
+${guideSitemapEntries}
 
 </urlset>
 `;
@@ -978,6 +1003,19 @@ ${sitemapEntries}
       fs.copyFileSync(path.join(publicHubDir, f), path.join(distHubDir, f));
     }
     console.log('📄 Copied public/assets/hub to dist/assets/hub');
+  }
+
+  const publicGuidesDir = path.join(publicDir, 'guides');
+  const distGuidesDir = path.join(distDir, 'guides');
+  if (fs.existsSync(publicGuidesDir)) {
+    if (!fs.existsSync(distGuidesDir)) {
+      fs.mkdirSync(distGuidesDir, { recursive: true });
+    }
+    const files = fs.readdirSync(publicGuidesDir);
+    for (const f of files) {
+      fs.copyFileSync(path.join(publicGuidesDir, f), path.join(distGuidesDir, f));
+    }
+    console.log('📄 Copied public/guides to dist/guides');
   }
 
   console.log('✅ SSG Prerendering Completed: All routes static, crawlable, and SEO-optimized.');

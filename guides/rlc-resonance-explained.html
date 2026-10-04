@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WX8V8HH57V"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-WX8V8HH57V', {
+        'linker': {
+          'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+        }
+      });
+      gtag('config', 'GT-MKRVD4QN', {
+        'linker': {
+          'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+        }
+      });
+
+      console.log('[Google Analytics 4] Measurement ID linked: G-WX8V8HH57V (Tag: GT-MKRVD4QN). Verify link in Google Analytics → Admin → Product Links → Search Console.');
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>RLC Resonance Explained with Interactive Simulator | LiveSimulators</title>
+    <meta name="description" content="Understand series and parallel RLC resonant frequency, damping ratio, quality factor, and transient circuit impedance with free interactive simulator." />
+    <link rel="canonical" href="https://livesimulators.com/guides/rlc-resonance-explained.html" />
+
+    <!-- Open Graph & Social Meta Tags -->
+    <meta property="og:title" content="RLC Resonance Explained with Interactive Simulator | LiveSimulators" />
+    <meta property="og:description" content="Understand series and parallel RLC resonant frequency, damping ratio, quality factor, and transient circuit impedance with free interactive simulator." />
+    <meta property="og:url" content="https://livesimulators.com/guides/rlc-resonance-explained.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:image" content="https://livesimulators.com/og-default.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
+    <!-- Structured Data: Organization, WebSite & Article -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://livesimulators.com/#organization",
+          "name": "LiveSimulators",
+          "url": "https://livesimulators.com",
+          "logo": "https://livesimulators.com/og-default.png",
+          "sameAs": [
+            "https://mech.livesimulators.com",
+            "https://designcalculators.co.in"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://livesimulators.com/#website",
+          "name": "LiveSimulators",
+          "url": "https://livesimulators.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://livesimulators.com/?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Article",
+          "@id": "https://livesimulators.com/guides/rlc-resonance-explained.html#article",
+          "headline": "RLC Resonance: Complete Engineering Guide",
+          "description": "Understand series and parallel RLC resonant frequency, damping ratio, quality factor, and transient circuit impedance with free interactive simulator.",
+          "author": {
+            "@type": "Person",
+            "name": "Anil Sharma",
+            "url": "https://www.linkedin.com/in/toanilsharma/"
+          },
+          "publisher": {
+            "@id": "https://livesimulators.com/#organization"
+          },
+          "mainEntityOfPage": "https://livesimulators.com/guides/rlc-resonance-explained.html",
+          "url": "https://livesimulators.com/guides/rlc-resonance-explained.html"
+        }
+      ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Standalone Architectural CSS -->
+    <style>
+      :root {
+        --bg-body: #060a12;
+        --bg-card: #090e1a;
+        --bg-surface: #0f172a;
+        --border-color: #1e293b;
+        --border-highlight: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --cyan: #06b6d4;
+        --cyan-hover: #0891b2;
+        --amber: #f59e0b;
+        --emerald: #10b981;
+        --rose: #f43f5e;
+        --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        --font-mono: 'IBM Plex Mono', monospace;
+        --font-display: 'Chakra Petch', sans-serif;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--cyan); text-decoration: none; transition: color 0.2s; }
+      a:hover { color: #67e8f9; }
+      .container { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+
+      /* Precision Top Bar */
+      .top-strip {
+        background: #030712;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.35rem 1.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .top-strip span.highlight { color: var(--emerald); font-weight: 600; }
+
+      /* Navigation Header */
+      header.site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(6, 10, 18, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.85rem 0;
+      }
+      .nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+      }
+      .brand-logo .logo-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(6, 182, 212, 0.15);
+        border: 1px solid rgba(6, 182, 212, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cyan);
+        font-weight: 900;
+      }
+      .brand-logo span.accent { color: var(--cyan); }
+      nav.nav-links {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      nav.nav-links a { color: var(--text-secondary); }
+      nav.nav-links a:hover { color: #fff; }
+
+      /* Article Main Layout */
+      main.guide-content { padding: 3rem 0 5rem; }
+      .breadcrumb {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+      }
+      .guide-header { margin-bottom: 3rem; }
+      .guide-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 9999px;
+        background: rgba(6, 182, 212, 0.12);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        color: var(--cyan);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+      h1.guide-title {
+        font-size: 2.35rem;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1.25;
+        letter-spacing: -0.02em;
+        margin-bottom: 1rem;
+      }
+      .guide-tagline {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        max-width: 820px;
+      }
+
+      /* Sections */
+      section.guide-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2.25rem;
+      }
+      h2.section-heading {
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.75rem;
+      }
+      h2.section-heading .sec-num {
+        font-family: var(--font-mono);
+        color: var(--cyan);
+        font-size: 1rem;
+      }
+      p.paragraph {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: 1.25rem;
+      }
+      p.paragraph:last-child { margin-bottom: 0; }
+
+      /* Equations Box (Semantic MathML / Clean HTML) */
+      .math-box {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        margin: 1.25rem 0;
+        overflow-x: auto;
+      }
+      .math-title {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+      }
+      math {
+        font-family: 'Latin Modern Math', Cambria Math, STIX Two Math, serif;
+        font-size: 1.25rem;
+        color: #fff;
+        display: block;
+        margin: 0.5rem 0;
+      }
+      .math-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+      }
+
+      /* Step-by-Step Table */
+      table.step-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.25rem 0;
+        font-size: 0.9rem;
+      }
+      table.step-table th {
+        background: #0b1324;
+        color: var(--cyan);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        text-align: left;
+        padding: 0.85rem 1rem;
+        border-bottom: 2px solid var(--border-color);
+      }
+      table.step-table td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        vertical-align: top;
+      }
+      table.step-table tr:hover td {
+        background: rgba(15, 23, 42, 0.5);
+      }
+      .code-token {
+        font-family: var(--font-mono);
+        color: #fff;
+        font-weight: 600;
+        background: rgba(255,255,255,0.06);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+      }
+
+      /* Pitfalls & Mistakes */
+      ul.mistakes-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      ul.mistakes-list li {
+        background: rgba(244, 63, 94, 0.06);
+        border: 1px solid rgba(244, 63, 94, 0.25);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        color: #fecdd3;
+        font-size: 0.92rem;
+        line-height: 1.6;
+      }
+      ul.mistakes-list strong {
+        color: #fff;
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+
+      /* Interactive Lab CTA */
+      .lab-cta-card {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(9, 14, 26, 0.95) 100%);
+        border: 1px solid rgba(6, 182, 212, 0.4);
+        border-radius: 1rem;
+        padding: 2.25rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .lab-cta-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 0.65rem;
+      }
+      .lab-cta-desc {
+        color: var(--text-secondary);
+        max-width: 640px;
+        margin: 0 auto 1.75rem;
+        font-size: 0.95rem;
+      }
+      .launch-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.85rem 1.75rem;
+        background: var(--cyan);
+        color: #030712;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 700;
+        border-radius: 0.65rem;
+        text-decoration: none;
+        transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+      }
+      .launch-button:hover {
+        background: #22d3ee;
+        color: #030712;
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(6, 182, 212, 0.6);
+      }
+
+      /* References */
+      ul.ref-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      ul.ref-list li {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        padding-left: 1.25rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      ul.ref-list li::before {
+        content: "•";
+        color: var(--cyan);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+      }
+
+      /* Footer */
+      footer.site-footer {
+        background: #030712;
+        border-top: 1px solid var(--border-color);
+        padding: 3.5rem 0 2rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 2.5rem;
+        margin-bottom: 2.5rem;
+      }
+      .footer-col h5 {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: #fff;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .footer-col ul { list-style: none; }
+      .footer-col ul li { margin-bottom: 0.5rem; }
+      .footer-col ul li a { color: var(--text-muted); }
+      .footer-col ul li a:hover { color: var(--cyan); }
+      .footer-bottom {
+        border-top: 1px solid var(--border-color);
+        padding-top: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+      @media (max-width: 768px) {
+        .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+        .top-strip { display: none; }
+        h1.guide-title { font-size: 1.85rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Precision Top Engineering Strip -->
+    <div class="top-strip">
+      <div>
+        <span class="highlight">SOLVER KERNEL ACTIVE</span> • 60 FPS FLOAT64 NUMERICAL INTEGRATION • IEEE 1459 COMPLIANT
+      </div>
+      <div>
+        ZERO PLUGINS REQUIRED • CLIENT-SIDE PHYSICS ENGINE
+      </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="site-header">
+      <div class="container nav-row">
+        <a href="/" class="brand-logo" id="brand-logo">
+          <div class="logo-icon">LS</div>
+          <span>LIVE <span class="accent">SIMULATORS</span></span>
+        </a>
+        <nav class="nav-links">
+          <a href="/department/electrical">Electrical</a>
+          <a href="/department/mechanical">Mechanical</a>
+          <a href="/department/control">Control</a>
+          <a href="/department/civil">Civil</a>
+          <a href="/about">About</a>
+          <a href="/simulator/rlc-resonance" class="launch-button" style="padding:0.4rem 0.85rem; font-size:0.8rem;" onclick="gtag('event', 'simulator_launch', {'simulator': 'RLC Resonant Circuit & Damping Transient'});">Launch Lab ↗</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="guide-content">
+      <div class="container">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a> / <a href="/department/electrical">Electrical</a> / <span>RLC Resonance Guide</span>
+        </nav>
+
+        <header class="guide-header">
+          <div class="guide-badge">ELECTRICAL ENGINEERING • CIRCUITS &amp; SIGNALS</div>
+          <h1 class="guide-title">RLC Resonance: Complete Engineering Guide</h1>
+          <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:1rem; font-family:var(--font-mono);">
+            By <span style="color:#ffffff; font-weight:600;">Anil Sharma</span> • LiveSimulators Engineering
+          </div>
+          <p class="guide-tagline">
+            Master the mathematical formulation of 2nd-order series and parallel RLC electrical networks. Explore energy exchange between reactive magnetic and electrostatic fields, transient damping regimes, and the collapse of phase lag at resonance.
+          </p>
+        </header>
+
+        <!-- SECTION 1: DEFINITION -->
+        <section class="guide-section" aria-labelledby="sec-definition">
+          <h2 class="section-heading" id="sec-definition">
+            <span class="sec-num">01.</span> Definition
+          </h2>
+          <p class="paragraph">
+            Resonance in an RLC circuit is the physical operating state in which inductive reactance exactly cancels capacitive reactance. In a series alternating-current (AC) loop consisting of a resistor (R), inductor (L), and capacitor (C), the opposing phase shifts of inductor voltage (+90 degrees) and capacitor voltage (-90 degrees) cause their reactive voltages to sum to zero at a distinct angular frequency called the undamped natural resonant frequency.
+          </p>
+          <p class="paragraph">
+            At this exact excitation frequency, the total circuit impedance drops to its absolute theoretical minimum, equal solely to the ohmic resistance R. Consequently, current reaches its maximum possible amplitude and becomes perfectly in phase with the source voltage (unity power factor). Between cycles, magnetic field energy stored in the inductor coils and electrostatic field energy stored in the capacitor dielectric dielectric medium continuously oscillate back and forth, damped only by the dissipation of energy as Joule heat across the resistor.
+          </p>
+        </section>
+
+        <!-- SECTION 2: GOVERNING EQUATIONS -->
+        <section class="guide-section" aria-labelledby="sec-equations">
+          <h2 class="section-heading" id="sec-equations">
+            <span class="sec-num">02.</span> Governing Equations
+          </h2>
+          <p class="paragraph">
+            The differential dynamics of a series RLC loop follow directly from Kirchhoff’s Voltage Law (KVL), stating that the sum of potential differences around any closed circuit loop is zero:
+          </p>
+
+          <div class="math-box">
+            <div class="math-title">1. Canonical Second-Order Differential Equation</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <mi>L</mi>
+                <mfrac>
+                  <mrow>
+                    <msup><mi>d</mi><mn>2</mn></msup>
+                    <mi>i</mi><mo>(</mo><mi>t</mi><mo>)</mo>
+                  </mrow>
+                  <mrow><mi>d</mi><msup><mi>t</mi><mn>2</mn></msup></mrow>
+                </mfrac>
+                <mo>+</mo>
+                <mi>R</mi>
+                <mfrac>
+                  <mrow><mi>d</mi><mi>i</mi><mo>(</mo><mi>t</mi><mo>)</mo></mrow>
+                  <mrow><mi>d</mi><mi>t</mi></mrow>
+                </mfrac>
+                <mo>+</mo>
+                <mfrac>
+                  <mn>1</mn>
+                  <mi>C</mi>
+                </mfrac>
+                <mi>i</mi><mo>(</mo><mi>t</mi><mo>)</mo>
+                <mo>=</mo>
+                <mn>0</mn>
+              </mrow>
+            </math>
+            <div class="math-desc">Differentiated KVL circuit loop in source-free transient decay.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">2. Natural Resonant Frequency (Angular and Cyclic)</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <msub><mi>&omega;</mi><mn>0</mn></msub>
+                <mo>=</mo>
+                <mfrac>
+                  <mn>1</mn>
+                  <msqrt><mrow><mi>L</mi><mi>C</mi></mrow></msqrt>
+                </mfrac>
+                <mo>,</mo>
+                <mspace width="1em"/>
+                <msub><mi>f</mi><mn>0</mn></msub>
+                <mo>=</mo>
+                <mfrac>
+                  <mn>1</mn>
+                  <mrow><mn>2</mn><mi>&pi;</mi><msqrt><mrow><mi>L</mi><mi>C</mi></mrow></msqrt></mrow>
+                </mfrac>
+              </mrow>
+            </math>
+            <div class="math-desc">Condition where inductive reactance XL equals capacitive reactance XC (radians/sec and Hertz).</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">3. Dimensionless Damping Ratio and Quality Factor</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <mi>&zeta;</mi>
+                <mo>=</mo>
+                <mfrac>
+                  <mi>R</mi>
+                  <mn>2</mn>
+                </mfrac>
+                <msqrt>
+                  <mfrac><mi>C</mi><mi>L</mi></mfrac>
+                </msqrt>
+                <mo>=</mo>
+                <mfrac><mi>R</mi><msub><mi>R</mi><mtext>crit</mtext></msub></mfrac>
+                <mo>,</mo>
+                <mspace width="1em"/>
+                <mi>Q</mi>
+                <mo>=</mo>
+                <mfrac>
+                  <mn>1</mn>
+                  <mrow><mn>2</mn><mi>&zeta;</mi></mrow>
+                </mfrac>
+                <mo>=</mo>
+                <mfrac>
+                  <mrow><msub><mi>&omega;</mi><mn>0</mn></msub><mi>L</mi></mrow>
+                  <mi>R</mi>
+                </mfrac>
+                <mo>=</mo>
+                <mfrac>
+                  <mn>1</mn>
+                  <mi>R</mi>
+                </mfrac>
+                <msqrt>
+                  <mfrac><mi>L</mi><mi>C</mi></mfrac>
+                </msqrt>
+              </mrow>
+            </math>
+            <div class="math-desc">Critical resistance is defined as Rcrit = 2√(L/C). When &zeta; &lt; 1, response rings underdamped.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">4. Total Complex Loop Impedance</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <mi>Z</mi><mo>(</mo><mi>&omega;</mi><mo>)</mo>
+                <mo>=</mo>
+                <mi>R</mi>
+                <mo>+</mo>
+                <mi>j</mi>
+                <mo>(</mo>
+                <mi>&omega;</mi><mi>L</mi>
+                <mo>-</mo>
+                <mfrac><mn>1</mn><mrow><mi>&omega;</mi><mi>C</mi></mrow></mfrac>
+                <mo>)</mo>
+                <mo>,</mo>
+                <mspace width="1em"/>
+                <mrow><mo>|</mo><mi>Z</mi><mo>|</mo></mrow>
+                <mo>=</mo>
+                <msqrt>
+                  <mrow>
+                    <msup><mi>R</mi><mn>2</mn></msup>
+                    <mo>+</mo>
+                    <msup>
+                      <mrow>
+                        <mo>(</mo>
+                        <mi>&omega;</mi><mi>L</mi>
+                        <mo>-</mo>
+                        <mfrac><mn>1</mn><mrow><mi>&omega;</mi><mi>C</mi></mrow></mfrac>
+                        <mo>)</mo>
+                      </mrow>
+                      <mn>2</mn>
+                    </msup>
+                  </mrow>
+                </msqrt>
+              </mrow>
+            </math>
+            <div class="math-desc">At &omega; = &omega;0, imaginary reactance vanishes and |Z| = R.</div>
+          </div>
+        </section>
+
+        <!-- SECTION 3: WORKED NUMERICAL EXAMPLE -->
+        <section class="guide-section" aria-labelledby="sec-example">
+          <h2 class="section-heading" id="sec-example">
+            <span class="sec-num">03.</span> Worked Numerical Example
+          </h2>
+          <p class="paragraph">
+            Consider the flagship LiveSimulators industrial substation benchmark configuration: an AC voltage generator supplying an alternating source across a series RLC filtering network.
+          </p>
+          <div style="background:rgba(6,182,212,0.08); border:1px solid rgba(6,182,212,0.3); border-radius:0.75rem; padding:1rem 1.25rem; margin-bottom:1.5rem; font-family:var(--font-mono); font-size:0.85rem;">
+            <strong>Given Nominal Parameter Values:</strong><br>
+            Inductance: <span class="code-token">L = 60 mH = 0.060 H</span><br>
+            Capacitance: <span class="code-token">C = 40 µF = 40 × 10⁻⁶ F</span><br>
+            Damping Resistance: <span class="code-token">R = 25 Ω</span><br>
+            Source Drive Frequency: <span class="code-token">f = 100 Hz</span> (near resonance)
+          </div>
+
+          <table class="step-table">
+            <thead>
+              <tr>
+                <th style="width:12%;">Step</th>
+                <th style="width:28%;">Engineering Metric</th>
+                <th style="width:35%;">Formula &amp; Substitution</th>
+                <th style="width:25%;">Computed Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Step 1</strong></td>
+                <td>Natural Resonant Frequency (Cyclic)</td>
+                <td>f₀ = 1 / [2π √(0.060 × 40 × 10⁻⁶)]</td>
+                <td><span class="code-token">f₀ = 102.73 Hz</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 2</strong></td>
+                <td>Natural Angular Frequency</td>
+                <td>ω₀ = 2π × 102.73 = 1 / √(2.4 × 10⁻⁶)</td>
+                <td><span class="code-token">ω₀ = 645.50 rad/s</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 3</strong></td>
+                <td>Critical Damping Resistance</td>
+                <td>R_crit = 2 √(L / C) = 2 √(0.060 / 40 × 10⁻⁶)</td>
+                <td><span class="code-token">R_crit = 77.46 Ω</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 4</strong></td>
+                <td>Dimensionless Damping Ratio</td>
+                <td>ζ = R / R_crit = 25 / 77.46</td>
+                <td><span class="code-token">ζ = 0.3227</span> (Underdamped)</td>
+              </tr>
+              <tr>
+                <td><strong>Step 5</strong></td>
+                <td>Quality Factor (Selectivity)</td>
+                <td>Q = 1 / (2ζ) = 1 / (2 × 0.3227)</td>
+                <td><span class="code-token">Q = 1.549</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 6</strong></td>
+                <td>Reactance at f = 100 Hz</td>
+                <td>
+                  X_L = 2π(100)(0.060) = 37.70 Ω<br>
+                  X_C = 1 / [2π(100)(40×10⁻⁶)] = 39.79 Ω
+                </td>
+                <td><span class="code-token">X_net = -2.09 Ω</span> (Slightly capacitive)</td>
+              </tr>
+              <tr>
+                <td><strong>Step 7</strong></td>
+                <td>Total Loop Impedance |Z|</td>
+                <td>|Z| = √[25² + (-2.09)²] = √[625 + 4.37]</td>
+                <td><span class="code-token">|Z| = 25.09 Ω</span><br><small style="color:var(--amber);">At true resonance (102.73 Hz), |Z| = 25.00 Ω (TODO: verify real-world capacitor ESR)</small></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- SECTION 4: COMMON MISTAKES -->
+        <section class="guide-section" aria-labelledby="sec-mistakes">
+          <h2 class="section-heading" id="sec-mistakes">
+            <span class="sec-num">04.</span> Common Engineering Mistakes
+          </h2>
+          <ul class="mistakes-list">
+            <li>
+              <strong>1. Confusing Series Resonance with Parallel Anti-Resonance</strong>
+              In series RLC circuits, resonance produces minimum impedance (|Z| = R) and maximum loop current. In parallel RLC circuits, resonance produces maximum impedance and minimum line current. Applying series formulas to parallel tank circuits leads to completely inverted filter responses and damaged power supplies.
+            </li>
+            <li>
+              <strong>2. Neglecting Equivalent Series Resistance (ESR) of Components</strong>
+              Real-world inductors have significant copper coil resistance (DCR), and capacitors exhibit dielectric losses (ESR). Treating components as ideal zero-loss elements causes calculated Q factors to be wildly overstated, resulting in surprise thermal dissipation and lower-than-expected voltage amplification.
+            </li>
+            <li>
+              <strong>3. Assuming Critical Damping Occurs at R = √(L/C) instead of 2√(L/C)</strong>
+              Because the characteristic polynomial has a factor of 2 in the damping term (s² + (R/L)s + 1/LC = s² + 2ζω₀s + ω₀²), the critical damping resistance is exactly 2√(L/C). Forgetting the factor of 2 leaves the circuit with ζ = 0.50, leading to unexpected 16% transient voltage overshoot in pulse applications.
+            </li>
+          </ul>
+        </section>
+
+        <!-- SECTION 5: INTERACTIVE LAB CTA -->
+        <section class="guide-section" style="padding:0; background:transparent; border:none;" aria-labelledby="sec-lab">
+          <div class="lab-cta-card">
+            <h2 class="lab-cta-title" id="sec-lab">Observe Real-Time Resonance in Your Browser</h2>
+            <p class="lab-cta-desc">
+              Launch our 60 FPS Float64 numerical physics workbench. Sweep frequencies across the resonance peak, manipulate damping resistance to watch underdamped oscillations collapse, and inspect instantaneous inductor/capacitor voltage waveforms.
+            </p>
+            <a href="/simulator/rlc-resonance" class="launch-button" onclick="gtag('event', 'simulator_launch', {'simulator': 'RLC Resonant Circuit & Damping Transient'});">
+              Launch Interactive RLC Resonant Circuit Simulator &rarr;
+            </a>
+          </div>
+        </section>
+
+        <!-- SECTION 6: REFERENCES -->
+        <section class="guide-section" aria-labelledby="sec-references">
+          <h2 class="section-heading" id="sec-references">
+            <span class="sec-num">05.</span> References &amp; Standards
+          </h2>
+          <ul class="ref-list">
+            <li>Alexander, C. K., &amp; Sadiku, M. N. (2021). <em>Fundamentals of Electric Circuits</em> (7th ed.). McGraw-Hill Education. Chapters 8 &amp; 9.</li>
+            <li>Hayt, W. H., Kemmerly, J. E., &amp; Phillips, S. M. (2019). <em>Engineering Circuit Analysis</em> (9th ed.). McGraw-Hill. Chapter 14: Resonance and Second-Order Circuits.</li>
+            <li>IEEE Std 1459-2010: <em>IEEE Standard Definitions for the Measurement of Electric Power Quantities Under Sinusoidal, Nonsinusoidal, Balanced, or Unbalanced Conditions</em>. IEEE Power &amp; Energy Society.</li>
+            <li>IEC 60076-1: <em>Power transformers - Part 1: General</em>. International Electrotechnical Commission.</li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <!-- Global Site Footer -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <a href="/" class="brand-logo" style="margin-bottom:1rem;">
+              <div class="logo-icon">LS</div>
+              <span>LIVE <span class="accent">SIMULATORS</span></span>
+            </a>
+            <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; max-width:320px;">
+              Open-access engineering virtual laboratories. First-principles Float64 numerical differential solvers operating at 60 FPS directly in the browser. Founded by Anil Sharma.
+            </p>
+          </div>
+          <div class="footer-col">
+            <h5>Departments</h5>
+            <ul>
+              <li><a href="/department/electrical">Electrical Systems</a></li>
+              <li><a href="/department/mechanical">Mechanical Dynamics</a></li>
+              <li><a href="/department/control">Process Automation</a></li>
+              <li><a href="/department/civil">Structural Mechanics</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Educational Guides</h5>
+            <ul>
+              <li><a href="/guides/rlc-resonance-explained.html">RLC Resonance</a></li>
+              <li><a href="/guides/rankine-cycle-ts-diagram.html">Rankine Cycle T-s</a></li>
+              <li><a href="/guides/pid-tuning-step-by-step.html">PID Tuning Guide</a></li>
+              <li><a href="/guides/beam-deflection-euler-bernoulli.html">Beam Deflection</a></li>
+              <li><a href="/guides/four-bar-mechanism-kinematics.html">Four-Bar Kinematics</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Companion Portals</h5>
+            <ul>
+              <li><a href="https://mech.livesimulators.com" target="_blank" rel="noopener">Mech Digital Twins (ASME/API)</a></li>
+              <li><a href="https://designcalculators.co.in" target="_blank" rel="noopener">DesignCalculators.co.in</a></li>
+              <li><a href="/about">About LiveSimulators</a></li>
+              <li><a href="/contact-form.html">Contact Engineering Team</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div>
+            &copy; 2026 LiveSimulators.com • Created by Anil Sharma. All models governed by first principles.
+          </div>
+          <div>
+            Zero Plugins Required • Standard HTML5 / WebGL / Canvas / MathML
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

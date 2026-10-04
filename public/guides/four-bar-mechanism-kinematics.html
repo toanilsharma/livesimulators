@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WX8V8HH57V"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-WX8V8HH57V', {
+        'linker': {
+          'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+        }
+      });
+      gtag('config', 'GT-MKRVD4QN', {
+        'linker': {
+          'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+        }
+      });
+
+      console.log('[Google Analytics 4] Measurement ID linked: G-WX8V8HH57V (Tag: GT-MKRVD4QN). Verify link in Google Analytics → Admin → Product Links → Search Console.');
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Four-Bar Mechanism Kinematics Explained with Interactive Simulator | LiveSimulators</title>
+    <meta name="description" content="Synthesize planar 4-bar link inversions, Grashof mobility, transmission angle limits, and coupler curves with free interactive simulator." />
+    <link rel="canonical" href="https://livesimulators.com/guides/four-bar-mechanism-kinematics.html" />
+
+    <!-- Open Graph & Social Meta Tags -->
+    <meta property="og:title" content="Four-Bar Mechanism Kinematics Explained with Interactive Simulator | LiveSimulators" />
+    <meta property="og:description" content="Synthesize planar 4-bar link inversions, Grashof mobility, transmission angle limits, and coupler curves with free interactive simulator." />
+    <meta property="og:url" content="https://livesimulators.com/guides/four-bar-mechanism-kinematics.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:image" content="https://livesimulators.com/og-default.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
+    <!-- Structured Data: Organization, WebSite & Article -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://livesimulators.com/#organization",
+          "name": "LiveSimulators",
+          "url": "https://livesimulators.com",
+          "logo": "https://livesimulators.com/og-default.png",
+          "sameAs": [
+            "https://mech.livesimulators.com",
+            "https://designcalculators.co.in"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://livesimulators.com/#website",
+          "name": "LiveSimulators",
+          "url": "https://livesimulators.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://livesimulators.com/?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Article",
+          "@id": "https://livesimulators.com/guides/four-bar-mechanism-kinematics.html#article",
+          "headline": "Four-Bar Mechanism Kinematics: Complete Engineering Guide",
+          "description": "Synthesize planar 4-bar link inversions, Grashof mobility, transmission angle limits, and coupler curves with free interactive simulator.",
+          "author": {
+            "@type": "Person",
+            "name": "Anil Sharma",
+            "url": "https://www.linkedin.com/in/toanilsharma/"
+          },
+          "publisher": {
+            "@id": "https://livesimulators.com/#organization"
+          },
+          "mainEntityOfPage": "https://livesimulators.com/guides/four-bar-mechanism-kinematics.html",
+          "url": "https://livesimulators.com/guides/four-bar-mechanism-kinematics.html"
+        }
+      ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Standalone Architectural CSS -->
+    <style>
+      :root {
+        --bg-body: #060a12;
+        --bg-card: #090e1a;
+        --bg-surface: #0f172a;
+        --border-color: #1e293b;
+        --border-highlight: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --amber: #f59e0b;
+        --amber-hover: #d97706;
+        --cyan: #06b6d4;
+        --emerald: #10b981;
+        --pink: #ec4899;
+        --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        --font-mono: 'IBM Plex Mono', monospace;
+        --font-display: 'Chakra Petch', sans-serif;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--amber); text-decoration: none; transition: color 0.2s; }
+      a:hover { color: #fcd34d; }
+      .container { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+
+      /* Precision Top Bar */
+      .top-strip {
+        background: #030712;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.35rem 1.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .top-strip span.highlight { color: var(--amber); font-weight: 600; }
+
+      /* Navigation Header */
+      header.site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(6, 10, 18, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.85rem 0;
+      }
+      .nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+      }
+      .brand-logo .logo-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--amber);
+        font-weight: 900;
+      }
+      .brand-logo span.accent { color: var(--amber); }
+      nav.nav-links {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      nav.nav-links a { color: var(--text-secondary); }
+      nav.nav-links a:hover { color: #fff; }
+
+      /* Article Main Layout */
+      main.guide-content { padding: 3rem 0 5rem; }
+      .breadcrumb {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+      }
+      .guide-header { margin-bottom: 3rem; }
+      .guide-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 9999px;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: var(--amber);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+      h1.guide-title {
+        font-size: 2.35rem;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1.25;
+        letter-spacing: -0.02em;
+        margin-bottom: 1rem;
+      }
+      .guide-tagline {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        max-width: 820px;
+      }
+
+      /* Sections */
+      section.guide-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2.25rem;
+      }
+      h2.section-heading {
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.75rem;
+      }
+      h2.section-heading .sec-num {
+        font-family: var(--font-mono);
+        color: var(--amber);
+        font-size: 1rem;
+      }
+      p.paragraph {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: 1.25rem;
+      }
+      p.paragraph:last-child { margin-bottom: 0; }
+
+      /* Equations Box (Semantic MathML / Clean HTML) */
+      .math-box {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        margin: 1.25rem 0;
+        overflow-x: auto;
+      }
+      .math-title {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--amber);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+      }
+      math {
+        font-family: 'Latin Modern Math', Cambria Math, STIX Two Math, serif;
+        font-size: 1.25rem;
+        color: #fff;
+        display: block;
+        margin: 0.5rem 0;
+      }
+      .math-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+      }
+
+      /* Step-by-Step Table */
+      table.step-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.25rem 0;
+        font-size: 0.9rem;
+      }
+      table.step-table th {
+        background: #0b1324;
+        color: var(--amber);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        text-align: left;
+        padding: 0.85rem 1rem;
+        border-bottom: 2px solid var(--border-color);
+      }
+      table.step-table td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        vertical-align: top;
+      }
+      table.step-table tr:hover td {
+        background: rgba(15, 23, 42, 0.5);
+      }
+      .code-token {
+        font-family: var(--font-mono);
+        color: #fff;
+        font-weight: 600;
+        background: rgba(255,255,255,0.06);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+      }
+
+      /* Pitfalls & Mistakes */
+      ul.mistakes-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      ul.mistakes-list li {
+        background: rgba(244, 63, 94, 0.06);
+        border: 1px solid rgba(244, 63, 94, 0.25);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        color: #fecdd3;
+        font-size: 0.92rem;
+        line-height: 1.6;
+      }
+      ul.mistakes-list strong {
+        color: #fff;
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+
+      /* Interactive Lab CTA */
+      .lab-cta-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(9, 14, 26, 0.95) 100%);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 1rem;
+        padding: 2.25rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .lab-cta-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 0.65rem;
+      }
+      .lab-cta-desc {
+        color: var(--text-secondary);
+        max-width: 640px;
+        margin: 0 auto 1.75rem;
+        font-size: 0.95rem;
+      }
+      .launch-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.85rem 1.75rem;
+        background: var(--amber);
+        color: #030712;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 700;
+        border-radius: 0.65rem;
+        text-decoration: none;
+        transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+      }
+      .launch-button:hover {
+        background: #fbbf24;
+        color: #030712;
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+      }
+
+      /* References */
+      ul.ref-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      ul.ref-list li {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        padding-left: 1.25rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      ul.ref-list li::before {
+        content: "•";
+        color: var(--amber);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+      }
+
+      /* Footer */
+      footer.site-footer {
+        background: #030712;
+        border-top: 1px solid var(--border-color);
+        padding: 3.5rem 0 2rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 2.5rem;
+        margin-bottom: 2.5rem;
+      }
+      .footer-col h5 {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: #fff;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .footer-col ul { list-style: none; }
+      .footer-col ul li { margin-bottom: 0.5rem; }
+      .footer-col ul li a { color: var(--text-muted); }
+      .footer-col ul li a:hover { color: var(--amber); }
+      .footer-bottom {
+        border-top: 1px solid var(--border-color);
+        padding-top: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+      @media (max-width: 768px) {
+        .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+        .top-strip { display: none; }
+        h1.guide-title { font-size: 1.85rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Precision Top Engineering Strip -->
+    <div class="top-strip">
+      <div>
+        <span class="highlight">KINEMATIC KERNEL ACTIVE</span> • FREUDENSTEIN ANALYTICAL LOOP CLOSURE • ISO 13348
+      </div>
+      <div>
+        EXACT CLOSED-FORM GRASHOF EVALUATOR • ZERO APPROXIMATIONS
+      </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="site-header">
+      <div class="container nav-row">
+        <a href="/" class="brand-logo" id="brand-logo">
+          <div class="logo-icon">LS</div>
+          <span>LIVE <span class="accent">SIMULATORS</span></span>
+        </a>
+        <nav class="nav-links">
+          <a href="/department/mechanical">Mechanical</a>
+          <a href="/department/control">Control</a>
+          <a href="/department/electrical">Electrical</a>
+          <a href="/department/civil">Civil</a>
+          <a href="/about">About</a>
+          <a href="/simulator/four-bar-mechanism" class="launch-button" style="padding:0.4rem 0.85rem; font-size:0.8rem;" onclick="gtag('event', 'simulator_launch', {'simulator': 'Planar 4-Bar Grashof Kinematics & Coupler Curves'});">Launch Lab ↗</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="guide-content">
+      <div class="container">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a> / <a href="/department/mechanical">Mechanical</a> / <span>Four-Bar Mechanism Kinematics</span>
+        </nav>
+
+        <header class="guide-header">
+          <div class="guide-badge">MECHANICAL ENGINEERING • KINEMATICS &amp; MACHINE DYNAMICS</div>
+          <h1 class="guide-title">Four-Bar Mechanism Kinematics: Complete Engineering Guide</h1>
+          <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:1rem; font-family:var(--font-mono);">
+            By <span style="color:#ffffff; font-weight:600;">Anil Sharma</span> • LiveSimulators Engineering
+          </div>
+          <p class="guide-tagline">
+            Synthesize planar one-degree-of-freedom four-bar linkages. Formulate loop-closure vector polygons, solve Freudenstein analytical equations, evaluate Grashof mobility criteria, optimize transmission angles, and generate intricate coupler curve trajectories.
+          </p>
+        </header>
+
+        <!-- SECTION 1: DEFINITION -->
+        <section class="guide-section" aria-labelledby="sec-definition">
+          <h2 class="section-heading" id="sec-definition">
+            <span class="sec-num">01.</span> Definition
+          </h2>
+          <p class="paragraph">
+            A planar four-bar mechanism is the simplest closed-loop kinematic chain capable of single-degree-of-freedom constrained relative motion. It consists of four rigid links interconnected by four lower-pair revolute (pin) joints: a stationary ground frame link, an input driver link (typically a rotating crank or rocker), a floating connecting coupler link, and an output follower link (rocker or crank).
+          </p>
+          <p class="paragraph">
+            The mobility and inversion category of a four-bar linkage is governed by Grashof's Theorem, which establishes whether any link is capable of making a continuous 360-degree rotation relative to the frame based entirely on the relationship between link lengths. Kinematic analysis determines output joint angles, angular velocities, mechanical advantage, and transmission angles, while any point rigidly attached to the floating coupler traces out a complex planar path known as a coupler curve.
+          </p>
+        </section>
+
+        <!-- SECTION 2: GOVERNING EQUATIONS -->
+        <section class="guide-section" aria-labelledby="sec-equations">
+          <h2 class="section-heading" id="sec-equations">
+            <span class="sec-num">02.</span> Governing Equations
+          </h2>
+          <p class="paragraph">
+            The spatial orientation and mobility of a planar four-bar linkage follow vector loop-closure constraints formulated through complex numbers or trigonometry:
+          </p>
+
+          <div class="math-box">
+            <div class="math-title">1. Grashof Mobility Condition</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <mi>s</mi><mo>+</mo><mi>l</mi>
+                <mo>&le;</mo>
+                <mi>p</mi><mo>+</mo><mi>q</mi>
+              </mrow>
+            </math>
+            <div class="math-desc">s is shortest link, l is longest link, p and q are intermediate link lengths. If satisfied, at least one link makes a full 360&deg; revolution.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">2. Vector Loop-Closure Position Polygon</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <msub><mover><mi>r</mi><mo>&rarr;</mo></mover><mn>1</mn></msub>
+                <mo>+</mo>
+                <msub><mover><mi>r</mi><mo>&rarr;</mo></mover><mn>4</mn></msub>
+                <mo>=</mo>
+                <msub><mover><mi>r</mi><mo>&rarr;</mo></mover><mn>2</mn></msub>
+                <mo>+</mo>
+                <msub><mover><mi>r</mi><mo>&rarr;</mo></mover><mn>3</mn></msub>
+                <mspace width="1em"/>
+                <mo>&rArr;</mo>
+                <mspace width="1em"/>
+                <msub><mi>r</mi><mn>1</mn></msub>
+                <mo>+</mo>
+                <msub><mi>r</mi><mn>4</mn></msub><msup><mi>e</mi><mrow><mi>j</mi><msub><mi>&theta;</mi><mn>4</mn></msub></mrow></msup>
+                <mo>=</mo>
+                <msub><mi>r</mi><mn>2</mn></msub><msup><mi>e</mi><mrow><mi>j</mi><msub><mi>&theta;</mi><mn>2</mn></msub></mrow></msup>
+                <mo>+</mo>
+                <msub><mi>r</mi><mn>3</mn></msub><msup><mi>e</mi><mrow><mi>j</mi><msub><mi>&theta;</mi><mn>3</mn></msub></mrow></msup>
+              </mrow>
+            </math>
+            <div class="math-desc">Vector loop polygon where r1 is ground frame, r2 is crank, r3 is coupler, and r4 is output rocker.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">3. Freudenstein’s Analytical Loop Equation</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <msub><mi>K</mi><mn>1</mn></msub><mi>cos</mi><mo>(</mo><msub><mi>&theta;</mi><mn>4</mn></msub><mo>)</mo>
+                <mo>-</mo>
+                <msub><mi>K</mi><mn>2</mn></msub><mi>cos</mi><mo>(</mo><msub><mi>&theta;</mi><mn>2</mn></msub><mo>)</mo>
+                <mo>+</mo>
+                <msub><mi>K</mi><mn>3</mn></msub>
+                <mo>=</mo>
+                <mi>cos</mi><mo>(</mo><msub><mi>&theta;</mi><mn>2</mn></msub><mo>-</mo><msub><mi>&theta;</mi><mn>4</mn></msub><mo>)</mo>
+              </mrow>
+            </math>
+            <div class="math-desc">Freudenstein constants: K1 = r1/r2, K2 = r1/r4, K3 = (r1² + r2² - r3² + r4²) / (2 r2 r4).</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">4. Transmission Angle (&mu;) and Law of Cosines</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <mi>&mu;</mi>
+                <mo>=</mo>
+                <mi>arccos</mi>
+                <mo>(</mo>
+                <mfrac>
+                  <mrow>
+                    <msubsup><mi>r</mi><mn>3</mn><mn>2</mn></msubsup>
+                    <mo>+</mo>
+                    <msubsup><mi>r</mi><mn>4</mn><mn>2</mn></msubsup>
+                    <mo>-</mo>
+                    <msubsup><mi>z</mi><mn>12</mn><mn>2</mn></msubsup>
+                  </mrow>
+                  <mrow><mn>2</mn><msub><mi>r</mi><mn>3</mn></msub><msub><mi>r</mi><mn>4</mn></msub></mrow>
+                </mfrac>
+                <mo>)</mo>
+                <mo>,</mo>
+                <mspace width="1em"/>
+                <msubsup><mi>z</mi><mn>12</mn><mn>2</mn></msubsup>
+                <mo>=</mo>
+                <msubsup><mi>r</mi><mn>1</mn><mn>2</mn></msubsup>
+                <mo>+</mo>
+                <msubsup><mi>r</mi><mn>2</mn><mn>2</mn></msubsup>
+                <mo>-</mo>
+                <mn>2</mn><msub><mi>r</mi><mn>1</mn></msub><msub><mi>r</mi><mn>2</mn></msub><mi>cos</mi><mo>(</mo><msub><mi>&theta;</mi><mn>2</mn></msub><mo>)</mo>
+              </mrow>
+            </math>
+            <div class="math-desc">Transmission angle &mu; must stay strictly between 40&deg; and 140&deg; throughout the cycle to prevent mechanical binding.</div>
+          </div>
+        </section>
+
+        <!-- SECTION 3: WORKED NUMERICAL EXAMPLE -->
+        <section class="guide-section" aria-labelledby="sec-example">
+          <h2 class="section-heading" id="sec-example">
+            <span class="sec-num">03.</span> Worked Numerical Example
+          </h2>
+          <p class="paragraph">
+            Synthesize and solve the standard LiveSimulators mechanical kinematics benchmark linkage (Grashof Class I Crank-Rocker mechanism):
+          </p>
+          <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:0.75rem; padding:1rem 1.25rem; margin-bottom:1.5rem; font-family:var(--font-mono); font-size:0.85rem;">
+            <strong>Link Dimensions:</strong><br>
+            Ground Frame Link: <span class="code-token">r₁ = 130 mm</span><br>
+            Input Crank Link: <span class="code-token">r₂ = 40 mm</span><br>
+            Connecting Coupler Link: <span class="code-token">r₃ = 120 mm</span><br>
+            Output Rocker Link: <span class="code-token">r₄ = 90 mm</span><br>
+            Test Input Angle: <span class="code-token">θ₂ = 0°</span> (Crank in-line with ground axis)
+          </div>
+
+          <table class="step-table">
+            <thead>
+              <tr>
+                <th style="width:12%;">Step</th>
+                <th style="width:28%;">Kinematic Parameter</th>
+                <th style="width:35%;">Analytical Formulation &amp; Substitution</th>
+                <th style="width:25%;">Computed Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Step 1</strong></td>
+                <td>Link Length Ordering</td>
+                <td>
+                  Shortest: s = r₂ = 40 mm<br>
+                  Longest: l = r₁ = 130 mm<br>
+                  Others: p = r₄ = 90 mm, q = r₃ = 120 mm
+                </td>
+                <td><span class="code-token">s=40, l=130, p=90, q=120</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 2</strong></td>
+                <td>Grashof Sum Evaluation</td>
+                <td>
+                  s + l = 40 + 130 = 170 mm<br>
+                  p + q = 90 + 120 = 210 mm
+                </td>
+                <td><span class="code-token">170 mm &le; 210 mm</span> (Grashof Satisfied)</td>
+              </tr>
+              <tr>
+                <td><strong>Step 3</strong></td>
+                <td>Mechanism Inversion Type</td>
+                <td>
+                  Shortest link r₂ is adjacent to fixed ground frame r₁:
+                </td>
+                <td><span class="code-token">Crank-Rocker Mechanism</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 4</strong></td>
+                <td>Freudenstein Constants</td>
+                <td>
+                  K₁ = r₁ / r₂ = 130 / 40 = 3.250<br>
+                  K₂ = r₁ / r₄ = 130 / 90 = 1.444<br>
+                  K₃ = (130² + 40² - 120² + 90²) / [2(40)(90)]
+                </td>
+                <td>
+                  <span class="code-token">K₁ = 3.250</span><br>
+                  <span class="code-token">K₂ = 1.444</span><br>
+                  <span class="code-token">K₃ = 1.694</span>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Step 5</strong></td>
+                <td>Output Rocker Angle at θ₂ = 0°</td>
+                <td>
+                  3.250 cos(θ₄) - 1.444(1) + 1.694 = cos(-θ₄) = cos(θ₄)<br>
+                  2.250 cos(θ₄) = -0.250 &rArr; cos(θ₄) = -0.1111
+                </td>
+                <td><span class="code-token">θ₄ = 96.38°</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 6</strong></td>
+                <td>Coupler Angle at θ₂ = 0°</td>
+                <td>
+                  r₃ sin(θ₃) = r₄ sin(θ₄) - r₂ sin(θ₂)<br>
+                  120 sin(θ₃) = 90 sin(96.38°) = 89.44
+                </td>
+                <td><span class="code-token">θ₃ = 48.19°</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 7</strong></td>
+                <td>Transmission Angle Range</td>
+                <td>
+                  μ_min occurs when θ₂ = 180°: μ_min ≈ 42.1°<br>
+                  μ_max occurs when θ₂ = 0°: μ_max ≈ 104.5°
+                </td>
+                <td>
+                  <span class="code-token">42.1° &le; μ &le; 104.5°</span><br>
+                  <small style="color:var(--amber);">Safe, non-locking (TODO: verify pin clearance tolerance)</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- SECTION 4: COMMON MISTAKES -->
+        <section class="guide-section" aria-labelledby="sec-mistakes">
+          <h2 class="section-heading" id="sec-mistakes">
+            <span class="sec-num">04.</span> Common Engineering Mistakes
+          </h2>
+          <ul class="mistakes-list">
+            <li>
+              <strong>1. Allowing Transmission Angle μ to Drop Below 35° or 40°</strong>
+              The transmission angle μ between the coupler link and output rocker governs how efficiently force is transmitted into usable torque. When μ drops below 35° near dead centers, the mechanical advantage approaches zero and joint pin friction forces easily trigger mechanical binding or toggle lock.
+            </li>
+            <li>
+              <strong>2. Misidentifying Inversion Types Based Only on Link Lengths</strong>
+              The Grashof inequality s + l ≤ p + q alone only determines whether a continuous revolution is physically possible. The specific kinematic inversion (Crank-Rocker, Drag-Link Double-Crank, or Double-Rocker) is determined strictly by which link is bolted to ground: fixing the link adjacent to s yields a Crank-Rocker; fixing s yields a Double-Crank; fixing the link opposite to s yields a Grashof Double-Rocker.
+            </li>
+            <li>
+              <strong>3. Overlooking Branch Defects and Assembly Mode Discontinuities</strong>
+              Freudenstein’s algebraic equation has two mathematical roots corresponding to the "open" and "crossed" assembly circuits. An actual physical linkage cannot jump between these two branches without being disconnected at a pin joint. Failing to verify assembly branch continuity results in CAD simulations that appear continuous but cannot be physically traversed.
+            </li>
+          </ul>
+        </section>
+
+        <!-- SECTION 5: INTERACTIVE LAB CTA -->
+        <section class="guide-section" style="padding:0; background:transparent; border:none;" aria-labelledby="sec-lab">
+          <div class="lab-cta-card">
+            <h2 class="lab-cta-title" id="sec-lab">Synthesize Linkages &amp; Coupler Curves Live</h2>
+            <p class="lab-cta-desc">
+              Adjust crank, coupler, rocker, and ground link lengths in real time. Switch between Grashof inversions, observe instantaneous transmission angles, and trace complex industrial coupler point paths at 60 FPS.
+            </p>
+            <a href="/simulator/four-bar-mechanism" class="launch-button" onclick="gtag('event', 'simulator_launch', {'simulator': 'Planar 4-Bar Grashof Kinematics & Coupler Curves'});">
+              Launch Interactive Four-Bar Mechanism Simulator &rarr;
+            </a>
+          </div>
+        </section>
+
+        <!-- SECTION 6: REFERENCES -->
+        <section class="guide-section" aria-labelledby="sec-references">
+          <h2 class="section-heading" id="sec-references">
+            <span class="sec-num">05.</span> References &amp; Standards
+          </h2>
+          <ul class="ref-list">
+            <li>Norton, R. L. (2020). <em>Design of Machinery: An Introduction to the Synthesis and Analysis of Mechanisms and Machines</em> (6th ed.). McGraw-Hill Education. Chapters 2-4: Kinematics of Linkages.</li>
+            <li>Uicker, J. J., Pennock, G. R., &amp; Shigley, J. E. (2017). <em>Theory of Machines and Mechanisms</em> (5th ed.). Oxford University Press. Chapter 3: Position Analysis of Planar Mechanisms.</li>
+            <li>ISO 13348: <em>Industrial automation systems and integration - Mechanics and linkages</em>. International Organization for Standardization.</li>
+            <li>ASME B105: <em>Kinematics of Mechanisms and Machine Design</em>. American Society of Mechanical Engineers.</li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <!-- Global Site Footer -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <a href="/" class="brand-logo" style="margin-bottom:1rem;">
+              <div class="logo-icon">LS</div>
+              <span>LIVE <span class="accent">SIMULATORS</span></span>
+            </a>
+            <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; max-width:320px;">
+              Open-access engineering virtual laboratories. First-principles Float64 numerical differential solvers operating at 60 FPS directly in the browser. Founded by Anil Sharma.
+            </p>
+          </div>
+          <div class="footer-col">
+            <h5>Departments</h5>
+            <ul>
+              <li><a href="/department/mechanical">Mechanical Dynamics</a></li>
+              <li><a href="/department/control">Process Automation</a></li>
+              <li><a href="/department/electrical">Electrical Systems</a></li>
+              <li><a href="/department/civil">Structural Mechanics</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Educational Guides</h5>
+            <ul>
+              <li><a href="/guides/rlc-resonance-explained.html">RLC Resonance</a></li>
+              <li><a href="/guides/rankine-cycle-ts-diagram.html">Rankine Cycle T-s</a></li>
+              <li><a href="/guides/pid-tuning-step-by-step.html">PID Tuning Guide</a></li>
+              <li><a href="/guides/beam-deflection-euler-bernoulli.html">Beam Deflection</a></li>
+              <li><a href="/guides/four-bar-mechanism-kinematics.html">Four-Bar Kinematics</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Companion Portals</h5>
+            <ul>
+              <li><a href="https://mech.livesimulators.com" target="_blank" rel="noopener">Mech Digital Twins (ASME/API)</a></li>
+              <li><a href="https://designcalculators.co.in" target="_blank" rel="noopener">DesignCalculators.co.in</a></li>
+              <li><a href="/about">About LiveSimulators</a></li>
+              <li><a href="/contact-form.html">Contact Engineering Team</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div>
+            &copy; 2026 LiveSimulators.com • Created by Anil Sharma. All models governed by first principles.
+          </div>
+          <div>
+            Zero Plugins Required • Standard HTML5 / WebGL / Canvas / MathML
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

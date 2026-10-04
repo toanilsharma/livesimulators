@@ -426,6 +426,34 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     metrics.push({ label: 'Damping Ratio ζ', value: zeta.toFixed(3), unit: '', description: 'Dimensionless damping coefficient', status: zeta < 1 ? 'warning' : 'normal' });
     metrics.push({ label: 'Quality Factor Q', value: Q.toFixed(2), unit: '', description: 'Sharpness of frequency resonance peak' });
     metrics.push({ label: 'Total Impedance |Z|', value: Z.toFixed(1), unit: 'Ω', description: 'Effective AC circuit opposition to current' });
+  } else if (simulator.type === 'fourier') {
+    const harmonics = Math.round(params['harmonicsCount'] !== undefined ? params['harmonicsCount'] : 7);
+    const f0 = params['fundamentalFreq'] !== undefined ? params['fundamentalFreq'] : 50;
+    const waveType = Math.round(params['waveformType'] !== undefined ? params['waveformType'] : 0);
+    const noise = params['noiseLevel'] !== undefined ? params['noiseLevel'] : 0;
+
+    let harmonicPowerSum = 0;
+    if (waveType === 0) {
+      for (let n = 3; n <= harmonics; n += 2) {
+        harmonicPowerSum += Math.pow(1 / n, 2);
+      }
+    } else if (waveType === 1) {
+      for (let n = 3; n <= harmonics; n += 2) {
+        harmonicPowerSum += Math.pow(1 / (n * n), 2);
+      }
+    } else {
+      for (let n = 2; n <= harmonics; n++) {
+        harmonicPowerSum += Math.pow(1 / n, 2);
+      }
+    }
+    const thdPct = Math.sqrt(harmonicPowerSum) * 100;
+    const gibbsOvershoot = waveType === 0 ? (harmonics > 1 ? 8.95 : 0) : 0;
+    const waveName = waveType === 0 ? 'Square Wave' : waveType === 1 ? 'Triangle Wave' : 'Sawtooth Wave';
+
+    metrics.push({ label: 'Synthesized Waveform', value: waveName, unit: '', description: `Harmonic partial sum up to n = ${harmonics}` });
+    metrics.push({ label: 'Fundamental Freq f₀', value: f0.toFixed(0), unit: 'Hz', description: 'Base repetition rate of periodic signal' });
+    metrics.push({ label: 'Total Harmonic Distortion', value: `${thdPct.toFixed(1)}%`, unit: 'THD', description: 'IEEE 519 spectral purity index', status: thdPct > 20 ? 'warning' : 'normal' });
+    metrics.push({ label: 'Gibbs Phenomenon', value: waveType === 0 ? `${gibbsOvershoot.toFixed(2)}%` : '0.00%', unit: '', description: waveType === 0 ? 'Peak overshoot ringing at step discontinuity' : 'Continuous signal (uniform convergence)' });
   } else if (simulator.type === 'three_phase') {
     const f = params['frequency'] || 50;
     const V_ph = params['voltage'] || 230;
@@ -1567,62 +1595,81 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
           pidState: pidStateRef.current
         });
       } else if (simulator.type === 'current_loop') {
-        const pVal = params['pressure'] || 6.5;
-        const lrv = params['lrv'] || 0;
-        const urv = params['urv'] || 10;
-        const frac = Math.max(0, Math.min(1, (pVal - lrv) / (urv - lrv)));
+        const pv = params['processPressure'] !== undefined ? params['processPressure'] : 6.5;
+        const Rwire = params['wireResistance'] !== undefined ? params['wireResistance'] : 25;
+        const Rload = params['loadResistance'] !== undefined ? params['loadResistance'] : 250;
+        const Vs = params['supplyVoltage'] !== undefined ? params['supplyVoltage'] : 24;
+
+        const lrv = 0;
+        const urv = 10;
+        const frac = Math.max(0, Math.min(1, (pv - lrv) / (urv - lrv)));
         const mA = 4.0 + 16.0 * frac;
+        const I_amp = mA * 1e-3;
+        const vWire = I_amp * Rwire;
+        const vLoad = I_amp * Rload;
+        const vTerm = Vs - vWire - vLoad;
+        const isHealthy = vTerm >= 11.5;
+
         renderCurrentLoop(rc, {
-          processPressure: pVal,
+          processPressure: pv,
           lrv,
           urv,
           calculatedCurrent: mA,
           pressurePercent: frac * 100,
-          wireResistance: 15,
-          wireVoltage: (mA / 1000) * 15,
-          loadResistance: 250,
-          loadVoltage: (mA / 1000) * 250,
-          supplyVoltage: 24,
-          transmitterTerminalVoltage: 24 - (mA / 1000) * (250 + 15),
-          isComplianceVoltageHealthy: true,
+          wireResistance: Rwire,
+          wireVoltage: vWire,
+          loadResistance: Rload,
+          loadVoltage: vLoad,
+          supplyVoltage: Vs,
+          transmitterTerminalVoltage: vTerm,
+          isComplianceVoltageHealthy: isHealthy,
           hartActive: true,
           particles: loopParticlesRef.current,
           hartWavePhase: localTime * 20
         });
       } else if (simulator.type === 'control_valve') {
-        const cOut = params['controllerOutput'] || 60;
-        const inP = params['inletPressure'] || 6.0;
-        const outP = params['outletPressure'] || 3.0;
-        const dP = Math.max(0.1, inP - outP);
-        const lift = cOut / 100;
-        const cv = 50 * Math.pow(50, lift - 1);
+        const openPct = params['openingPct'] !== undefined ? params['openingPct'] : 60;
+        const inP = params['inletPressure'] !== undefined ? params['inletPressure'] : 6.0;
+        const outP = params['outletPressure'] !== undefined ? params['outletPressure'] : 2.5;
+        const maxCv = params['maxCv'] !== undefined ? params['maxCv'] : 50;
+        const dP = Math.max(0.01, inP - outP);
+        const lift = openPct / 100;
+        const cv = maxCv * Math.pow(50, lift - 1);
+        const flowQ = 0.865 * cv * Math.sqrt(dP);
         renderControlValve(rc, {
-          controllerOutput: cOut,
+          controllerOutput: openPct,
           trimType: 'equal_pct',
           inletPressure: inP,
           outletPressure: outP,
           deltaP: dP,
           calculatedCv: cv,
-          volumetricFlowRate: 0.865 * cv * Math.sqrt(dP),
+          volumetricFlowRate: flowQ,
           valveStemPos: lift,
           bubbleParticles: bubbleParticlesRef.current
         });
       } else if (simulator.type === 'orifice_meter') {
-        const d_bore = params['boreD'] || 50;
-        const d_pipe = params['pipeD'] || 100;
-        const p_diff = params['diffPressure'] || 250;
+        const d_bore = params['boreD'] !== undefined ? params['boreD'] : 60;
+        const Q = params['flowRateQ'] !== undefined ? params['flowRateQ'] : 45;
+        const rho = params['fluidDensity'] !== undefined ? params['fluidDensity'] : 1000;
+        const d_pipe = 100; // Standard 100mm pipe diameter
         const beta = d_bore / d_pipe;
+        const A1 = (Math.PI / 4) * Math.pow(d_pipe / 1000, 2);
+        const v1 = (Q / 3600) / A1;
+        const Cd = 0.605; // ISO 5167 Stolz discharge coefficient
+        const deltaP_mbar = ((0.5 * rho * Math.pow(v1, 2) * (1 - Math.pow(beta, 4))) / (Math.pow(Cd, 2) * Math.pow(beta, 4))) / 100;
+        const deltaP_clamped = Math.max(0.1, deltaP_mbar);
+        const transmitterCurrent = 4.0 + 16.0 * Math.min(1.0, Math.sqrt(deltaP_clamped / 500));
         renderOrificeFlow(rc, {
           pipeD: d_pipe,
           boreD: d_bore,
           beta,
-          flowRateQ: 11.5,
-          deltaP: p_diff,
-          permLossRatio: 1 - beta,
-          density: 1000,
+          flowRateQ: Q,
+          deltaP: deltaP_clamped,
+          permLossRatio: 1 - Math.pow(beta, 1.9),
+          density: rho,
           useSquareRoot: true,
           lowFlowCutoff: false,
-          outputCurrent: 4 + 16 * Math.sqrt(p_diff / 500),
+          outputCurrent: transmitterCurrent,
           particles: bubbleParticlesRef.current.map((b) => ({ x: b.x, y: b.y, speed: b.size }))
         });
       } else if (simulator.type === 'rtd_sensor') {

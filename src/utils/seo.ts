@@ -147,43 +147,27 @@ export const FOUNDER_PERSON_SCHEMA = {
   ],
 };
 
-// Base Founder & Organization Schema (Validated for Google Rich Results Test)
+// Base Organization Schema (Sitewide)
 export const ORGANIZATION_SCHEMA = {
   '@context': 'https://schema.org',
-  '@type': ['Organization', 'EducationalOrganization'],
+  '@type': 'Organization',
   '@id': `${SITE_URL}/#organization`,
   name: 'LiveSimulators',
-  alternateName: 'LiveSimulators.com',
   url: SITE_URL,
   logo: `${SITE_URL}/og-default.png`,
-  image: `${SITE_URL}/og-default.png`,
-  description: "Don't just read engineering. See it happen. Interactive first-principles numerical engineering simulations for students, educators, and practicing engineers.",
-  founder: {
-    '@id': `${SITE_URL}/#founder`,
-  },
-  contactPoint: {
-    '@type': 'ContactPoint',
-    email: '0808miracle@gmail.com',
-    contactType: 'customer service',
-    availableLanguage: ['English'],
-  },
   sameAs: [
     'https://mech.livesimulators.com',
     'https://designcalculators.co.in',
   ],
 };
 
-// Base WebSite Schema (Site-wide SearchAction)
+// Base WebSite Schema (Sitewide SearchAction)
 export const WEBSITE_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   '@id': `${SITE_URL}/#website`,
   name: 'LiveSimulators',
   url: SITE_URL,
-  description: "Don't just read engineering. See it happen. Interactive engineering simulations that turn theory into visual understanding.",
-  publisher: {
-    '@id': `${SITE_URL}/#organization`,
-  },
   potentialAction: {
     '@type': 'SearchAction',
     target: `${SITE_URL}/?search={search_term_string}`,
@@ -191,44 +175,14 @@ export const WEBSITE_SCHEMA = {
   },
 };
 
-// Core Engineering FAQ Schema
-export const FAQ_SCHEMA = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: 'How do LiveSimulators numerical physics engines work?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'LiveSimulators runs client-side Float64 numerical integrators using 4th-Order Runge-Kutta (RK4) and symplectic algorithms. Differential equations and boundary conditions are solved live at 60 FPS directly in the browser with zero server latency.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Are LiveSimulators models aligned with international engineering standards?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes. Simulations reference established industry standards including IEEE Std 1459/3002, ASME MFC-3M, ISO 5167, IEC 60076/60381, AISC 360, and SI-CODATA fundamental physical constants.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Can professors and universities use LiveSimulators for classroom lectures and syllabi?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes. LiveSimulators is an open-access educational platform. Educators can freely demonstrate live simulations, project workbenches during lectures, and integrate simulation links into syllabus coursework.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Who created LiveSimulators?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'LiveSimulators was founded and engineered by Anil Sharma (email: 0808miracle@gmail.com, LinkedIn: https://www.linkedin.com/in/toanilsharma/) to transform mathematical pedagogy into visual physical intuition.',
-      },
-    },
-  ],
+// Curricular Course Codes printed on Homepage
+export const HOMEPAGE_COURSE_CODES: Record<string, { code: string; name: string }> = {
+  electrical: { code: 'EE-200', name: 'Electrical & Electronic Systems' },
+  mechanical: { code: 'ME-400', name: 'Mechanical & Thermal Dynamics' },
+  control: { code: 'IC-300', name: 'Control Systems & Instrumentation' },
+  civil: { code: 'CE-320', name: 'Civil & Structural Mechanics' },
+  chemical: { code: 'CH-250', name: 'Chemical & Process Engineering' },
+  physics: { code: 'PH-500', name: 'Quantum & Semiconductor Physics' },
 };
 
 /**
@@ -254,7 +208,6 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         jsonLd: [
           ORGANIZATION_SCHEMA,
           WEBSITE_SCHEMA,
-          FAQ_SCHEMA,
           {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
@@ -465,32 +418,17 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         ],
       };
 
-      const collectionSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
-        '@id': `${canonicalUrl}#collection`,
-        name: `${dept.name} Simulators Hub`,
-        description: dept.description,
-        url: canonicalUrl,
-        about: {
-          '@type': 'DefinedTerm',
-          name: dept.name,
-          termCode: dept.code,
-        },
-      };
-
       const itemListSchema = {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
-        '@id': `${canonicalUrl}#simulators-list`,
-        name: `${dept.name} Engineering Simulators & Virtual Laboratories`,
-        description: `Comprehensive directory of ${deptSimulators.length} interactive ${dept.name} engineering simulators and numerical physics solvers.`,
+        '@id': `${canonicalUrl}#itemlist`,
+        name: `${dept.name} Simulators`,
+        description: `Interactive ${dept.name} simulators and numerical physics solvers.`,
         numberOfItems: deptSimulators.length,
         itemListElement: deptSimulators.map((s, idx) => ({
           '@type': 'ListItem',
           position: idx + 1,
           name: s.title,
-          description: s.description,
           url: `${SITE_URL}/simulator/${s.id}`,
         })),
       };
@@ -511,7 +449,6 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           ORGANIZATION_SCHEMA,
           WEBSITE_SCHEMA,
           breadcrumbSchema,
-          collectionSchema,
           itemListSchema,
         ],
       };
@@ -547,22 +484,20 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         name: `Interactive ${sim.title} Simulator & Calculator`,
         alternateName: sim.title,
         description: sim.description,
-        applicationCategory: 'EducationalApplication',
+        applicationCategory: 'EngineeringApplication',
         operatingSystem: 'Web Browser',
         browserRequirements: 'Requires HTML5 Canvas and JavaScript support. Runs client-side Float64 numerical physics engine.',
         offers: {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'USD',
-          availability: 'https://schema.org/InStock',
-        },
-        author: {
-          '@id': `${SITE_URL}/#founder`,
-        },
-        publisher: {
-          '@id': `${SITE_URL}/#organization`,
         },
         url: canonicalUrl,
+      };
+
+      const courseInfo = HOMEPAGE_COURSE_CODES[sim.discipline] || {
+        code: 'EE-200',
+        name: 'Engineering Systems',
       };
 
       const learningResourceSchema = {
@@ -571,132 +506,18 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         '@id': `${canonicalUrl}#learning-resource`,
         name: sim.title,
         description: sim.description,
-        learningResourceType: 'Simulation',
-        educationalLevel: sim.difficulty,
-        educationalUse: ['Simulation', 'Instruction', 'Laboratory Exploration'],
-        about: [
-          sim.disciplineName,
-          sim.physicalLaw,
-          sim.standardReference || 'International Engineering Standards'        ],
+        learningResourceType: 'Interactive Resource',
+        educationalUse: 'simulation',
         educationalAlignment: [
           {
             '@type': 'AlignmentObject',
             alignmentType: 'educationalSubject',
-            educationalFramework: 'Engineering Disciplines & First Principles',
-            targetName: sim.disciplineName,
-            targetDescription: `Engineering branch covering ${sim.disciplineName}`,
+            educationalFramework: 'EducationalOccupationalCredential',
+            targetName: courseInfo.code,
+            targetDescription: `${courseInfo.name} (${courseInfo.code})`,
           },
-          {
-            '@type': 'AlignmentObject',
-            alignmentType: 'educationalTopic',
-            educationalFramework: 'Physical Laws & Governing Formulations',
-            targetName: sim.physicalLaw,
-            targetDescription: `${sim.equationDescription}: ${sim.governingEquation}`,
-          },
-          {
-            '@type': 'AlignmentObject',
-            alignmentType: 'educationalLevel',
-            educationalFramework: 'Academic Rigor Level',
-            targetName: sim.difficulty,
-            targetDescription: `Engineering rigor level ${sim.difficulty}`,
-          },
-          ...(sim.courseMapping
-            ? sim.courseMapping.split(',').map((c) => ({
-                '@type': 'AlignmentObject',
-                alignmentType: 'courseMapping',
-                educationalFramework: 'University Engineering Curriculum',
-                targetName: c.trim(),
-              }))
-            : []),
-          ...(sim.standardReference
-            ? [
-                {
-                  '@type': 'AlignmentObject',
-                  alignmentType: 'standardVerification',
-                  educationalFramework: 'Industrial Engineering Standards',
-                  targetName: sim.standardReference,
-                },
-              ]
-            : []),
         ],
-        teaches: `Governing physical formulation: ${sim.governingEquation}. ${sim.equationDescription}`,
-        author: {
-          '@id': `${SITE_URL}/#founder`,
-        },
-        publisher: {
-          '@id': `${SITE_URL}/#organization`,
-        },
-        isAccessibleForFree: true,
-        inLanguage: 'en',
         url: canonicalUrl,
-      };
-
-      const techArticleSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'TechArticle',
-        headline: `${sim.title} - Mathematical Formulation & Analytical Proof`,
-        description: sim.analyticalProof || sim.description,
-        proficiencyLevel: sim.difficulty,
-        author: {
-          '@id': `${SITE_URL}/#founder`,
-        },
-        publisher: {
-          '@id': `${SITE_URL}/#organization`,
-        },
-        dependencies: sim.standardReference || 'Engineering Standard Reference',
-        url: canonicalUrl,
-      };
-
-      const courseSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'Course',
-        '@id': `${canonicalUrl}#course`,
-        name: `${sim.title} - Virtual Laboratory Module`,
-        description: sim.description,
-        courseCode: sim.courseMapping ? sim.courseMapping.split(',')[0].trim() : `${dept?.code || 'ENG-100'}`,
-        provider: {
-          '@id': `${SITE_URL}/#organization`,
-        },
-        educationalCredentialAwarded: 'Open Academic Access',
-        isAccessibleForFree: true,
-        hasCourseInstance: {
-          '@type': 'CourseInstance',
-          courseMode: 'online',
-          courseWorkload: 'PT30M',
-          instructor: {
-            '@id': `${SITE_URL}/#founder`,
-          },
-        },
-      };
-
-      const faqList = (sim.faqs && sim.faqs.length > 0)
-        ? sim.faqs
-        : [
-            {
-              question: `What physical formulation governs the ${sim.title}?`,
-              answer: `The ${sim.title} is governed by ${sim.physicalLaw}, evaluated via ${sim.equationDescription}: ${sim.governingEquation}.`,
-            },
-            {
-              question: `How is the ${sim.title} utilized in engineering curricula?`,
-              answer: `Students and professors use this interactive model in ${sim.courseMapping || (dept ? dept.name : 'Engineering')} coursework to observe real-time dynamic response, measure key output metrics, and verify theoretical textbook derivations without physical hardware constraints.`,
-            },
-            {
-              question: `Can educators embed the ${sim.title} into university LMS platforms like Canvas or Moodle?`,
-              answer: `Yes, LiveSimulators supports standard iframe embeds (<iframe src="https://livesimulators.com/embed/${sim.id}" width="100%" height="600"></iframe>) for direct integration into Canvas, Moodle, Blackboard, and laboratory worksheets.`,
-            },
-          ];
-
-      const faqSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: faqList.map((f) => ({
-          '@type': 'Question',
-          name: f.question,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: f.answer,
-          },
-        })),
       };
 
       return {
@@ -717,14 +538,10 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         ],
         jsonLd: [
           ORGANIZATION_SCHEMA,
-          FOUNDER_PERSON_SCHEMA,
           WEBSITE_SCHEMA,
           breadcrumbSchema,
           webApplicationSchema,
           learningResourceSchema,
-          techArticleSchema,
-          courseSchema,
-          faqSchema,
         ],
       };
     }

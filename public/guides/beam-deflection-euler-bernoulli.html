@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WX8V8HH57V"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-WX8V8HH57V', {
+        'linker': {
+          'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+        }
+      });
+      gtag('config', 'GT-MKRVD4QN', {
+        'linker': {
+          'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+        }
+      });
+
+      console.log('[Google Analytics 4] Measurement ID linked: G-WX8V8HH57V (Tag: GT-MKRVD4QN). Verify link in Google Analytics → Admin → Product Links → Search Console.');
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Beam Deflection Euler-Bernoulli Explained with Interactive Simulator | LiveSimulators</title>
+    <meta name="description" content="Calculate structural beam deflection, shear force, bending moments, and AISC L/360 serviceability limits with free interactive simulator." />
+    <link rel="canonical" href="https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html" />
+
+    <!-- Open Graph & Social Meta Tags -->
+    <meta property="og:title" content="Beam Deflection Euler-Bernoulli Explained with Interactive Simulator | LiveSimulators" />
+    <meta property="og:description" content="Calculate structural beam deflection, shear force, bending moments, and AISC L/360 serviceability limits with free interactive simulator." />
+    <meta property="og:url" content="https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:image" content="https://livesimulators.com/og-default.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
+    <!-- Structured Data: Organization, WebSite & Article -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://livesimulators.com/#organization",
+          "name": "LiveSimulators",
+          "url": "https://livesimulators.com",
+          "logo": "https://livesimulators.com/og-default.png",
+          "sameAs": [
+            "https://mech.livesimulators.com",
+            "https://designcalculators.co.in"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://livesimulators.com/#website",
+          "name": "LiveSimulators",
+          "url": "https://livesimulators.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://livesimulators.com/?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Article",
+          "@id": "https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html#article",
+          "headline": "Beam Deflection Euler-Bernoulli: Complete Engineering Guide",
+          "description": "Calculate structural beam deflection, shear force, bending moments, and AISC L/360 serviceability limits with free interactive simulator.",
+          "author": {
+            "@type": "Person",
+            "name": "Anil Sharma",
+            "url": "https://www.linkedin.com/in/toanilsharma/"
+          },
+          "publisher": {
+            "@id": "https://livesimulators.com/#organization"
+          },
+          "mainEntityOfPage": "https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html",
+          "url": "https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html"
+        }
+      ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Standalone Architectural CSS -->
+    <style>
+      :root {
+        --bg-body: #060a12;
+        --bg-card: #090e1a;
+        --bg-surface: #0f172a;
+        --border-color: #1e293b;
+        --border-highlight: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --pink: #ec4899;
+        --pink-hover: #db2777;
+        --cyan: #06b6d4;
+        --amber: #f59e0b;
+        --emerald: #10b981;
+        --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        --font-mono: 'IBM Plex Mono', monospace;
+        --font-display: 'Chakra Petch', sans-serif;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--pink); text-decoration: none; transition: color 0.2s; }
+      a:hover { color: #f472b6; }
+      .container { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+
+      /* Precision Top Bar */
+      .top-strip {
+        background: #030712;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.35rem 1.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .top-strip span.highlight { color: var(--pink); font-weight: 600; }
+
+      /* Navigation Header */
+      header.site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(6, 10, 18, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.85rem 0;
+      }
+      .nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+      }
+      .brand-logo .logo-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(236, 72, 153, 0.15);
+        border: 1px solid rgba(236, 72, 153, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--pink);
+        font-weight: 900;
+      }
+      .brand-logo span.accent { color: var(--pink); }
+      nav.nav-links {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      nav.nav-links a { color: var(--text-secondary); }
+      nav.nav-links a:hover { color: #fff; }
+
+      /* Article Main Layout */
+      main.guide-content { padding: 3rem 0 5rem; }
+      .breadcrumb {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+      }
+      .guide-header { margin-bottom: 3rem; }
+      .guide-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 9999px;
+        background: rgba(236, 72, 153, 0.12);
+        border: 1px solid rgba(236, 72, 153, 0.3);
+        color: var(--pink);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+      h1.guide-title {
+        font-size: 2.35rem;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1.25;
+        letter-spacing: -0.02em;
+        margin-bottom: 1rem;
+      }
+      .guide-tagline {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        max-width: 820px;
+      }
+
+      /* Sections */
+      section.guide-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2.25rem;
+      }
+      h2.section-heading {
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.75rem;
+      }
+      h2.section-heading .sec-num {
+        font-family: var(--font-mono);
+        color: var(--pink);
+        font-size: 1rem;
+      }
+      p.paragraph {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: 1.25rem;
+      }
+      p.paragraph:last-child { margin-bottom: 0; }
+
+      /* Equations Box (Semantic MathML / Clean HTML) */
+      .math-box {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        margin: 1.25rem 0;
+        overflow-x: auto;
+      }
+      .math-title {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--pink);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+      }
+      math {
+        font-family: 'Latin Modern Math', Cambria Math, STIX Two Math, serif;
+        font-size: 1.25rem;
+        color: #fff;
+        display: block;
+        margin: 0.5rem 0;
+      }
+      .math-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+      }
+
+      /* Step-by-Step Table */
+      table.step-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.25rem 0;
+        font-size: 0.9rem;
+      }
+      table.step-table th {
+        background: #0b1324;
+        color: var(--pink);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        text-align: left;
+        padding: 0.85rem 1rem;
+        border-bottom: 2px solid var(--border-color);
+      }
+      table.step-table td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        vertical-align: top;
+      }
+      table.step-table tr:hover td {
+        background: rgba(15, 23, 42, 0.5);
+      }
+      .code-token {
+        font-family: var(--font-mono);
+        color: #fff;
+        font-weight: 600;
+        background: rgba(255,255,255,0.06);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+      }
+
+      /* Pitfalls & Mistakes */
+      ul.mistakes-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      ul.mistakes-list li {
+        background: rgba(244, 63, 94, 0.06);
+        border: 1px solid rgba(244, 63, 94, 0.25);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        color: #fecdd3;
+        font-size: 0.92rem;
+        line-height: 1.6;
+      }
+      ul.mistakes-list strong {
+        color: #fff;
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+
+      /* Interactive Lab CTA */
+      .lab-cta-card {
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(9, 14, 26, 0.95) 100%);
+        border: 1px solid rgba(236, 72, 153, 0.4);
+        border-radius: 1rem;
+        padding: 2.25rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .lab-cta-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 0.65rem;
+      }
+      .lab-cta-desc {
+        color: var(--text-secondary);
+        max-width: 640px;
+        margin: 0 auto 1.75rem;
+        font-size: 0.95rem;
+      }
+      .launch-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.85rem 1.75rem;
+        background: var(--pink);
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 700;
+        border-radius: 0.65rem;
+        text-decoration: none;
+        transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 0 20px rgba(236, 72, 153, 0.35);
+      }
+      .launch-button:hover {
+        background: #f472b6;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(236, 72, 153, 0.6);
+      }
+
+      /* References */
+      ul.ref-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      ul.ref-list li {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        padding-left: 1.25rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      ul.ref-list li::before {
+        content: "•";
+        color: var(--pink);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+      }
+
+      /* Footer */
+      footer.site-footer {
+        background: #030712;
+        border-top: 1px solid var(--border-color);
+        padding: 3.5rem 0 2rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 2.5rem;
+        margin-bottom: 2.5rem;
+      }
+      .footer-col h5 {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: #fff;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .footer-col ul { list-style: none; }
+      .footer-col ul li { margin-bottom: 0.5rem; }
+      .footer-col ul li a { color: var(--text-muted); }
+      .footer-col ul li a:hover { color: var(--pink); }
+      .footer-bottom {
+        border-top: 1px solid var(--border-color);
+        padding-top: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+      @media (max-width: 768px) {
+        .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+        .top-strip { display: none; }
+        h1.guide-title { font-size: 1.85rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Precision Top Engineering Strip -->
+    <div class="top-strip">
+      <div>
+        <span class="highlight">STRUCTURAL SOLVER ACTIVE</span> • AISC 360-16 &amp; EUROCODE 3 BEAM MECHANICS
+      </div>
+      <div>
+        FLOAT64 EULER-BERNOULLI INTEGRATOR • EXACT SHEAR &amp; MOMENT PROFILES
+      </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="site-header">
+      <div class="container nav-row">
+        <a href="/" class="brand-logo" id="brand-logo">
+          <div class="logo-icon">LS</div>
+          <span>LIVE <span class="accent">SIMULATORS</span></span>
+        </a>
+        <nav class="nav-links">
+          <a href="/department/civil">Civil &amp; Structures</a>
+          <a href="/department/mechanical">Mechanical</a>
+          <a href="/department/electrical">Electrical</a>
+          <a href="/department/control">Control</a>
+          <a href="/about">About</a>
+          <a href="/simulator/beam-bending" class="launch-button" style="padding:0.4rem 0.85rem; font-size:0.8rem;" onclick="gtag('event', 'simulator_launch', {'simulator': 'Euler-Bernoulli Beam Deflection, Shear & Moment'});">Launch Lab ↗</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="guide-content">
+      <div class="container">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a> / <a href="/department/civil">Civil</a> / <span>Beam Deflection Guide</span>
+        </nav>
+
+        <header class="guide-header">
+          <div class="guide-badge">CIVIL ENGINEERING • STRUCTURAL MECHANICS</div>
+          <h1 class="guide-title">Beam Deflection Euler-Bernoulli: Complete Engineering Guide</h1>
+          <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:1rem; font-family:var(--font-mono);">
+            By <span style="color:#ffffff; font-weight:600;">Anil Sharma</span> • LiveSimulators Engineering
+          </div>
+          <p class="guide-tagline">
+            Formulate transverse shear equilibrium, internal bending moments, and elastic deflection profiles for structural members under distributed and concentrated transverse loads. Verify AISC 360 L/360 serviceability limits.
+          </p>
+        </header>
+
+        <!-- SECTION 1: DEFINITION -->
+        <section class="guide-section" aria-labelledby="sec-definition">
+          <h2 class="section-heading" id="sec-definition">
+            <span class="sec-num">01.</span> Definition
+          </h2>
+          <p class="paragraph">
+            Euler-Bernoulli beam theory (also known as classical beam theory) is a mathematical simplification of linear isotropic elasticity that calculates the load-carrying and deflection characteristics of slender beams under transverse loads. It establishes that cross-sections perpendicular to the neutral centroidal axis remain plane and perpendicular to the deformed axis after flexural bending, neglecting transverse shear strain through the beam depth.
+          </p>
+          <p class="paragraph">
+            In civil and structural engineering design under AISC 360 and Eurocode 3, beams must satisfy two independent design thresholds: ultimate strength capacity (preventing plastic bending failure and yielding of the outer fibers where stress exceeds yield strength) and serviceability deflection limits (preventing excessive sagging ponding, floor bounce, and cosmetic plaster cracking under occupational live loads).
+          </p>
+        </section>
+
+        <!-- SECTION 2: GOVERNING EQUATIONS -->
+        <section class="guide-section" aria-labelledby="sec-equations">
+          <h2 class="section-heading" id="sec-equations">
+            <span class="sec-num">02.</span> Governing Equations
+          </h2>
+          <p class="paragraph">
+            The differential equilibrium of transverse internal forces and bending moments along the beam span coordinate x is expressed by the canonical 4th-order ODE:
+          </p>
+
+          <div class="math-box">
+            <div class="math-title">1. Fourth-Order Differential Equation of Beam Flexure</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <mi>E</mi><mi>I</mi>
+                <mfrac>
+                  <mrow>
+                    <msup><mi>d</mi><mn>4</mn></msup>
+                    <mi>w</mi><mo>(</mo><mi>x</mi><mo>)</mo>
+                  </mrow>
+                  <mrow><mi>d</mi><msup><mi>x</mi><mn>4</mn></msup></mrow>
+                </mfrac>
+                <mo>=</mo>
+                <mi>q</mi><mo>(</mo><mi>x</mi><mo>)</mo>
+              </mrow>
+            </math>
+            <div class="math-desc">EI is the flexural rigidity (E = Young’s modulus, I = area moment of inertia) and q(x) is continuous transverse load.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">2. Moment-Curvature and Shear Force Relations</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <mi>M</mi><mo>(</mo><mi>x</mi><mo>)</mo>
+                <mo>=</mo>
+                <mo>-</mo><mi>E</mi><mi>I</mi>
+                <mfrac>
+                  <mrow>
+                    <msup><mi>d</mi><mn>2</mn></msup>
+                    <mi>w</mi><mo>(</mo><mi>x</mi><mo>)</mo>
+                  </mrow>
+                  <mrow><mi>d</mi><msup><mi>x</mi><mn>2</mn></msup></mrow>
+                </mfrac>
+                <mo>,</mo>
+                <mspace width="1em"/>
+                <mi>V</mi><mo>(</mo><mi>x</mi><mo>)</mo>
+                <mo>=</mo>
+                <mfrac>
+                  <mrow><mi>d</mi><mi>M</mi><mo>(</mo><mi>x</mi><mo>)</mo></mrow>
+                  <mrow><mi>d</mi><mi>x</mi></mrow>
+                </mfrac>
+                <mo>=</mo>
+                <mo>-</mo><mi>E</mi><mi>I</mi>
+                <mfrac>
+                  <mrow>
+                    <msup><mi>d</mi><mn>3</mn></msup>
+                    <mi>w</mi><mo>(</mo><mi>x</mi><mo>)</mo>
+                  </mrow>
+                  <mrow><mi>d</mi><msup><mi>x</mi><mn>3</mn></msup></mrow>
+                </mfrac>
+              </mrow>
+            </math>
+            <div class="math-desc">Shear Force V(x) is the first spatial derivative of Bending Moment M(x). Moment peaks where V(x) = 0.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">3. Flexural Bending Stress (Navier’s Formula)</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <msub><mi>&sigma;</mi><mtext>max</mtext></msub>
+                <mo>=</mo>
+                <mfrac>
+                  <mrow><msub><mi>M</mi><mtext>max</mtext></msub><mi>y</mi></mrow>
+                  <mi>I</mi>
+                </mfrac>
+                <mo>=</mo>
+                <mfrac><msub><mi>M</mi><mtext>max</mtext></msub><mi>S</mi></mfrac>
+              </mrow>
+            </math>
+            <div class="math-desc">y is distance from the neutral axis to the extreme fiber; S = I/y is the elastic section modulus.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">4. Midspan Deflection for Simply Supported Beam</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <msub><mi>&delta;</mi><mtext>max</mtext></msub>
+                <mo>=</mo>
+                <mfrac>
+                  <mrow><mi>P</mi><msup><mi>L</mi><mn>3</mn></msup></mrow>
+                  <mrow><mn>48</mn><mi>E</mi><mi>I</mi></mrow>
+                </mfrac>
+                <mo>+</mo>
+                <mfrac>
+                  <mrow><mn>5</mn><mi>q</mi><msup><mi>L</mi><mn>4</mn></msup></mrow>
+                  <mrow><mn>384</mn><mi>E</mi><mi>I</mi></mrow>
+                </mfrac>
+              </mrow>
+            </math>
+            <div class="math-desc">Superposition of center concentrated load P and uniformly distributed load q across span length L.</div>
+          </div>
+        </section>
+
+        <!-- SECTION 3: WORKED NUMERICAL EXAMPLE -->
+        <section class="guide-section" aria-labelledby="sec-example">
+          <h2 class="section-heading" id="sec-example">
+            <span class="sec-num">03.</span> Worked Numerical Example
+          </h2>
+          <p class="paragraph">
+            Evaluate a simply supported structural steel floor girder modeled in the LiveSimulators civil mechanics workbench (standard AISC W250×67 section):
+          </p>
+          <div style="background:rgba(236,72,153,0.08); border:1px solid rgba(236,72,153,0.3); border-radius:0.75rem; padding:1rem 1.25rem; margin-bottom:1.5rem; font-family:var(--font-mono); font-size:0.85rem;">
+            <strong>Beam Properties &amp; Loads:</strong><br>
+            Clear Span Length: <span class="code-token">L = 6.0 m</span><br>
+            Center Concentrated Point Load: <span class="code-token">P = 45 kN = 45,000 N</span><br>
+            Uniform Distributed Load (UDL): <span class="code-token">q = 12 kN/m = 12,000 N/m</span><br>
+            Structural Steel Modulus: <span class="code-token">E = 200 GPa = 200 × 10⁹ N/m²</span><br>
+            Second Moment of Area: <span class="code-token">I = 84.9 × 10⁻⁶ m⁴</span> (EI = 16.98 × 10⁶ N·m²)
+          </div>
+
+          <table class="step-table">
+            <thead>
+              <tr>
+                <th style="width:12%;">Step</th>
+                <th style="width:28%;">Structural Metric</th>
+                <th style="width:35%;">Formula &amp; Substitution</th>
+                <th style="width:25%;">Computed Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Step 1</strong></td>
+                <td>Moment from Point Load</td>
+                <td>M_p = (P × L) / 4 = (45 kN × 6.0 m) / 4</td>
+                <td><span class="code-token">M_p = 67.50 kN·m</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 2</strong></td>
+                <td>Moment from Uniform Load</td>
+                <td>M_udl = (q × L²) / 8 = (12 kN/m × 36.0 m²) / 8</td>
+                <td><span class="code-token">M_udl = 54.00 kN·m</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 3</strong></td>
+                <td>Total Peak Bending Moment</td>
+                <td>M_total = 67.50 + 54.00</td>
+                <td><span class="code-token">M_max = 121.50 kN·m</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 4</strong></td>
+                <td>Deflection from Point Load</td>
+                <td>
+                  δ_p = (P L³) / (48 E I)<br>
+                  = (45,000 × 216) / [48 × (16.98 × 10⁶)]
+                </td>
+                <td><span class="code-token">δ_p = 11.93 mm</span> (0.01193 m)</td>
+              </tr>
+              <tr>
+                <td><strong>Step 5</strong></td>
+                <td>Deflection from Uniform Load</td>
+                <td>
+                  δ_udl = (5 q L⁴) / (384 E I)<br>
+                  = (5 × 12,000 × 1296) / [384 × (16.98 × 10⁶)]
+                </td>
+                <td><span class="code-token">δ_udl = 11.93 mm</span> (0.01193 m)</td>
+              </tr>
+              <tr>
+                <td><strong>Step 6</strong></td>
+                <td>Total Elastic Midspan Deflection</td>
+                <td>δ_total = 11.93 mm + 11.93 mm</td>
+                <td><span class="code-token">δ_total = 23.86 mm</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 7</strong></td>
+                <td>AISC L/360 Serviceability Limit</td>
+                <td>
+                  δ_allow = L / 360 = 6000 mm / 360 = 16.67 mm<br>
+                  Check: 23.86 mm &gt; 16.67 mm
+                </td>
+                <td>
+                  <span class="code-token" style="color:var(--rose);">FAILS L/360 LIMIT</span><br>
+                  <small style="color:var(--amber);">TODO: human verification of deeper W310 section to satisfy deflection</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- SECTION 4: COMMON MISTAKES -->
+        <section class="guide-section" aria-labelledby="sec-mistakes">
+          <h2 class="section-heading" id="sec-mistakes">
+            <span class="sec-num">04.</span> Common Engineering Mistakes
+          </h2>
+          <ul class="mistakes-list">
+            <li>
+              <strong>1. Applying Euler-Bernoulli Theory to Deep Beams (L/d &lt; 10)</strong>
+              Euler-Bernoulli theory completely neglects transverse shear deformation. For short, deep transfer girders or coupling beams where the span-to-depth ratio L/d is less than 10, Timoshenko beam theory must be utilized because shear strains can account for 20% to 40% of the total measured deflection.
+            </li>
+            <li>
+              <strong>2. Checking Strength While Ignoring Serviceability Deflection Limits</strong>
+              A beam can be completely safe against flexural yielding (working stresses well below the steel yield strength Fy = 250 or 355 MPa) while still sagging excessively under normal live loads. Unchecked deflection causes cracked drywall partitions, water ponding on flat roof decks, and perceptible, unsettling floor bounce.
+            </li>
+            <li>
+              <strong>3. Unit Conversion Errors Between Meters, Millimeters, and GigaPascals</strong>
+              The flexural rigidity EI contains elastic modulus E (often cited in GPa = 10⁹ N/m²) and moment of inertia I (cited in mm⁴ or cm⁴ in steel tables). Failing to convert I into meters to the fourth power (1 mm⁴ = 10⁻¹² m⁴) causes computed deflections to be off by factors of 10⁶ or 10¹², leading to completely invalid design judgments.
+            </li>
+          </ul>
+        </section>
+
+        <!-- SECTION 5: INTERACTIVE LAB CTA -->
+        <section class="guide-section" style="padding:0; background:transparent; border:none;" aria-labelledby="sec-lab">
+          <div class="lab-cta-card">
+            <h2 class="lab-cta-title" id="sec-lab">Solve Beam Shear &amp; Moment Profiles in Real Time</h2>
+            <p class="lab-cta-desc">
+              Slide concentrated loads across the beam, vary spans up to 12 meters, and observe instantaneous shear force diagrams (SFD), bending moment diagrams (BMD), and elastic deflection profiles in our structural laboratory.
+            </p>
+            <a href="/simulator/beam-bending" class="launch-button" onclick="gtag('event', 'simulator_launch', {'simulator': 'Euler-Bernoulli Beam Deflection, Shear & Moment'});">
+              Launch Interactive Beam Bending Simulator &rarr;
+            </a>
+          </div>
+        </section>
+
+        <!-- SECTION 6: REFERENCES -->
+        <section class="guide-section" aria-labelledby="sec-references">
+          <h2 class="section-heading" id="sec-references">
+            <span class="sec-num">05.</span> References &amp; Standards
+          </h2>
+          <ul class="ref-list">
+            <li>Hibbeler, R. C. (2018). <em>Mechanics of Materials</em> (10th ed.). Pearson. Chapter 6: Bending &amp; Chapter 12: Deflection of Beams and Shafts.</li>
+            <li>Gere, J. M., &amp; Goodno, B. J. (2018). <em>Mechanics of Materials</em> (9th ed.). Cengage Learning. Chapters 9 &amp; 10: Deflections of Beams.</li>
+            <li>AISC 360-16: <em>Specification for Structural Steel Buildings</em>. American Institute of Steel Construction. Chapter L: Design for Serviceability.</li>
+            <li>Eurocode 3: <em>Design of steel structures - Part 1-1: General rules and rules for buildings</em> (EN 1993-1-1). European Committee for Standardization.</li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <!-- Global Site Footer -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <a href="/" class="brand-logo" style="margin-bottom:1rem;">
+              <div class="logo-icon">LS</div>
+              <span>LIVE <span class="accent">SIMULATORS</span></span>
+            </a>
+            <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; max-width:320px;">
+              Open-access engineering virtual laboratories. First-principles Float64 numerical differential solvers operating at 60 FPS directly in the browser. Founded by Anil Sharma.
+            </p>
+          </div>
+          <div class="footer-col">
+            <h5>Departments</h5>
+            <ul>
+              <li><a href="/department/civil">Structural Mechanics</a></li>
+              <li><a href="/department/mechanical">Mechanical Dynamics</a></li>
+              <li><a href="/department/electrical">Electrical Systems</a></li>
+              <li><a href="/department/control">Process Automation</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Educational Guides</h5>
+            <ul>
+              <li><a href="/guides/rlc-resonance-explained.html">RLC Resonance</a></li>
+              <li><a href="/guides/rankine-cycle-ts-diagram.html">Rankine Cycle T-s</a></li>
+              <li><a href="/guides/pid-tuning-step-by-step.html">PID Tuning Guide</a></li>
+              <li><a href="/guides/beam-deflection-euler-bernoulli.html">Beam Deflection</a></li>
+              <li><a href="/guides/four-bar-mechanism-kinematics.html">Four-Bar Kinematics</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Companion Portals</h5>
+            <ul>
+              <li><a href="https://mech.livesimulators.com" target="_blank" rel="noopener">Mech Digital Twins (ASME/API)</a></li>
+              <li><a href="https://designcalculators.co.in" target="_blank" rel="noopener">DesignCalculators.co.in</a></li>
+              <li><a href="/about">About LiveSimulators</a></li>
+              <li><a href="/contact-form.html">Contact Engineering Team</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div>
+            &copy; 2026 LiveSimulators.com • Created by Anil Sharma. All models governed by first principles.
+          </div>
+          <div>
+            Zero Plugins Required • Standard HTML5 / WebGL / Canvas / MathML
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -63,6 +63,13 @@
 ## Mechanical Engineering Digital Twins (Subdomain)
 Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference the methodologies of API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) publications for educational and preliminary design purposes.
 
+## Cornerstone Engineering Educational Guides
+- [RLC Resonance Explained](https://livesimulators.com/guides/rlc-resonance-explained.html): Complete engineering guide covering 2nd-order RLC frequency response, damping ratio, quality factor, and transient impedance.
+- [Rankine Cycle T-s Diagram](https://livesimulators.com/guides/rankine-cycle-ts-diagram.html): Complete thermodynamic guide to steam power cycles, superheat expansion, pump work, and condenser backpressure on T-s diagrams.
+- [PID Tuning Step-by-Step](https://livesimulators.com/guides/pid-tuning-step-by-step.html): Complete guide to tuning industrial proportional, integral, and derivative loops with anti-windup clamping.
+- [Beam Deflection Euler-Bernoulli](https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html): Complete structural guide to Euler-Bernoulli 4th-order beam deflection, shear force, bending moments, and AISC L/360 limits.
+- [Four-Bar Mechanism Kinematics](https://livesimulators.com/guides/four-bar-mechanism-kinematics.html): Complete kinematic guide to planar 4-bar link inversions, Grashof mobility, transmission angle limits, and coupler curves.
+
 ## Companion Engineering Portals
 - [DesignCalculators.co.in](https://designcalculators.co.in): Free multi-disciplinary engineering calculators (Electrical, Mechanical, Instrumentation) referencing published standards (IEEE, IEC, ASME, API, ISA).
 - [ReliabilityTools.co.in](https://reliabilitytools.co.in): Free plant reliability, asset uptime analytics, 2P/3P Weibull failure modeling, MTBF/MTTR, RCA, and IEC 61508/61511 SIL verification.

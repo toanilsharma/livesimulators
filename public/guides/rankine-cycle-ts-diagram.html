@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WX8V8HH57V"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-WX8V8HH57V', {
+        'linker': {
+          'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+        }
+      });
+      gtag('config', 'GT-MKRVD4QN', {
+        'linker': {
+          'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+        }
+      });
+
+      console.log('[Google Analytics 4] Measurement ID linked: G-WX8V8HH57V (Tag: GT-MKRVD4QN). Verify link in Google Analytics → Admin → Product Links → Search Console.');
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Rankine Cycle T-s Diagram Explained with Interactive Simulator | LiveSimulators</title>
+    <meta name="description" content="Analyze thermodynamic steam power cycles, superheat expansion, pump work, and condenser backpressure on T-s diagrams with free interactive simulator." />
+    <link rel="canonical" href="https://livesimulators.com/guides/rankine-cycle-ts-diagram.html" />
+
+    <!-- Open Graph & Social Meta Tags -->
+    <meta property="og:title" content="Rankine Cycle T-s Diagram Explained with Interactive Simulator | LiveSimulators" />
+    <meta property="og:description" content="Analyze thermodynamic steam power cycles, superheat expansion, pump work, and condenser backpressure on T-s diagrams with free interactive simulator." />
+    <meta property="og:url" content="https://livesimulators.com/guides/rankine-cycle-ts-diagram.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:image" content="https://livesimulators.com/og-default.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+
+    <!-- Structured Data: Organization, WebSite & Article -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://livesimulators.com/#organization",
+          "name": "LiveSimulators",
+          "url": "https://livesimulators.com",
+          "logo": "https://livesimulators.com/og-default.png",
+          "sameAs": [
+            "https://mech.livesimulators.com",
+            "https://designcalculators.co.in"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://livesimulators.com/#website",
+          "name": "LiveSimulators",
+          "url": "https://livesimulators.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://livesimulators.com/?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Article",
+          "@id": "https://livesimulators.com/guides/rankine-cycle-ts-diagram.html#article",
+          "headline": "Rankine Cycle T-s Diagram: Complete Engineering Guide",
+          "description": "Analyze thermodynamic steam power cycles, superheat expansion, pump work, and condenser backpressure on T-s diagrams with free interactive simulator.",
+          "author": {
+            "@type": "Person",
+            "name": "Anil Sharma",
+            "url": "https://www.linkedin.com/in/toanilsharma/"
+          },
+          "publisher": {
+            "@id": "https://livesimulators.com/#organization"
+          },
+          "mainEntityOfPage": "https://livesimulators.com/guides/rankine-cycle-ts-diagram.html",
+          "url": "https://livesimulators.com/guides/rankine-cycle-ts-diagram.html"
+        }
+      ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Standalone Architectural CSS -->
+    <style>
+      :root {
+        --bg-body: #060a12;
+        --bg-card: #090e1a;
+        --bg-surface: #0f172a;
+        --border-color: #1e293b;
+        --border-highlight: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --amber: #f59e0b;
+        --amber-hover: #d97706;
+        --cyan: #06b6d4;
+        --emerald: #10b981;
+        --rose: #f43f5e;
+        --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        --font-mono: 'IBM Plex Mono', monospace;
+        --font-display: 'Chakra Petch', sans-serif;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--amber); text-decoration: none; transition: color 0.2s; }
+      a:hover { color: #fcd34d; }
+      .container { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+
+      /* Precision Top Bar */
+      .top-strip {
+        background: #030712;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.35rem 1.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .top-strip span.highlight { color: var(--amber); font-weight: 600; }
+
+      /* Navigation Header */
+      header.site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(6, 10, 18, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.85rem 0;
+      }
+      .nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+      }
+      .brand-logo .logo-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--amber);
+        font-weight: 900;
+      }
+      .brand-logo span.accent { color: var(--amber); }
+      nav.nav-links {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      nav.nav-links a { color: var(--text-secondary); }
+      nav.nav-links a:hover { color: #fff; }
+
+      /* Article Main Layout */
+      main.guide-content { padding: 3rem 0 5rem; }
+      .breadcrumb {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+      }
+      .guide-header { margin-bottom: 3rem; }
+      .guide-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 9999px;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: var(--amber);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+      h1.guide-title {
+        font-size: 2.35rem;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1.25;
+        letter-spacing: -0.02em;
+        margin-bottom: 1rem;
+      }
+      .guide-tagline {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        max-width: 820px;
+      }
+
+      /* Sections */
+      section.guide-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2.25rem;
+      }
+      h2.section-heading {
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.75rem;
+      }
+      h2.section-heading .sec-num {
+        font-family: var(--font-mono);
+        color: var(--amber);
+        font-size: 1rem;
+      }
+      p.paragraph {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: 1.25rem;
+      }
+      p.paragraph:last-child { margin-bottom: 0; }
+
+      /* Equations Box (Semantic MathML / Clean HTML) */
+      .math-box {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        margin: 1.25rem 0;
+        overflow-x: auto;
+      }
+      .math-title {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--amber);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+      }
+      math {
+        font-family: 'Latin Modern Math', Cambria Math, STIX Two Math, serif;
+        font-size: 1.25rem;
+        color: #fff;
+        display: block;
+        margin: 0.5rem 0;
+      }
+      .math-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+      }
+
+      /* Step-by-Step Table */
+      table.step-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.25rem 0;
+        font-size: 0.9rem;
+      }
+      table.step-table th {
+        background: #0b1324;
+        color: var(--amber);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        text-align: left;
+        padding: 0.85rem 1rem;
+        border-bottom: 2px solid var(--border-color);
+      }
+      table.step-table td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        vertical-align: top;
+      }
+      table.step-table tr:hover td {
+        background: rgba(15, 23, 42, 0.5);
+      }
+      .code-token {
+        font-family: var(--font-mono);
+        color: #fff;
+        font-weight: 600;
+        background: rgba(255,255,255,0.06);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+      }
+
+      /* Pitfalls & Mistakes */
+      ul.mistakes-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      ul.mistakes-list li {
+        background: rgba(244, 63, 94, 0.06);
+        border: 1px solid rgba(244, 63, 94, 0.25);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        color: #fecdd3;
+        font-size: 0.92rem;
+        line-height: 1.6;
+      }
+      ul.mistakes-list strong {
+        color: #fff;
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+
+      /* Interactive Lab CTA */
+      .lab-cta-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(9, 14, 26, 0.95) 100%);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 1rem;
+        padding: 2.25rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .lab-cta-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 0.65rem;
+      }
+      .lab-cta-desc {
+        color: var(--text-secondary);
+        max-width: 640px;
+        margin: 0 auto 1.75rem;
+        font-size: 0.95rem;
+      }
+      .launch-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.85rem 1.75rem;
+        background: var(--amber);
+        color: #030712;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 700;
+        border-radius: 0.65rem;
+        text-decoration: none;
+        transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+      }
+      .launch-button:hover {
+        background: #fbbf24;
+        color: #030712;
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+      }
+
+      /* References */
+      ul.ref-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      ul.ref-list li {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        padding-left: 1.25rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      ul.ref-list li::before {
+        content: "•";
+        color: var(--amber);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+      }
+
+      /* Footer */
+      footer.site-footer {
+        background: #030712;
+        border-top: 1px solid var(--border-color);
+        padding: 3.5rem 0 2rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 2.5rem;
+        margin-bottom: 2.5rem;
+      }
+      .footer-col h5 {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: #fff;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .footer-col ul { list-style: none; }
+      .footer-col ul li { margin-bottom: 0.5rem; }
+      .footer-col ul li a { color: var(--text-muted); }
+      .footer-col ul li a:hover { color: var(--amber); }
+      .footer-bottom {
+        border-top: 1px solid var(--border-color);
+        padding-top: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+      @media (max-width: 768px) {
+        .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+        .top-strip { display: none; }
+        h1.guide-title { font-size: 1.85rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Precision Top Engineering Strip -->
+    <div class="top-strip">
+      <div>
+        <span class="highlight">THERMODYNAMIC KERNEL ACTIVE</span> • ASME PTC 4.4 &amp; PTC 6 STEAM SPECIFICATION • IAPWS-IF97
+      </div>
+      <div>
+        CLIENT-SIDE STEAM PROPERTY EVALUATOR • ZERO PLUGINS
+      </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="site-header">
+      <div class="container nav-row">
+        <a href="/" class="brand-logo" id="brand-logo">
+          <div class="logo-icon">LS</div>
+          <span>LIVE <span class="accent">SIMULATORS</span></span>
+        </a>
+        <nav class="nav-links">
+          <a href="/department/mechanical">Mechanical</a>
+          <a href="/department/electrical">Electrical</a>
+          <a href="/department/control">Control</a>
+          <a href="/department/civil">Civil</a>
+          <a href="/about">About</a>
+          <a href="/simulator/rankine-cycle" class="launch-button" style="padding:0.4rem 0.85rem; font-size:0.8rem;" onclick="gtag('event', 'simulator_launch', {'simulator': 'Thermodynamic Rankine Steam Power Cycle'});">Launch Lab ↗</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="guide-content">
+      <div class="container">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a> / <a href="/department/mechanical">Mechanical</a> / <span>Rankine Cycle T-s Guide</span>
+        </nav>
+
+        <header class="guide-header">
+          <div class="guide-badge">MECHANICAL ENGINEERING • THERMODYNAMICS &amp; POWER SYSTEMS</div>
+          <h1 class="guide-title">Rankine Cycle T-s Diagram: Complete Engineering Guide</h1>
+          <div style="font-size:0.85rem; color:#94a3b8; margin-bottom:1rem; font-family:var(--font-mono);">
+            By <span style="color:#ffffff; font-weight:600;">Anil Sharma</span> • LiveSimulators Engineering
+          </div>
+          <p class="guide-tagline">
+            Understand the fundamental vapor power cycle driving modern electric generation. Track isobaric boiler heat addition, superheated steam expansion, isentropic turbine efficiency, liquid pump compression, and exhaust condenser dynamics on the temperature-entropy plane.
+          </p>
+        </header>
+
+        <!-- SECTION 1: DEFINITION -->
+        <section class="guide-section" aria-labelledby="sec-definition">
+          <h2 class="section-heading" id="sec-definition">
+            <span class="sec-num">01.</span> Definition
+          </h2>
+          <p class="paragraph">
+            The Rankine cycle is the idealized thermodynamic closed-loop cycle used to convert thermal energy into mechanical shaft work in steam turbine power generation facilities. Governed by the First and Second Laws of Thermodynamics, the working fluid (water and steam) undergoes phase changes between liquid and vapor states under two isobaric pressure levels: a high boiler pressure and a deep vacuum condenser backpressure.
+          </p>
+          <p class="paragraph">
+            On a Temperature-Entropy (T-s) diagram, the cycle is characterized by four distinct physical processes: isentropic or non-isentropic liquid pumping (State 3 to 4), constant-pressure subcooled heating and vaporization in the boiler steam drum (State 4 to 1), adiabatic turbine expansion producing shaft work (State 1 to 2), and constant-pressure heat rejection within the cooling water condenser (State 2 to 3). Plotting these processes against the water-steam vapor dome illustrates net cycle power, Carnot efficiency limits, and moisture condensation risks.
+          </p>
+        </section>
+
+        <!-- SECTION 2: GOVERNING EQUATIONS -->
+        <section class="guide-section" aria-labelledby="sec-equations">
+          <h2 class="section-heading" id="sec-equations">
+            <span class="sec-num">02.</span> Governing Equations
+          </h2>
+          <p class="paragraph">
+            Steady-flow energy equations applied across the four major plant control volumes determine specific enthalpy transfers (kilojoules per kilogram):
+          </p>
+
+          <div class="math-box">
+            <div class="math-title">1. First-Law Thermal Efficiency</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <msub><mi>&eta;</mi><mtext>th</mtext></msub>
+                <mo>=</mo>
+                <mfrac>
+                  <msub><mi>w</mi><mtext>net</mtext></msub>
+                  <msub><mi>q</mi><mtext>in</mtext></msub>
+                </mfrac>
+                <mo>=</mo>
+                <mfrac>
+                  <mrow>
+                    <msub><mi>w</mi><mi>t</mi></msub>
+                    <mo>-</mo>
+                    <msub><mi>w</mi><mi>p</mi></msub>
+                  </mrow>
+                  <msub><mi>q</mi><mtext>in</mtext></msub>
+                </mfrac>
+                <mo>=</mo>
+                <mfrac>
+                  <mrow>
+                    <mo>(</mo><msub><mi>h</mi><mn>1</mn></msub><mo>-</mo><msub><mi>h</mi><mn>2</mn></msub><mo>)</mo>
+                    <mo>-</mo>
+                    <mo>(</mo><msub><mi>h</mi><mn>4</mn></msub><mo>-</mo><msub><mi>h</mi><mn>3</mn></msub><mo>)</mo>
+                  </mrow>
+                  <mrow><msub><mi>h</mi><mn>1</mn></msub><mo>-</mo><msub><mi>h</mi><mn>4</mn></msub></mrow>
+                </mfrac>
+              </mrow>
+            </math>
+            <div class="math-desc">Net work output divided by total heat added in the boiler economizer, evaporator, and superheater tubes.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">2. Turbine Work Output and Isentropic Efficiency</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <msub><mi>w</mi><mi>t</mi></msub>
+                <mo>=</mo>
+                <msub><mi>h</mi><mn>1</mn></msub><mo>-</mo><msub><mi>h</mi><mn>2</mn></msub>
+                <mo>=</mo>
+                <msub><mi>&eta;</mi><mi>t</mi></msub>
+                <mo>(</mo><msub><mi>h</mi><mn>1</mn></msub><mo>-</mo><msub><mi>h</mi><mrow><mn>2</mn><mi>s</mi></mrow></msub><mo>)</mo>
+              </mrow>
+            </math>
+            <div class="math-desc">Actual enthalpy drop across turbine blading accounting for aerodynamic friction and blade leakage.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">3. Boiler Feed Pump Compression Work</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <msub><mi>w</mi><mi>p</mi></msub>
+                <mo>=</mo>
+                <msub><mi>h</mi><mn>4</mn></msub><mo>-</mo><msub><mi>h</mi><mn>3</mn></msub>
+                <mo>&approx;</mo>
+                <msub><mi>v</mi><mn>3</mn></msub>
+                <mo>(</mo><msub><mi>P</mi><mtext>high</mtext></msub><mo>-</mo><msub><mi>P</mi><mtext>low</mtext></msub><mo>)</mo>
+              </mrow>
+            </math>
+            <div class="math-desc">Incompressible liquid pump work where v3 is saturated liquid specific volume at condenser pressure.</div>
+          </div>
+
+          <div class="math-box">
+            <div class="math-title">4. Back Work Ratio and Steam Quality</div>
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+              <mrow>
+                <mtext>BWR</mtext>
+                <mo>=</mo>
+                <mfrac><msub><mi>w</mi><mi>p</mi></msub><msub><mi>w</mi><mi>t</mi></msub></mfrac>
+                <mo>,</mo>
+                <mspace width="1em"/>
+                <msub><mi>x</mi><mn>2</mn></msub>
+                <mo>=</mo>
+                <mfrac>
+                  <mrow><msub><mi>s</mi><mn>2</mn></msub><mo>-</mo><msub><mi>s</mi><mi>f</mi></msub></mrow>
+                  <msub><mi>s</mi><mrow><mi>f</mi><mi>g</mi></mrow></msub>
+                </mfrac>
+              </mrow>
+            </math>
+            <div class="math-desc">Steam quality x2 must strictly satisfy ASME PTC 6 criteria (x2 &gt; 0.88) to protect low-pressure turbine blades.</div>
+          </div>
+        </section>
+
+        <!-- SECTION 3: WORKED NUMERICAL EXAMPLE -->
+        <section class="guide-section" aria-labelledby="sec-example">
+          <h2 class="section-heading" id="sec-example">
+            <span class="sec-num">03.</span> Worked Numerical Example
+          </h2>
+          <p class="paragraph">
+            Evaluate a subcritical utility steam power generation unit operating under the standard ASME PTC 6 acceptance trial conditions modeled in LiveSimulators:
+          </p>
+          <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:0.75rem; padding:1rem 1.25rem; margin-bottom:1.5rem; font-family:var(--font-mono); font-size:0.85rem;">
+            <strong>Plant Operating Parameters:</strong><br>
+            Boiler Operating Pressure: <span class="code-token">P₁ = 80 bar = 8.0 MPa</span><br>
+            Turbine Inlet Superheat Temp: <span class="code-token">T₁ = 480 °C</span><br>
+            Condenser Vacuum Backpressure: <span class="code-token">P₂ = 0.08 bar = 8.0 kPa</span> (T_sat ≈ 41.5 °C)<br>
+            Turbine Isentropic Efficiency: <span class="code-token">η_t = 85% = 0.85</span>
+          </div>
+
+          <table class="step-table">
+            <thead>
+              <tr>
+                <th style="width:12%;">Step</th>
+                <th style="width:28%;">Thermodynamic State</th>
+                <th style="width:35%;">Steam Table Evaluation / Formulation</th>
+                <th style="width:25%;">Computed Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Step 1</strong></td>
+                <td>State 1: Turbine Inlet Steam</td>
+                <td>Superheated steam at 80 bar, 480 °C (IAPWS-IF97):</td>
+                <td><span class="code-token">h₁ = 3348.4 kJ/kg</span><br><span class="code-token">s₁ = 6.658 kJ/(kg·K)</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 2</strong></td>
+                <td>State 2s: Isentropic Expansion</td>
+                <td>
+                  s_2s = s₁ = 6.658 kJ/(kg·K) at 0.08 bar:<br>
+                  s_f = 0.5926, s_fg = 7.6361 kJ/(kg·K)<br>
+                  x_2s = (6.658 - 0.5926) / 7.6361 = 0.7943
+                </td>
+                <td><span class="code-token">h_2s = 2108.5 kJ/kg</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 3</strong></td>
+                <td>Actual Turbine Work Output</td>
+                <td>w_t = η_t × (h₁ - h_2s) = 0.85 × (3348.4 - 2108.5)</td>
+                <td><span class="code-token">w_t = 1053.9 kJ/kg</span><br>h₂ = 2294.5 kJ/kg</td>
+              </tr>
+              <tr>
+                <td><strong>Step 4</strong></td>
+                <td>Exhaust Vapor Quality x₂</td>
+                <td>x₂ = (h₂ - h_f) / h_fg = (2294.5 - 173.8) / 2403.1</td>
+                <td><span class="code-token">x₂ = 0.882 (88.2%)</span> (Meets ASME &gt;88% limit)</td>
+              </tr>
+              <tr>
+                <td><strong>Step 5</strong></td>
+                <td>Feed Pump Compression Work</td>
+                <td>w_p = v₃ × (P₁ - P₂) = 0.001008 m³/kg × (80 - 0.08) × 100 kPa</td>
+                <td><span class="code-token">w_p = 8.06 kJ/kg</span><br>h₄ = h₃ + w_p = 181.86 kJ/kg</td>
+              </tr>
+              <tr>
+                <td><strong>Step 6</strong></td>
+                <td>Boiler Heat Input q_in</td>
+                <td>q_in = h₁ - h₄ = 3348.4 - 181.86</td>
+                <td><span class="code-token">q_in = 3166.54 kJ/kg</span></td>
+              </tr>
+              <tr>
+                <td><strong>Step 7</strong></td>
+                <td>Cycle Thermal Efficiency η_th</td>
+                <td>
+                  w_net = w_t - w_p = 1053.9 - 8.06 = 1045.84 kJ/kg<br>
+                  η_th = 1045.84 / 3166.54
+                </td>
+                <td><span class="code-token">η_th = 33.03%</span><br><small style="color:var(--amber);">BWR = 0.76% (TODO: human verification for exact IAPWS-IF97 interpolation)</small></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- SECTION 4: COMMON MISTAKES -->
+        <section class="guide-section" aria-labelledby="sec-mistakes">
+          <h2 class="section-heading" id="sec-mistakes">
+            <span class="sec-num">04.</span> Common Engineering Mistakes
+          </h2>
+          <ul class="mistakes-list">
+            <li>
+              <strong>1. Forgetting Liquid Pump Work in Cycle Energy Balances</strong>
+              Engineers sometimes assume pump work is negligible (w_p ≈ 0) because water is a liquid. In ultra-high pressure and supercritical utility boilers (P₁ &gt; 150 bar), feed pump work exceeds 25 kJ/kg and consumes significant auxiliary station power. Neglecting w_p produces artificially inflated net efficiency reports.
+            </li>
+            <li>
+              <strong>2. Assuming Turbine Expansion Is 100% Isentropic</strong>
+              Drawing a purely vertical downward line on the T-s diagram ignores fluid aerodynamic friction, boundary layer shear, and tip leakage across turbine stages. Real turbines operate with isentropic efficiencies between 80% and 92%, curving the expansion path to the right (entropy increases, s₂ &gt; s₁) and dramatically altering exhaust enthalpy.
+            </li>
+            <li>
+              <strong>3. Allowing Turbine Exhaust Quality to Fall Below 88% (x₂ &lt; 0.88)</strong>
+              When moisture content at the low-pressure turbine exhaust exceeds 12% (steam quality drops below 0.88), high-velocity liquid water droplets strike spinning titanium and nickel blades at supersonic relative speeds. This causes severe blade leading-edge pitting, erosion, and catastrophic mechanical failure.
+            </li>
+          </ul>
+        </section>
+
+        <!-- SECTION 5: INTERACTIVE LAB CTA -->
+        <section class="guide-section" style="padding:0; background:transparent; border:none;" aria-labelledby="sec-lab">
+          <div class="lab-cta-card">
+            <h2 class="lab-cta-title" id="sec-lab">Interact with the Dynamic T-s Vapor Dome</h2>
+            <p class="lab-cta-desc">
+              Adjust boiler pressures from 20 to 160 bar, increase turbine superheat temperatures to 600 °C, and observe live updates to the saturated vapor dome, enthalpy drops, and cycle thermal efficiency.
+            </p>
+            <a href="/simulator/rankine-cycle" class="launch-button" onclick="gtag('event', 'simulator_launch', {'simulator': 'Thermodynamic Rankine Steam Power Cycle'});">
+              Launch Interactive Rankine Cycle Simulator &rarr;
+            </a>
+          </div>
+        </section>
+
+        <!-- SECTION 6: REFERENCES -->
+        <section class="guide-section" aria-labelledby="sec-references">
+          <h2 class="section-heading" id="sec-references">
+            <span class="sec-num">05.</span> References &amp; Standards
+          </h2>
+          <ul class="ref-list">
+            <li>Moran, M. J., Shapiro, H. N., Boettner, D. D., &amp; Bailey, M. B. (2018). <em>Fundamentals of Engineering Thermodynamics</em> (9th ed.). Wiley. Chapter 8: Vapor Power Systems.</li>
+            <li>Cengel, Y. A., &amp; Boles, M. A. (2019). <em>Thermodynamics: An Engineering Approach</em> (9th ed.). McGraw-Hill Education. Chapter 10: Vapor and Combined Power Cycles.</li>
+            <li>ASME PTC 6-2004 (R2014): <em>Steam Turbines Performance Test Codes</em>. American Society of Mechanical Engineers.</li>
+            <li>IAPWS-IF97: <em>Industrial Formulation 1997 for the Thermodynamic Properties of Water and Steam</em>. International Association for the Properties of Water and Steam.</li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <!-- Global Site Footer -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <a href="/" class="brand-logo" style="margin-bottom:1rem;">
+              <div class="logo-icon">LS</div>
+              <span>LIVE <span class="accent">SIMULATORS</span></span>
+            </a>
+            <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; max-width:320px;">
+              Open-access engineering virtual laboratories. First-principles Float64 numerical differential solvers operating at 60 FPS directly in the browser. Founded by Anil Sharma.
+            </p>
+          </div>
+          <div class="footer-col">
+            <h5>Departments</h5>
+            <ul>
+              <li><a href="/department/mechanical">Mechanical Dynamics</a></li>
+              <li><a href="/department/electrical">Electrical Systems</a></li>
+              <li><a href="/department/control">Process Automation</a></li>
+              <li><a href="/department/civil">Structural Mechanics</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Educational Guides</h5>
+            <ul>
+              <li><a href="/guides/rlc-resonance-explained.html">RLC Resonance</a></li>
+              <li><a href="/guides/rankine-cycle-ts-diagram.html">Rankine Cycle T-s</a></li>
+              <li><a href="/guides/pid-tuning-step-by-step.html">PID Tuning Guide</a></li>
+              <li><a href="/guides/beam-deflection-euler-bernoulli.html">Beam Deflection</a></li>
+              <li><a href="/guides/four-bar-mechanism-kinematics.html">Four-Bar Kinematics</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Companion Portals</h5>
+            <ul>
+              <li><a href="https://mech.livesimulators.com" target="_blank" rel="noopener">Mech Digital Twins (ASME/API)</a></li>
+              <li><a href="https://designcalculators.co.in" target="_blank" rel="noopener">DesignCalculators.co.in</a></li>
+              <li><a href="/about">About LiveSimulators</a></li>
+              <li><a href="/contact-form.html">Contact Engineering Team</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div>
+            &copy; 2026 LiveSimulators.com • Created by Anil Sharma. All models governed by first principles.
+          </div>
+          <div>
+            Zero Plugins Required • Standard HTML5 / WebGL / Canvas / MathML
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
