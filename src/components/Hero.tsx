@@ -480,8 +480,8 @@ export const Hero: React.FC<HeroProps> = ({
         // =====================================================================
         const machX = w * 0.40;
         const machY = h * 0.28;
-        const statorR = 54;
-        const rotorR = 36;
+        const statorR = 50;
+        const rotorR = 34;
 
         // Terminal Block atop Stator with standard R, Y, B, N terminals
         const tbY = machY - statorR - 15;
@@ -643,7 +643,7 @@ export const Hero: React.FC<HeroProps> = ({
         // =====================================================================
         const pwX = w * 0.77;
         const pwY = machY;
-        const pwR = 38;
+        const pwR = 36;
 
         ctx.fillStyle = '#090e17';
         ctx.strokeStyle = '#1e293b';
@@ -706,9 +706,9 @@ export const Hero: React.FC<HeroProps> = ({
         // Shows R, Y, B & N Standard Color Traces (wave cycles scale with frequency f)
         // =====================================================================
         const scX = 16;
-        const scY = h * 0.58;
+        const scY = h * 0.57;
         const scW = w - 32;
-        const scH = h * 0.38;
+        const scH = h * 0.39;
 
         ctx.fillStyle = '#060a12';
         ctx.strokeStyle = '#1e293b';
@@ -815,9 +815,9 @@ export const Hero: React.FC<HeroProps> = ({
         // Kinematic Ratio: i = 1 + Zr / Zs = 1 + 52/20 = 3.60:1
         const pgX = w * 0.22;
         const pgY = h * 0.48;
-        const sunR = 25;
-        const planetR = 19;
-        const ringR = sunR + 2 * planetR; // 63px scaled
+        const sunR = 23;
+        const planetR = 18;
+        const ringR = sunR + 2 * planetR; // 59px scaled
 
         // Outer Ring Gear (Stationary casing with 52 teeth)
         ctx.strokeStyle = '#475569';
@@ -830,7 +830,7 @@ export const Hero: React.FC<HeroProps> = ({
         for (let i = 0; i < 26; i++) {
           const a = (i * 2 * Math.PI) / 26;
           ctx.beginPath();
-          ctx.moveTo(pgX + Math.cos(a) * (ringR - 6), pgY + Math.sin(a) * (ringR - 6));
+          ctx.moveTo(pgX + Math.cos(a) * (ringR - 5), pgY + Math.sin(a) * (ringR - 5));
           ctx.lineTo(pgX + Math.cos(a) * ringR, pgY + Math.sin(a) * ringR);
           ctx.stroke();
         }
@@ -884,10 +884,10 @@ export const Hero: React.FC<HeroProps> = ({
 
         ctx.font = '9px "IBM Plex Mono", monospace';
         ctx.fillStyle = '#06b6d4';
-        ctx.fillText('WILLIS EPICYCLIC GEARS', pgX - 52, pgY + ringR + 16);
+        ctx.fillText('WILLIS EPICYCLIC GEARS', pgX - 52, pgY + ringR + 15);
         ctx.fillStyle = '#64748b';
         ctx.font = '8px "IBM Plex Mono", monospace';
-        ctx.fillText('Zs=20 • Zp=16 • Zr=52 (3.60:1)', pgX - 58, pgY + ringR + 26);
+        ctx.fillText('Zs=20 • Zp=16 • Zr=52 (3.60:1)', pgX - 58, pgY + ringR + 25);
 
         // 2. Right Half: 4-Bar Grashof Kinematic Mechanism with Analytical Loop Closure
         // Ground AD: r1=110, Crank AB: r2=36, Coupler BC: r3=96, Rocker CD: r4=74
@@ -896,7 +896,7 @@ export const Hero: React.FC<HeroProps> = ({
         const r2 = 36;
         const r3 = 96;
         const r4 = 74;
-        const scale = 0.90;
+        const scale = 0.85;
         const ox = w * 0.46;
         const oy = h * 0.52;
 
@@ -1052,8 +1052,8 @@ export const Hero: React.FC<HeroProps> = ({
         const bldgX = w * 0.22;
         const baseY = h * 0.82;
         const stories = 4;
-        const storyH = 42;
-        const bldgW = 95;
+        const storyH = 38;
+        const bldgW = 92;
 
         // Vibrating Shake Table Ground Plate
         ctx.fillStyle = '#1e293b';
@@ -1123,13 +1123,13 @@ export const Hero: React.FC<HeroProps> = ({
 
         ctx.font = '9px "IBM Plex Mono", monospace';
         ctx.fillStyle = isQuake ? '#ef4444' : '#06b6d4';
-        ctx.fillText('ASCE 7-22 BASE ISOLATED', bldgX - 54, baseY + 32);
+        ctx.fillText('ASCE 7-22 BASE ISOLATED', bldgX - 54, baseY + 30);
 
         // 2. Right Half: Warren Truss Bridge with Moving AASHTO Heavy Truck Load
         const trussStartX = w * 0.46;
         const trussW = w * 0.50;
         const trussBaseY = h * 0.38;
-        const trussH = 62;
+        const trussH = 58;
         const bays = 5;
         const bayW = trussW / bays;
 
@@ -1250,8 +1250,8 @@ export const Hero: React.FC<HeroProps> = ({
         // 1. Left: Industrial Liquid Reservoir
         const tankX = 22;
         const tankY = 28;
-        const tankW = 105;
-        const tankH = h * 0.68;
+        const tankW = 100;
+        const tankH = h * 0.67;
 
         const liquidH = (pv / 100) * tankH;
         const liquidY = tankY + tankH - liquidH;
@@ -1330,8 +1330,8 @@ export const Hero: React.FC<HeroProps> = ({
 
         // 2. Center: Centrifugal Impeller Pump with Fluid Pipeline
         const pumpX = tankX + tankW + 42;
-        const pumpY = tankY + tankH - 24;
-        const pumpR = 20;
+        const pumpY = tankY + tankH - 22;
+        const pumpR = 19;
 
         // Pipeline connection
         ctx.strokeStyle = '#475569';
@@ -1489,14 +1489,14 @@ export const Hero: React.FC<HeroProps> = ({
         // 1. Left: Jacketed Continuous Stirred Tank Reactor (CSTR) Vessel
         const rX = w * 0.22;
         const rY = h * 0.52;
-        const rW = 130;
-        const rH = 200;
+        const rW = 122;
+        const rH = 185;
 
         // Outer Cooling Jacket Shell (Annulus)
-        const jW = rW + 28;
-        const jH = rH - 18;
+        const jW = rW + 27;
+        const jH = rH - 17;
         const jX = rX - jW / 2;
-        const jY = rY - rH / 2 + 18;
+        const jY = rY - rH / 2 + 17;
 
         const isRunaway = effectiveT > 375;
         const jacketColor = isRunaway ? 'rgba(239, 68, 68, 0.25)' : 'rgba(6, 182, 212, 0.2)';
@@ -2287,9 +2287,9 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
           </div>
 
-          {/* RIGHT COLUMN: The Living Simulation Workbench - Smartly Justified & Full-Height */}
-          <div className="lg:col-span-7 flex flex-col h-full">
-            <div className="h-full flex flex-col rounded-2xl border border-slate-700/80 bg-slate-900/95 shadow-2xl shadow-cyan-950/40 overflow-hidden">
+          {/* RIGHT COLUMN: The Living Simulation Workbench */}
+          <div className="lg:col-span-7 flex flex-col justify-center">
+            <div className="flex flex-col rounded-2xl border border-slate-700/80 bg-slate-900/95 shadow-2xl shadow-cyan-950/40 overflow-hidden">
               
               {/* Top Control Bar */}
               <div className="px-3.5 py-2.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
@@ -2453,12 +2453,12 @@ export const Hero: React.FC<HeroProps> = ({
                 </div>
               </div>
 
-              {/* Smartly Justified Living Simulation Canvas - Reduced Height by 20% */}
-              <div className="relative bg-[#050811] select-none flex-1 w-full min-h-[300px] sm:min-h-[340px] lg:min-h-[390px] xl:min-h-[410px] flex flex-col overflow-hidden">
+              {/* Living Simulation Canvas */}
+              <div className="relative bg-[#050811] select-none flex-1 w-full min-h-[280px] sm:min-h-[320px] lg:min-h-[360px] xl:min-h-[375px] flex flex-col overflow-hidden">
                 <canvas
                   ref={canvasRef}
                   width={720}
-                  height={380}
+                  height={360}
                   style={{ aspectRatio: 'auto' }}
                   onClick={handleCanvasClick}
                   onMouseMove={handleCanvasMouseMove}

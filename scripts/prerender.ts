@@ -54,7 +54,7 @@ function generateLlmsTxt(): { summary: string; full: string } {
 
   summaryLines.push('');
   summaryLines.push('## Mechanical Engineering Digital Twins (Subdomain)');
-  summaryLines.push('Full-fidelity mechanical simulators at https://mech.livesimulators.com covering turbomachinery (referencing published API 610/617/618 literature), rotor dynamics (ISO 1940/API 684), process piping (ASME B31.3), and tribology (AGMA 2001/ISO 281). Independent educational platform; not affiliated with, approved, or endorsed by any standards body.');
+  summaryLines.push('Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference the methodologies of API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) publications for educational and preliminary design purposes.');
 
   summaryLines.push('');
   summaryLines.push('## Companion Engineering Portals');
@@ -77,6 +77,9 @@ function generateLlmsTxt(): { summary: string; full: string } {
     '',
     'Website: https://livesimulators.com',
     'Founder & Lead Computational Engineer: Anil Sharma (0808miracle@gmail.com)',
+    '',
+    '## Mechanical Engineering Digital Twins (Subdomain)',
+    'Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference the methodologies of API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) publications for educational and preliminary design purposes.',
     '',
     '---',
     '',
