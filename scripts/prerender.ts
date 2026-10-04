@@ -6,8 +6,9 @@ import { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } from '../src/data/simulators';
 import { LABS } from '../src/config/labs';
 import { AppRoute, DisciplineId, SimulatorItem } from '../src/types';
 import { getSeoMetadata } from '../src/utils/seo';
-import { routeToPath, SITE_URL } from '../src/utils/routes';
-import { getEngineeringTheory } from '../src/utils/engineeringTheory';
+import { routeToPath, SITE_URL, TOP_FLAGSHIP_EMBED_SLUGS } from '../src/utils/routes';
+import { getEngineeringTheory, cleanLatexToPlainText } from '../src/utils/engineeringTheory';
+import { getCrossDisciplineEquivalents } from '../src/data/crossDisciplineEquivalents';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +22,25 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+/**
+ * Renders LaTeX equation into MathML & clean HTML via KaTeX,
+ * and sets a plain-text fallback data attribute for screen readers & LLMs.
+ */
+function renderMath(latex: string, displayMode = false): string {
+  if (!latex) return '';
+  const plain = cleanLatexToPlainText(latex);
+  try {
+    const rendered = katex.renderToString(latex.trim(), {
+      displayMode,
+      throwOnError: false,
+      output: 'htmlAndMathml',
+    });
+    return `<span class="math-container" data-math-plain="${escapeHtml(plain)}">${rendered}</span>`;
+  } catch {
+    return `<span class="math-plain" data-math-plain="${escapeHtml(plain)}">${escapeHtml(plain)}</span>`;
+  }
+}
  
 /**
  * Generates official llms.txt and llms-full.txt files following https://llmstxt.org/
@@ -28,22 +48,58 @@ function escapeHtml(str: string): string {
  * all mathematical models, physical formulations, parameter bounds, and validation tests.
  */
 function generateLlmsTxt(): { summary: string; full: string } {
+  const currentYear = new Date().getFullYear();
+  const entityName = 'LiveSimulators — browser-based first-principles engineering simulators';
+
   const summaryLines: string[] = [
-    '# LiveSimulators',
+    `# ${entityName}`,
     '',
-    '> LiveSimulators (https://livesimulators.com) is an open-access engineering simulation and virtual laboratory platform. It executes first-principles physical and mathematical models directly in the user browser at 60 FPS using Float64 numerical integrators (including 4th-Order Runge-Kutta). Built for university engineering syllabi, laboratory exploration, and industrial plant troubleshooting.',
+    `> LiveSimulators — browser-based first-principles engineering simulators (https://livesimulators.com) is an open-access platform executing dynamic physical and mathematical models directly in the user browser at 60 FPS using Float64 numerical integrators (including 4th-Order Runge-Kutta). Built for university engineering syllabi, laboratory exploration, and industrial plant troubleshooting.`,
+    '',
+    '## Citation & Usage',
+    'To cite LiveSimulators or any individual simulator in academic literature, research papers, course syllabi, or lab manuals, use the following plain-text citation format:',
+    '',
+    `Sharma, A. (${currentYear}). [Simulator Title]. LiveSimulators. Retrieved from https://livesimulators.com/simulator/[simulator-id]`,
+    '',
+    'BibTeX entry format:',
+    '```bibtex',
+    `@misc{livesimulators_[simulator_id]_${currentYear},`,
+    '  author = {Sharma, A.},',
+    '  title = {[Simulator Title]},',
+    `  year = {${currentYear}},`,
+    '  howpublished = {LiveSimulators},',
+    '  url = {https://livesimulators.com/simulator/[simulator-id]}',
+    '}',
+    '```',
     '',
     '## Academic & Industrial Disciplines',
   ];
 
   for (const d of DISCIPLINES) {
-    summaryLines.push(`- [${d.name} (${d.code})](https://livesimulators.com/department/${d.id}): ${d.description} Core equation: \`${d.coreEquation}\``);
+    const cleanCore = cleanLatexToPlainText(d.coreEquation);
+    summaryLines.push(`- [${d.name} (${d.code})](https://livesimulators.com/department/${d.id}): ${d.description} Core equation: \`${cleanCore}\``);
   }
 
   summaryLines.push('');
   summaryLines.push('## Interactive Engineering Simulators');
   for (const s of ALL_AVAILABLE_SIMULATORS) {
-    summaryLines.push(`- [${s.title}](https://livesimulators.com/simulator/${s.id}): ${s.tagline} Physical law: ${s.physicalLaw}. Governing formulation: \`${s.governingEquation}\`. Level: ${s.difficulty}.`);
+    const theory = getEngineeringTheory(s);
+    const cleanEq = cleanLatexToPlainText(s.governingEquation);
+    const inputs = s.parameters.map((p) => `${p.name} (${p.symbol}) [${p.unit || 'unitless'}]: default ${p.default}, range [${p.min} to ${p.max} ${p.unit || ''}]`).join('; ');
+    const outputs = (s.keyMetrics && s.keyMetrics.length > 0)
+      ? s.keyMetrics.map((m) => `${m.label} [${m.unit || 'dimensionless'}]`).join('; ')
+      : `${theory.stepByStepExample.finalAnswer.metric} [${theory.stepByStepExample.finalAnswer.symbol}]`;
+    const assumptions = theory.assumptions.join(' | ');
+    const limitations = theory.limitations.join(' | ');
+
+    summaryLines.push(`- [${s.title}](https://livesimulators.com/simulator/${s.id}): ${s.tagline}`);
+    summaryLines.push(`  - Entity: ${entityName}`);
+    summaryLines.push(`  - Citation: Sharma, A. (${currentYear}). ${s.title}. LiveSimulators. Retrieved from https://livesimulators.com/simulator/${s.id}`);
+    summaryLines.push(`  - Governing equations (plain text): ${cleanEq}`);
+    summaryLines.push(`  - Inputs (with SI units): ${inputs}`);
+    summaryLines.push(`  - Outputs (with SI units): ${outputs}`);
+    summaryLines.push(`  - Assumptions: ${assumptions}`);
+    summaryLines.push(`  - Limitations: ${limitations}`);
   }
 
   summaryLines.push('');
@@ -54,7 +110,7 @@ function generateLlmsTxt(): { summary: string; full: string } {
 
   summaryLines.push('');
   summaryLines.push('## Mechanical Engineering Digital Twins (Subdomain)');
-  summaryLines.push('Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference the methodologies of API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) publications for educational and preliminary design purposes.');
+  summaryLines.push('Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference standard methodologies published in API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) literature for educational and preliminary design purposes.');
 
   summaryLines.push('');
   summaryLines.push('## Cornerstone Engineering Educational Guides');
@@ -63,6 +119,10 @@ function generateLlmsTxt(): { summary: string; full: string } {
   summaryLines.push('- [PID Tuning Step-by-Step](https://livesimulators.com/guides/pid-tuning-step-by-step.html): Complete guide to tuning industrial proportional, integral, and derivative loops with anti-windup clamping.');
   summaryLines.push('- [Beam Deflection Euler-Bernoulli](https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html): Complete structural guide to Euler-Bernoulli 4th-order beam deflection, shear force, bending moments, and AISC L/360 limits.');
   summaryLines.push('- [Four-Bar Mechanism Kinematics](https://livesimulators.com/guides/four-bar-mechanism-kinematics.html): Complete kinematic guide to planar 4-bar link inversions, Grashof mobility, transmission angle limits, and coupler curves.');
+
+  summaryLines.push('');
+  summaryLines.push('## Verification Methodology & Quality Assurance');
+  summaryLines.push('- [Numerical Methodology & Standards Reference](https://livesimulators.com/about/methodology.html): Complete documentation of 4th-Order Runge-Kutta (RK4) numerical integrator verification, Butcher tableau, and analytical benchmark proofs across 41 engineering simulators.');
 
   summaryLines.push('');
   summaryLines.push('## Companion Engineering Portals');
@@ -79,12 +139,28 @@ function generateLlmsTxt(): { summary: string; full: string } {
 
   // Full technical document
   const fullLines: string[] = [
-    '# LiveSimulators - Complete Technical & Mathematical Knowledge Base',
+    `# ${entityName} — Complete Technical & Mathematical Knowledge Base`,
     '',
-    '> Complete first-principles equations, analytical proofs, NIST/IEEE/ASME validation benchmarks, and parameter definitions for all LiveSimulators computational models.',
+    `> Complete first-principles equations, analytical proofs, NIST/IEEE/ASME validation benchmarks, and parameter definitions for all LiveSimulators computational models.`,
     '',
     'Website: https://livesimulators.com',
-    'Founder & Lead Computational Engineer: Anil Sharma (0808miracle@gmail.com)',
+    'Methodology: https://livesimulators.com/about/methodology.html',
+    'Founder & Lead Computational Engineer: Anil Sharma (https://www.linkedin.com/in/toanilsharma/)',
+    '',
+    '## Citation & Usage',
+    'To cite LiveSimulators in academic literature, university courseware, or research papers:',
+    `Sharma, A. (${currentYear}). [Simulator Title]. LiveSimulators. Retrieved from https://livesimulators.com/simulator/[simulator-id]`,
+    '',
+    'BibTeX entry format:',
+    '```bibtex',
+    `@misc{livesimulators_[simulator_id]_${currentYear},`,
+    '  author = {Sharma, A.},',
+    '  title = {[Simulator Title]},',
+    `  year = {${currentYear}},`,
+    '  howpublished = {LiveSimulators},',
+    '  url = {https://livesimulators.com/simulator/[simulator-id]}',
+    '}',
+    '```',
     '',
     '## Mechanical Engineering Digital Twins (Subdomain)',
     'Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference the methodologies of API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) publications for educational and preliminary design purposes.',
@@ -94,33 +170,50 @@ function generateLlmsTxt(): { summary: string; full: string } {
   ];
 
   for (const s of ALL_AVAILABLE_SIMULATORS) {
+    const theory = getEngineeringTheory(s);
+    const cleanEq = cleanLatexToPlainText(s.governingEquation);
     fullLines.push(`## ${s.title}`);
+    fullLines.push(`- **Entity**: ${entityName}`);
     fullLines.push(`- **URL**: https://livesimulators.com/simulator/${s.id}`);
+    fullLines.push(`- **Citation**: Sharma, A. (${currentYear}). ${s.title}. LiveSimulators. Retrieved from https://livesimulators.com/simulator/${s.id}`);
     fullLines.push(`- **Discipline**: ${s.disciplineName} (${s.discipline}) | **Level**: ${s.difficulty} | **Badge**: ${s.badge}`);
     fullLines.push(`- **Overview**: ${s.description}`);
     fullLines.push(`- **Physical Law**: ${s.physicalLaw}`);
-    fullLines.push(`- **Governing Formulation**: \`${s.governingEquation}\``);
-    fullLines.push(`- **Equation Description**: ${s.equationDescription}`);
+    fullLines.push(`- **Governing Equations (plain text)**: ${cleanEq}`);
+    for (const ge of theory.governingEquations) {
+      fullLines.push(`  - ${ge.title}: ${cleanLatexToPlainText(ge.latex)} — ${ge.description}`);
+    }
+    fullLines.push('- **Inputs (with SI units)**:');
+    for (const p of s.parameters) {
+      fullLines.push(`  - \`${p.symbol}\` (${p.name}): Default ${p.default} ${p.unit || 'unitless'}, Range [${p.min} to ${p.max} ${p.unit || 'unitless'}]. ${p.description}`);
+    }
+    fullLines.push('- **Outputs (with SI units)**:');
+    if (s.keyMetrics && s.keyMetrics.length > 0) {
+      for (const m of s.keyMetrics) {
+        fullLines.push(`  - ${m.label} [${m.unit || 'dimensionless'}]`);
+      }
+    } else {
+      fullLines.push(`  - ${theory.stepByStepExample.finalAnswer.metric} (${theory.stepByStepExample.finalAnswer.symbol}): ${theory.stepByStepExample.finalAnswer.value} — ${theory.stepByStepExample.finalAnswer.physicalMeaning}`);
+    }
+    fullLines.push('- **Assumptions**:');
+    for (const a of theory.assumptions) {
+      fullLines.push(`  - ${a}`);
+    }
+    fullLines.push('- **Limitations**:');
+    for (const l of theory.limitations) {
+      fullLines.push(`  - ${l}`);
+    }
     if (s.standardReference) {
       fullLines.push(`- **Referenced Standards**: ${s.standardReference}`);
     }
     if (s.analyticalProof) {
-      fullLines.push(`- **Analytical Proof & Mathematical Derivation**: ${s.analyticalProof}`);
+      fullLines.push(`- **Analytical Proof & Mathematical Derivation**: ${cleanLatexToPlainText(s.analyticalProof)}`);
     }
     if (s.validationTest) {
-      fullLines.push(`- **Benchmark Validation Test**: ${s.validationTest}`);
+      fullLines.push(`- **Benchmark Validation Test**: ${cleanLatexToPlainText(s.validationTest)}`);
     }
     if (s.fieldInsights) {
       fullLines.push(`- **Industrial Practical Insights**: ${s.fieldInsights}`);
-    }
-    if (s.parameters && s.parameters.length > 0) {
-      fullLines.push('- **Tunable Parameters**:');
-      for (const p of s.parameters) {
-        fullLines.push(`  - \`${p.name}\` (${p.symbol}): Range [${p.min} to ${p.max} ${p.unit}], Default: ${p.default} ${p.unit}. ${p.description}`);
-      }
-    }
-    if (s.keyMetrics && s.keyMetrics.length > 0) {
-      fullLines.push(`- **Solved Real-Time Outputs**: ${s.keyMetrics.map((m) => `${m.label} (${m.unit || 'dimensionless'})`).join(', ')}`);
     }
     if (s.courseMapping) {
       fullLines.push(`- **University Course Mapping**: ${s.courseMapping}`);
@@ -132,11 +225,8 @@ function generateLlmsTxt(): { summary: string; full: string } {
       fullLines.push('- **Frequently Asked Questions & Theoretical Concepts**:');
       for (const faq of s.faqs) {
         fullLines.push(`  - Q: ${faq.question}`);
-        fullLines.push(`    A: ${faq.answer}`);
+        fullLines.push(`    A: ${cleanLatexToPlainText(faq.answer)}`);
       }
-    }
-    if (s.tags && s.tags.length > 0) {
-      fullLines.push(`- **Curricular Tags**: ${s.tags.join(', ')}`);
     }
     fullLines.push('');
     fullLines.push('---');
@@ -164,7 +254,7 @@ function renderContentForRoute(route: AppRoute): string {
           </h3>
           <p style="color:#94a3b8; font-size:0.875rem; line-height:1.5; margin-bottom:0.75rem;">${escapeHtml(d.description)}</p>
           ${d.id === 'mechanical' ? '<div style="margin-bottom:0.75rem;"><a href="https://mech.livesimulators.com" target="_blank" rel="noopener" style="color:#f59e0b; font-size:0.8rem; font-family:monospace; text-decoration:underline;">Advanced Turbomachinery &amp; Rotor Dynamics &rarr;</a></div>' : ''}
-          <div style="font-family:monospace; color:#38bdf8; font-size:0.8rem; margin-bottom:0.75rem;">Core Formulation: ${escapeHtml(d.coreEquation)}</div>
+          <div style="font-family:monospace; color:#38bdf8; font-size:0.8rem; margin-bottom:0.75rem;">Core Formulation: ${renderMath(d.coreEquation, false)}</div>
           <div style="color:#64748b; font-size:0.75rem;">Active Simulators: ${d.activeSimulatorsCount} | Subfields: ${escapeHtml(d.subfields.join(', '))}</div>
         </article>
       `
@@ -231,7 +321,7 @@ function renderContentForRoute(route: AppRoute): string {
             <a href="/simulator/${s.id}" style="color:#ffffff; text-decoration:none;">${escapeHtml(s.title)}</a>
           </h3>
           <p style="color:#94a3b8; font-size:0.875rem; line-height:1.5; margin-bottom:0.75rem;">${escapeHtml(s.description)}</p>
-          <div style="font-family:monospace; color:#38bdf8; font-size:0.8rem; margin-bottom:0.75rem;">Equation: ${escapeHtml(s.governingEquation)}</div>
+          <div style="font-family:monospace; color:#38bdf8; font-size:0.8rem; margin-bottom:0.75rem;">Equation: ${renderMath(s.governingEquation, false)}</div>
           <div style="color:#64748b; font-size:0.75rem; margin-bottom:1rem;">Standard: ${escapeHtml(s.standardReference || 'IEEE/ASME Standard')}</div>
           <a href="/simulator/${s.id}" onclick="gtag('event', 'simulator_launch', {'simulator': '${escapeHtml(s.title).replace(/'/g, "\\'")}'});" style="display:inline-block; padding:0.5rem 1rem; background:#06b6d4; color:#030712; border-radius:0.5rem; font-weight:bold; text-decoration:none; font-size:0.8rem;">Launch Workbench &rarr;</a>
         </article>
@@ -249,14 +339,85 @@ function renderContentForRoute(route: AppRoute): string {
           <h1 style="font-size:2.5rem; font-weight:900; color:#ffffff; margin:0.75rem 0;">${escapeHtml(dept.name)} Simulators Hub</h1>
           <p style="font-size:1.125rem; color:#cbd5e1; max-width:48rem; line-height:1.6;">${escapeHtml(dept.description)}</p>
           <div style="font-family:monospace; color:#38bdf8; font-size:0.9rem; margin-top:1rem; padding:1rem; background:#0f172a; border-radius:0.5rem; border:1px solid #1e293b;">
-            Governing Formulation: ${escapeHtml(dept.coreEquation)}
+            Governing Formulation: ${renderMath(dept.coreEquation, false)}
           </div>
         </header>
 
-        <section>
-          <h2 style="font-size:1.5rem; font-weight:bold; color:#ffffff; margin-bottom:1.5rem;">Interactive Workbenches in ${escapeHtml(dept.name)}</h2>
-          ${simCardsHtml || '<p style="color:#94a3b8;">No simulators currently in this category.</p>'}
+        ${dept.id === 'electrical' ? `
+        <section class="curriculum-track-section" aria-label="Curriculum Track: Circuit Theory I Lab Sequence" style="margin-top:2.5rem; margin-bottom:2.5rem; padding:1.75rem; background:linear-gradient(135deg, rgba(6,182,212,0.1) 0%, #0b1324 100%); border:1px solid rgba(6,182,212,0.4); border-radius:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; border-bottom:1px solid #1e293b; padding-bottom:1rem; margin-bottom:1.5rem;">
+            <div>
+              <span style="font-family:monospace; font-size:0.75rem; color:#38bdf8; text-transform:uppercase; letter-spacing:0.05em; font-weight:bold; background:#0f172a; padding:0.25rem 0.5rem; border-radius:0.25rem; border:1px solid rgba(6,182,212,0.3);">Curriculum Track • Related Concepts</span>
+              <h2 style="font-size:1.5rem; font-weight:bold; color:#ffffff; margin:0.5rem 0 0 0;">
+                <a href="/simulator/rlc-resonance" style="color:#38bdf8; text-decoration:underline;">Circuit Theory I Lab Sequence</a>
+              </h2>
+            </div>
+            <p style="color:#94a3b8; font-size:0.875rem; max-width:32rem; margin:0; line-height:1.5;">
+              Recommended progressive laboratory sequence spanning 2nd-order differential equations, active filtering, harmonic decomposition, and transmission line wave physics.
+            </p>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
+            <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
+              <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 01 • 2nd-Order ODE</span>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/rlc-resonance" style="color:#ffffff; text-decoration:none; font-weight:bold;">RLC Circuit Resonance &rarr;</a></h3>
+              <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Series/parallel RLC frequency response, quality factor, and transient damping.</p>
+            </div>
+            <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
+              <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 02 • Active Biquad</span>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/sallen-key-filter" style="color:#ffffff; text-decoration:none; font-weight:bold;">Sallen-Key Active Filter &rarr;</a></h3>
+              <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Op-amp frequency selectivity, Butterworth vs Chebyshev peaking, and phase roll-off.</p>
+            </div>
+            <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
+              <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 03 • Harmonic Theory</span>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/fourier-synthesis" style="color:#ffffff; text-decoration:none; font-weight:bold;">Fourier Series Synthesis &rarr;</a></h3>
+              <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Harmonic decomposition of square and triangle waves, Gibbs phenomenon, and IEEE 519 THD.</p>
+            </div>
+            <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
+              <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 04 • Wave Propagation</span>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/transmission-line" style="color:#ffffff; text-decoration:none; font-weight:bold;">RF Transmission Line &rarr;</a></h3>
+              <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Distributed parameter telegrapher equations, impedance mismatch, and VSWR.</p>
+            </div>
+          </div>
         </section>
+        ` : ''}
+
+        ${dept.id === 'mechanical' ? `
+        <section class="curriculum-track-section" aria-label="Curriculum Track: Mechanical Dynamics Sequence" style="margin-top:2.5rem; margin-bottom:2.5rem; padding:1.75rem; background:linear-gradient(135deg, rgba(245,158,11,0.1) 0%, #0b1324 100%); border:1px solid rgba(245,158,11,0.4); border-radius:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; border-bottom:1px solid #1e293b; padding-bottom:1rem; margin-bottom:1.5rem;">
+            <div>
+              <span style="font-family:monospace; font-size:0.75rem; color:#f59e0b; text-transform:uppercase; letter-spacing:0.05em; font-weight:bold; background:#0f172a; padding:0.25rem 0.5rem; border-radius:0.25rem; border:1px solid rgba(245,158,11,0.3);">Curriculum Track • Related Concepts</span>
+              <h2 style="font-size:1.5rem; font-weight:bold; color:#ffffff; margin:0.5rem 0 0 0;">
+                <a href="/simulator/harmonic-oscillator" style="color:#f59e0b; text-decoration:underline;">Mechanical Dynamics Sequence</a>
+              </h2>
+            </div>
+            <p style="color:#94a3b8; font-size:0.875rem; max-width:32rem; margin:0; line-height:1.5;">
+              Progressive mechanical engineering sequence connecting single-degree-of-freedom vibrations to multi-bar linkage kinematics, machine gearing, and thermodynamic steam cycles.
+            </p>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
+            <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
+              <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 01 • Vibrations &amp; SDOF</span>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/harmonic-oscillator" style="color:#ffffff; text-decoration:none; font-weight:bold;">Harmonic Oscillator &rarr;</a></h3>
+              <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Mass-spring-damper resonance, dynamic magnification factor M(ω), and 90° phase shift.</p>
+            </div>
+            <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
+              <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 02 • Planar Kinematics</span>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/four-bar-mechanism" style="color:#ffffff; text-decoration:none; font-weight:bold;">4-Bar Mechanism &rarr;</a></h3>
+              <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Grashof mobility criterion, Freudenstein loop closure, and transmission angle tracking.</p>
+            </div>
+            <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
+              <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 03 • Machine Elements</span>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/spur-gear-mesh" style="color:#ffffff; text-decoration:none; font-weight:bold;">Spur Gear Mesh &rarr;</a></h3>
+              <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Conjugate involute tooth action, pitch line velocity, and AGMA 2001 contact ratio.</p>
+            </div>
+            <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
+              <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 04 • Thermodynamics</span>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/rankine-cycle" style="color:#ffffff; text-decoration:none; font-weight:bold;">Rankine Cycle &rarr;</a></h3>
+              <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Steam boiler heat addition, non-isentropic turbine expansion, and thermal efficiency on T-s diagrams.</p>
+            </div>
+          </div>
+        </section>
+        ` : ''}
 
         ${dept.id === 'mechanical' ? `
         <section style="margin-top:3rem; padding:2rem; background:linear-gradient(135deg, rgba(120,53,15,0.3), #0b1324); border-radius:1rem; border:1px solid rgba(245,158,11,0.4);">
@@ -295,12 +456,7 @@ function renderContentForRoute(route: AppRoute): string {
 
       // Formulate Accessible KaTeX / MathML Equations
       const equationsHtml = theory.governingEquations.map((eq) => {
-        let katexHtml = '';
-        try {
-          katexHtml = katex.renderToString(eq.latex, { displayMode: true, throwOnError: false });
-        } catch {
-          katexHtml = `<div style="font-family:monospace; color:#38bdf8;">${escapeHtml(eq.latex)}</div>`;
-        }
+        const katexHtml = renderMath(eq.latex, true);
 
         const varListHtml = eq.variables && eq.variables.length > 0
           ? `
@@ -335,12 +491,9 @@ function renderContentForRoute(route: AppRoute): string {
       `).join('');
 
       const stepsHtml = theory.stepByStepExample.steps.map(st => {
-        let stepKatex = '';
-        try {
-          stepKatex = katex.renderToString(st.formulaLatex, { displayMode: true, throwOnError: false });
-        } catch {
-          stepKatex = `<div style="font-family:monospace; color:#38bdf8;">${escapeHtml(st.formulaLatex)}</div>`;
-        }
+        const stepKatex = renderMath(st.formulaLatex, true);
+        const substHtml = renderMath(st.substitution, false);
+        const resultHtml = renderMath(st.stepResult, false);
         return `
         <div style="margin-bottom:1rem; padding:1rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.5rem;">
@@ -350,8 +503,8 @@ function renderContentForRoute(route: AppRoute): string {
           <div style="margin:0.5rem 0; overflow-x:auto;">${stepKatex}</div>
           <div style="padding:0.6rem; background:#070d19; border-radius:0.375rem; font-family:monospace; font-size:0.8rem; color:#cbd5e1; margin-bottom:0.5rem;">
             <div style="color:#64748b; font-size:0.7rem; text-transform:uppercase;">Numerical Substitution:</div>
-            <div style="color:#f8fafc; margin:0.25rem 0;">${escapeHtml(st.substitution)}</div>
-            <div style="color:#34d399; font-weight:bold;">Result: ${escapeHtml(st.stepResult)}</div>
+            <div style="color:#f8fafc; margin:0.25rem 0;">${substHtml}</div>
+            <div style="color:#34d399; font-weight:bold;">Result: ${resultHtml}</div>
           </div>
           <p style="font-size:0.8rem; color:#94a3b8; line-height:1.5; margin:0;">${escapeHtml(st.explanation)}</p>
         </div>
@@ -376,6 +529,24 @@ function renderContentForRoute(route: AppRoute): string {
           <p style="font-size:1.15rem; color:#38bdf8; font-weight:600; margin-bottom:1rem;">${escapeHtml(sim.tagline)}</p>
           <p style="font-size:1rem; color:#cbd5e1; line-height:1.6; max-width:54rem;">${escapeHtml(sim.description)}</p>
         </header>
+
+        ${TOP_FLAGSHIP_EMBED_SLUGS.includes(sim.id as any) ? `
+        <!-- Embed this lab section for flagship simulators (Prompt Requirements 1-3) -->
+        <details class="embed-lab-details" style="margin-bottom:2rem; padding:1rem 1.25rem; background:#0b1324; border:1px solid rgba(168,85,247,0.4); border-radius:0.75rem; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+          <summary style="font-size:1rem; font-weight:700; color:#c084fc; cursor:pointer; font-family:monospace; user-select:none;">
+            Embed this lab
+          </summary>
+          <div style="margin-top:0.75rem;">
+            <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:0.5rem; line-height:1.4;">
+              Copy and paste the HTML snippet below to embed this interactive first-principles simulator directly into Canvas, Moodle, Blackboard, or course websites:
+            </p>
+            <textarea readonly rows="3" onclick="this.select(); document.execCommand('copy'); gtag('event', 'embed_copy', {'simulator': '${escapeHtml(sim.title).replace(/'/g, "\\'")}'});" style="width:100%; box-sizing:border-box; background:#030712; color:#c084fc; border:1px solid #1e293b; border-radius:0.5rem; padding:0.6rem 0.75rem; font-family:monospace; font-size:0.8rem; line-height:1.4; resize:vertical; cursor:pointer;"><iframe src="https://livesimulators.com/simulator/${sim.id}?embed=1" width="100%" height="600" frameborder="0" title="${escapeHtml(sim.title)}"></iframe></textarea>
+            <p style="font-size:0.8rem; color:#cbd5e1; margin-top:0.4rem; margin-bottom:0;">
+              Please credit LiveSimulators when embedding in your course materials.
+            </p>
+          </div>
+        </details>
+        ` : ''}
 
         <!-- Interactive 60 FPS Physics Canvas Stage (Initial Payload Dimensions prevent CLS) -->
         <div class="simulator-canvas-stage" style="width:100%; aspect-ratio:16/9; max-height:540px; background:#060b13; border:1px solid #1e293b; border-radius:1rem; position:relative; overflow:hidden; margin-bottom:2.5rem;">
@@ -548,6 +719,86 @@ function renderContentForRoute(route: AppRoute): string {
             </section>
           </div>
         </details>
+
+        <!-- Related Concepts & Cross-Discipline Equivalents Section -->
+        ${(() => {
+          const equivalents = getCrossDisciplineEquivalents(sim.id);
+          if (equivalents.length === 0) return '';
+          return `
+          <section class="related-concepts-section" aria-label="Related Physics Concepts" style="margin-bottom:2.5rem; padding:1.5rem; background:#070d19; border:1px solid rgba(6,182,212,0.4); border-radius:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1e293b; padding-bottom:0.75rem; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
+              <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin:0; display:flex; align-items:center; gap:0.5rem;">
+                <span style="color:#38bdf8;">Related Concepts</span> • <span style="font-size:0.85rem; color:#94a3b8; font-weight:normal;">Cross-Discipline Isomorphisms</span>
+              </h2>
+              <span style="font-family:monospace; font-size:0.75rem; color:#38bdf8; background:rgba(6,182,212,0.1); padding:0.25rem 0.5rem; border-radius:0.25rem; border:1px solid rgba(6,182,212,0.3);">
+                Shared Differential Equation Structure
+              </span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1rem;">
+              ${equivalents.map(eq => {
+                const targetSim = ALL_AVAILABLE_SIMULATORS.find(s => s.id === eq.targetSimulatorId);
+                return `
+                <div style="padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem; display:flex; flex-direction:column; justify-content:space-between;">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                      <span style="font-family:monospace; font-size:0.75rem; color:#34d399; background:rgba(16,185,129,0.1); padding:0.2rem 0.5rem; border-radius:0.25rem;">${escapeHtml(eq.relationshipType)}</span>
+                      ${targetSim ? `<span style="font-family:monospace; font-size:0.75rem; color:#94a3b8;">${escapeHtml(targetSim.disciplineName)}</span>` : ''}
+                    </div>
+                    <h3 style="font-size:1rem; font-weight:bold; margin:0.25rem 0 0.5rem 0;">
+                      <a href="/simulator/${eq.targetSimulatorId}" style="color:#38bdf8; text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem;">
+                        ${escapeHtml(eq.anchorText)} &rarr;
+                      </a>
+                    </h3>
+                    <p style="color:#cbd5e1; font-size:0.85rem; line-height:1.5; margin:0;">
+                      ${escapeHtml(eq.subtitle)}
+                    </p>
+                  </div>
+                  ${eq.sharedMathematicalLaw ? `
+                  <div style="margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid #1e293b; font-family:monospace; font-size:0.75rem; color:#64748b;">
+                    Governing Law: <span style="color:#94a3b8;">${escapeHtml(eq.sharedMathematicalLaw)}</span>
+                  </div>` : ''}
+                </div>
+                `;
+              }).join('')}
+            </div>
+          </section>
+          `;
+        })()}
+
+        <!-- How to cite this simulator section immediately above footer -->
+        <section class="citation-section" aria-label="How to cite this simulator" style="margin-top:2.5rem; margin-bottom:2rem; padding:1.5rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem;">
+          <h3 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin:0 0 0.75rem 0;">How to cite this simulator</h3>
+          <p style="color:#cbd5e1; font-size:0.875rem; line-height:1.6; margin-bottom:1rem;">
+            Sharma, A. (${new Date().getFullYear()}). ${escapeHtml(sim.title)}. LiveSimulators. Retrieved from https://livesimulators.com/simulator/${sim.id}
+          </p>
+          <div style="position:relative; margin-bottom:1rem;">
+            <pre style="background:#030712; border:1px solid #1e293b; border-radius:0.5rem; padding:1rem; overflow-x:auto; margin:0;"><code class="bibtex" style="font-family:monospace; font-size:0.8rem; color:#38bdf8;">@misc{livesimulators_${sim.id.replace(/-/g, '_')}_${new Date().getFullYear()},
+  author = {Sharma, A.},
+  title = {{${escapeHtml(sim.title)}}},
+  year = {${new Date().getFullYear()}},
+  howpublished = {LiveSimulators},
+  url = {https://livesimulators.com/simulator/${sim.id}}
+}</code></pre>
+          </div>
+          <button type="button" onclick="navigator.clipboard.writeText(&quot;@misc{livesimulators_${sim.id.replace(/-/g, '_')}_${new Date().getFullYear()},\\n  author = {Sharma, A.},\\n  title = {{${escapeHtml(sim.title).replace(/"/g, '\\"')}}},\\n  year = {${new Date().getFullYear()}},\\n  howpublished = {LiveSimulators},\\n  url = {https://livesimulators.com/simulator/${sim.id}}\\n}&quot;); gtag('event', 'cite_copy', {'simulator': '${escapeHtml(sim.title).replace(/'/g, "\\'")}'}); alert('Citation copied to clipboard!');" style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:#0284c7; color:#ffffff; border:none; border-radius:0.5rem; font-weight:bold; font-size:0.8rem; cursor:pointer;">
+            Copy citation
+          </button>
+        </section>
+
+        <!-- Pre-rendered Semantic Footer -->
+        <footer style="margin-top:2.5rem; padding-top:2rem; border-top:1px solid #1e293b; color:#64748b; font-size:0.8rem; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem;">
+          <div>
+            <strong style="color:#ffffff;">LiveSimulators</strong> — Browser-based first-principles engineering simulators. © ${new Date().getFullYear()}.
+          </div>
+          <div style="display:flex; gap:1.25rem; flex-wrap:wrap;">
+            <a href="/" style="color:#94a3b8; text-decoration:none;">Home</a>
+            <a href="/about" style="color:#94a3b8; text-decoration:none;">About</a>
+            <a href="/about/methodology.html" style="color:#38bdf8; text-decoration:none;">Methodology &amp; Verification</a>
+            <a href="/contact" style="color:#94a3b8; text-decoration:none;">Contact</a>
+            <a href="/privacy-policy" style="color:#94a3b8; text-decoration:none;">Privacy Policy</a>
+            <a href="/terms" style="color:#94a3b8; text-decoration:none;">Terms</a>
+          </div>
+        </footer>
       </article>
       `;
     }
@@ -565,7 +816,7 @@ function renderContentForRoute(route: AppRoute): string {
         </header>
         <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">${escapeHtml(sim.description)}</p>
         <div style="font-family:monospace; color:#38bdf8; font-size:0.9rem; padding:0.75rem; background:#0f172a; border-radius:0.5rem; margin-bottom:1rem;">
-          ${escapeHtml(sim.governingEquation)}
+          ${renderMath(sim.governingEquation, false)}
         </div>
         <p style="color:#64748b; font-size:0.8rem;">Physical Law: ${escapeHtml(sim.physicalLaw)} | Reference: ${escapeHtml(sim.standardReference || 'Standard Reference')}</p>
       </div>
@@ -930,8 +1181,10 @@ async function runPrerender() {
   </url>`;
   }).join('\n\n');
 
-  // Cornerstone Educational Guides
+  // Cornerstone Educational Guides & Methodology Documentation
   const guideUrls = [
+    '/about/methodology.html',
+    '/for-professors.html',
     '/guides/rlc-resonance-explained.html',
     '/guides/rankine-cycle-ts-diagram.html',
     '/guides/pid-tuning-step-by-step.html',
@@ -970,7 +1223,7 @@ ${guideSitemapEntries}
   console.log('🤖 Generated llms.txt & llms-full.txt for AI Search & LLM Discovery');
 
   // Copy static assets from public to dist
-  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt', 'manifest.webmanifest', 'sw.js', 'contact-form.html'];
+  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt', 'manifest.webmanifest', 'sw.js', 'contact-form.html', 'for-professors.html'];
   for (const asset of assetsToCopy) {
     const srcFile = path.join(publicDir, asset);
     if (fs.existsSync(srcFile)) {
@@ -1016,6 +1269,19 @@ ${guideSitemapEntries}
       fs.copyFileSync(path.join(publicGuidesDir, f), path.join(distGuidesDir, f));
     }
     console.log('📄 Copied public/guides to dist/guides');
+  }
+
+  const publicAboutDir = path.join(publicDir, 'about');
+  const distAboutDir = path.join(distDir, 'about');
+  if (fs.existsSync(publicAboutDir)) {
+    if (!fs.existsSync(distAboutDir)) {
+      fs.mkdirSync(distAboutDir, { recursive: true });
+    }
+    const files = fs.readdirSync(publicAboutDir);
+    for (const f of files) {
+      fs.copyFileSync(path.join(publicAboutDir, f), path.join(distAboutDir, f));
+    }
+    console.log('📄 Copied public/about to dist/about');
   }
 
   console.log('✅ SSG Prerendering Completed: All routes static, crawlable, and SEO-optimized.');

@@ -26,10 +26,10 @@ export const CROSS_DISCIPLINE_EQUIVALENTS: CrossDisciplineEquivalent[] = [
   {
     sourceSimulatorId: 'rlc-resonance',
     targetSimulatorId: 'harmonic-oscillator',
-    anchorText: 'Mechanical Equivalent: Mass-Spring-Damper System',
+    anchorText: 'Mechanical Equivalent: Mass-Spring-Damper',
     relationshipType: 'Differential Equation',
     differentialEquationLatex: 'L\\frac{d^2q}{dt^2} + R\\frac{dq}{dt} + \\frac{q}{C} = v(t) \\iff m\\ddot{x} + c\\dot{x} + kx = F(t)',
-    subtitle: 'Both systems are governed by 2nd-order linear ODEs linking kinetic/magnetic inertia with potential/electrostatic compliance.',
+    subtitle: 'Both systems are governed by identical canonical 2nd-order linear ODEs: electric charge oscillation maps isomorphically to mechanical mass displacement, where inductance provides inertia, resistance provides viscous damping, and capacitance provides spring compliance.',
     tooltipText: 'Governed by identical canonical 2nd-order differential equations: Inductance L maps to Mass m, Resistance R maps to Damper c, and Capacitance 1/C maps to Spring k.',
     sharedMathematicalLaw: 'Canonical 2nd-Order Linear Ordinary Differential Equation (ODE)',
     isomorphicMappings: [
@@ -40,21 +40,21 @@ export const CROSS_DISCIPLINE_EQUIVALENTS: CrossDisciplineEquivalent[] = [
     ],
   },
 
-  // 2. Electrical Buck-Boost Converter -> Thermal Heat Exchanger
+  // 2. Active Sallen-Key Filter -> Mechanical Damped Harmonic Oscillator
   {
-    sourceSimulatorId: 'buck-boost-converter',
-    targetSimulatorId: 'heat-exchanger',
-    anchorText: 'Conservation of Energy Equivalent: Thermal Systems',
-    relationshipType: 'Conservation Law',
-    differentialEquationLatex: '\\langle v_L \\rangle_{T_{sw}} = 0 \\iff \\dot{Q} = U A \\Delta T_{lm} = \\dot{m} C_p (T_{out} - T_{in})',
-    subtitle: 'Both systems are governed by first-principles energy conservation equations linking energy storage rates with continuous input/output transfer gradients.',
-    tooltipText: 'Governed by dynamic energy conservation laws: inductor volt-second flux balance maps to convective heat transfer and fluid thermal enthalpy exchange.',
-    sharedMathematicalLaw: 'First Law of Thermodynamics & Electromagnetic Conservation of Energy',
+    sourceSimulatorId: 'sallen-key-filter',
+    targetSimulatorId: 'harmonic-oscillator',
+    anchorText: 'Same 2nd-order ODE structure as mechanical oscillation',
+    relationshipType: 'Differential Equation',
+    differentialEquationLatex: '\\frac{d^2 v_{out}}{dt^2} + 2\\zeta\\omega_0 \\frac{d v_{out}}{dt} + \\omega_0^2 v_{out} = K\\omega_0^2 v_{in} \\iff m\\ddot{x} + c\\dot{x} + kx = F(t)',
+    subtitle: 'The active Sallen-Key low-pass filter shares the identical second-order ordinary differential equation structure as a mechanical mass-spring-damper oscillation, where filter cutoff frequency corresponds to natural frequency and damping ratio governs passband peaking.',
+    tooltipText: 'Sallen-Key active filter dynamics exhibit the exact same 2nd-order ODE structure as mechanical oscillation, mapping op-amp filter damping ζ and cutoff ω₀ directly to viscous friction c and spring stiffness k.',
+    sharedMathematicalLaw: 'Canonical 2nd-Order S-Domain Biquad Transfer Function & ODE',
     isomorphicMappings: [
-      { domainA: 'Inductor Volt-Second Balance', domainB: 'Thermal Enthalpy Rate Balance (Q = m·Cp·ΔT)' },
-      { domainA: 'PWM Duty Cycle (D)', domainB: 'Heat Exchanger Thermal Effectiveness (ε)' },
-      { domainA: 'Output Filter Capacitance (C)', domainB: 'Thermal Mass Fluid Capacitance (m·Cp)' },
-      { domainA: 'Switching Frequency (f_sw)', domainB: 'Fluid Mass Flow Velocity (m_dot)' },
+      { domainA: 'Filter Cutoff Frequency (ω₀ = 1/√(R₁R₂C₁C₂))', domainB: 'Undamped Natural Frequency (ω₀ = √(k/m))' },
+      { domainA: 'Filter Damping Ratio (ζ = 1/(2Q))', domainB: 'Mechanical Damping Ratio (ζ = c/(2√(km)))' },
+      { domainA: 'Butterworth / Chebyshev Frequency Peaking', domainB: 'Mechanical Resonance Magnification (Q = 1/(2ζ))' },
+      { domainA: 'Output Sallen-Key Voltage v_out(t)', domainB: 'Harmonic Mass Displacement x(t)' },
     ],
   },
 
@@ -62,10 +62,10 @@ export const CROSS_DISCIPLINE_EQUIVALENTS: CrossDisciplineEquivalent[] = [
   {
     sourceSimulatorId: 'pid-tuning',
     targetSimulatorId: 'cstr-kinetics',
-    anchorText: 'Thermal CSTR Runaway: Closed-Loop Process Dynamics',
+    anchorText: 'Industrial process control equivalent: CSTR temperature regulation',
     relationshipType: 'Feedback Dynamics',
     differentialEquationLatex: 'u(t) = K_p e(t) + K_i \\int_0^t e(\\tau)d\\tau + K_d \\frac{de}{dt} \\iff V\\frac{dC_A}{dt} = F(C_{A0} - C_A) - V k_0 e^{-E/RT} C_A',
-    subtitle: 'Both systems are governed by feedback-controlled error minimization subject to non-linear dead-time, thermal runaway sensitivity, and closed-loop phase margins.',
+    subtitle: 'The 3-term PID feedback algorithm is the benchmark industrial control standard for regulating temperature and stabilizing highly non-linear exothermic CSTR reactors against catastrophic thermal runaway.',
     tooltipText: 'Governed by closed-loop feedback stabilization: PID actuator response directly prevents exponential thermal runaway in non-linear exothermic CSTR reactors.',
     sharedMathematicalLaw: 'Lyapunov Stability & Non-Linear Feedback Regulation',
     isomorphicMappings: [
@@ -76,14 +76,32 @@ export const CROSS_DISCIPLINE_EQUIVALENTS: CrossDisciplineEquivalent[] = [
     ],
   },
 
-  // 4. Reciprocal: Mechanical Damped Harmonic Oscillator -> Electrical RLC Resonance
+  // 4. Civil Beam Bending -> Civil Truss Bridge
+  {
+    sourceSimulatorId: 'beam-bending',
+    targetSimulatorId: 'truss-bridge',
+    anchorText: 'Related: truss bridge nodal equilibrium analysis',
+    relationshipType: 'Differential Equation',
+    differentialEquationLatex: 'EI \\frac{d^4 w}{dx^4} = q(x) \\iff \\sum \\vec{F}_x = 0, \\; \\sum \\vec{F}_y = 0',
+    subtitle: 'Euler-Bernoulli continuous flexural beam equilibrium directly complements discrete pin-jointed truss bridge nodal equilibrium, demonstrating how continuum bending moments resolve into discrete axial tension and compression forces.',
+    tooltipText: 'Continuous flexural beam bending complements discrete truss bar equilibrium under static structural loading.',
+    sharedMathematicalLaw: 'Static Equilibrium & Elastic Virtual Work Principle',
+    isomorphicMappings: [
+      { domainA: 'Continuous Bending Moment M(x)', domainB: 'Discrete Chord Axial Force (T / C)' },
+      { domainA: 'Euler-Bernoulli Curvature d²w/dx²', domainB: 'Truss Joint Deflection Vector δ' },
+      { domainA: 'Beam Section Modulus (S = I/y)', domainB: 'Truss Member Cross-Section Area A' },
+      { domainA: 'Distributed Load q(x)', domainB: 'Joint Nodal External Force P' },
+    ],
+  },
+
+  // 5. Reciprocal: Mechanical Damped Harmonic Oscillator -> Electrical RLC Resonance
   {
     sourceSimulatorId: 'harmonic-oscillator',
     targetSimulatorId: 'rlc-resonance',
-    anchorText: 'Electrical Equivalent: Series RLC Circuit',
+    anchorText: 'Electrical analog: RLC resonant circuit',
     relationshipType: 'Differential Equation',
     differentialEquationLatex: 'm\\ddot{x} + c\\dot{x} + kx = F_0 \\cos(\\omega t) \\iff L\\frac{d^2q}{dt^2} + R\\frac{dq}{dt} + \\frac{q}{C} = V_0 \\cos(\\omega t)',
-    subtitle: 'Both systems are governed by 2nd-order linear ODEs where mechanical mass, damping, and springs map directly to electrical inductance, resistance, and capacitance.',
+    subtitle: 'Mechanical mass-spring-damper dynamics are the direct physical analog to electrical series RLC resonant circuits, where Newton second law mẍ + cẋ + kx = F(t) maps identically to Kirchhoff voltage loop Lq̈ + Rq̇ + q/C = v(t).',
     tooltipText: 'Physical isomorphism: mechanical resonant frequency ω₀ = √(k/m) corresponds directly to electrical resonant frequency ω₀ = 1/√(LC).',
     sharedMathematicalLaw: 'Canonical 2nd-Order Linear Ordinary Differential Equation (ODE)',
     isomorphicMappings: [
@@ -91,23 +109,6 @@ export const CROSS_DISCIPLINE_EQUIVALENTS: CrossDisciplineEquivalent[] = [
       { domainA: 'Viscous Damper (c)', domainB: 'Damping Resistor (R)' },
       { domainA: 'Spring Stiffness (k)', domainB: 'Capacitive Reciprocal (1/C)' },
       { domainA: 'Resonance Peak Amplification (Q)', domainB: 'Electrical Quality Factor (Q = ω₀L/R)' },
-    ],
-  },
-
-  // 5. Reciprocal: Thermal Heat Exchanger -> Electrical Buck-Boost Converter
-  {
-    sourceSimulatorId: 'heat-exchanger',
-    targetSimulatorId: 'buck-boost-converter',
-    anchorText: 'Power Electronics Equivalent: Switching Energy Converter',
-    relationshipType: 'Conservation Law',
-    differentialEquationLatex: '\\dot{Q} = U A \\Delta T_{lm} \\iff P_{in} = V_{in} I_{in} = V_{out} I_{out} = P_{out}',
-    subtitle: 'Both systems are governed by continuous energy conservation balances where enthalpy transport parallels switched electromagnetic energy storage.',
-    tooltipText: 'Energy balance equivalent: fluid temperature differential across tube bundles behaves like switched voltage transformation across reactive elements.',
-    sharedMathematicalLaw: 'Conservation of Energy & Thermodynamic Flux Transfer',
-    isomorphicMappings: [
-      { domainA: 'Thermal Enthalpy Transfer Rate', domainB: 'Inductive Energy Transfer Rate' },
-      { domainA: 'Heat Transfer Surface Area (A)', domainB: 'Magnetic Core Choke Volume' },
-      { domainA: 'Overall Coefficient (U)', domainB: 'Conversion Efficiency (η)' },
     ],
   },
 
@@ -128,7 +129,37 @@ export const CROSS_DISCIPLINE_EQUIVALENTS: CrossDisciplineEquivalent[] = [
     ],
   },
 
-  // 7. RC / RL Transient -> Chemical Kinetics
+  // 7. Reciprocal: Civil Truss Bridge -> Civil Beam Bending
+  {
+    sourceSimulatorId: 'truss-bridge',
+    targetSimulatorId: 'beam-bending',
+    anchorText: 'Related: Euler-Bernoulli beam flexural mechanics',
+    relationshipType: 'Differential Equation',
+    differentialEquationLatex: '\\sum \\vec{F}_x = 0, \\; \\sum \\vec{F}_y = 0 \\iff EI \\frac{d^4 w}{dx^4} = q(x)',
+    subtitle: 'Pin-jointed truss bar axial tension and compression discretize global bending moments into a coupled structural framework equivalent to an Euler-Bernoulli beam.',
+    tooltipText: 'Truss structural mechanics map discrete bar forces into equivalent continuum flexural moments and shear forces.',
+    sharedMathematicalLaw: 'Structural Virtual Work & Equilibrium',
+  },
+
+  // 8. Electrical Buck-Boost Converter -> Thermal Heat Exchanger
+  {
+    sourceSimulatorId: 'buck-boost-converter',
+    targetSimulatorId: 'heat-exchanger',
+    anchorText: 'Conservation of Energy Equivalent: Thermal Systems',
+    relationshipType: 'Conservation Law',
+    differentialEquationLatex: '\\langle v_L \\rangle_{T_{sw}} = 0 \\iff \\dot{Q} = U A \\Delta T_{lm} = \\dot{m} C_p (T_{out} - T_{in})',
+    subtitle: 'Both systems are governed by first-principles energy conservation equations linking energy storage rates with continuous input/output transfer gradients.',
+    tooltipText: 'Governed by dynamic energy conservation laws: inductor volt-second flux balance maps to convective heat transfer and fluid thermal enthalpy exchange.',
+    sharedMathematicalLaw: 'First Law of Thermodynamics & Electromagnetic Conservation of Energy',
+    isomorphicMappings: [
+      { domainA: 'Inductor Volt-Second Balance', domainB: 'Thermal Enthalpy Rate Balance (Q = m·Cp·ΔT)' },
+      { domainA: 'PWM Duty Cycle (D)', domainB: 'Heat Exchanger Thermal Effectiveness (ε)' },
+      { domainA: 'Output Filter Capacitance (C)', domainB: 'Thermal Mass Fluid Capacitance (m·Cp)' },
+      { domainA: 'Switching Frequency (f_sw)', domainB: 'Fluid Mass Flow Velocity (m_dot)' },
+    ],
+  },
+
+  // 9. RC / RL Transient -> Chemical Kinetics
   {
     sourceSimulatorId: 'rc-rl-transient',
     targetSimulatorId: 'cstr-kinetics',
@@ -144,7 +175,7 @@ export const CROSS_DISCIPLINE_EQUIVALENTS: CrossDisciplineEquivalent[] = [
     ],
   },
 
-  // 8. Bode & Nyquist Stability -> Electrical RLC Resonance
+  // 10. Bode & Nyquist Stability -> Electrical RLC Resonance
   {
     sourceSimulatorId: 'bode-nyquist-stability',
     targetSimulatorId: 'rlc-resonance',
@@ -156,19 +187,7 @@ export const CROSS_DISCIPLINE_EQUIVALENTS: CrossDisciplineEquivalent[] = [
     sharedMathematicalLaw: 'Laplace S-Domain Transfer Function & Frequency Response',
   },
 
-  // 9. Civil Beam Bending -> Mechanical Damped Harmonic Oscillator
-  {
-    sourceSimulatorId: 'beam-bending',
-    targetSimulatorId: 'harmonic-oscillator',
-    anchorText: 'Structural Dynamics Equivalent: Modal Beam Vibrations',
-    relationshipType: 'Differential Equation',
-    differentialEquationLatex: 'EI \\frac{\\partial^4 w}{\\partial x^4} + \\rho A \\frac{\\partial^2 w}{\\partial t^2} = 0 \\iff m\\ddot{x} + kx = 0',
-    subtitle: 'Both systems solve elasticity and inertial balance differential equations governing structural flexure and natural frequencies.',
-    tooltipText: 'Continuous Euler-Bernoulli beam deflection discretizes into modal mass-spring-damper degrees of freedom.',
-    sharedMathematicalLaw: 'Euler-Bernoulli Elastic Continuum & Modal Dynamics',
-  },
-
-  // 10. DC Motor Speed Control -> Control Systems PID Tuning
+  // 11. DC Motor Speed Control -> Control Systems PID Tuning
   {
     sourceSimulatorId: 'dc-motor-speed-control',
     targetSimulatorId: 'pid-tuning',

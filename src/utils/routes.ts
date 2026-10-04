@@ -4,15 +4,36 @@ import { LABS } from '../config/labs';
 
 export const SITE_URL = 'https://livesimulators.com';
 
+export const TOP_FLAGSHIP_EMBED_SLUGS = [
+  'rlc-resonance',
+  'harmonic-oscillator',
+  'pid-tuning',
+  'beam-bending',
+  'rankine-cycle',
+  'four-bar-mechanism',
+  'sallen-key-filter',
+  'transmission-line',
+  'buck-boost-converter',
+  'spur-gear-mesh',
+] as const;
+
 /**
- * Converts a browser URL pathname (and optional legacy hash) to an AppRoute object.
+ * Converts a browser URL pathname (and optional legacy hash and search query) to an AppRoute object.
  */
-export function parsePathToRoute(pathname: string, hash?: string): AppRoute {
+export function parsePathToRoute(pathname: string, hash?: string, search?: string): AppRoute {
   // Check for legacy hash routes first (e.g. #/about, #/simulator/rlc-resonance, #/lab/power-electronics-lab)
   if (hash && hash.startsWith('#/')) {
     const hashPath = hash.slice(1); // remove '#'
-    return parsePathToRoute(hashPath);
+    return parsePathToRoute(hashPath, undefined, search);
   }
+
+  // Extract query parameters from search or pathname
+  const searchStr = search !== undefined 
+    ? search 
+    : (pathname.includes('?') 
+        ? pathname.slice(pathname.indexOf('?')) 
+        : (typeof window !== 'undefined' ? window.location.search : ''));
+  const isEmbedMode = new URLSearchParams(searchStr).get('embed') === '1';
 
   // Strip query parameters and hashes if present (e.g. ?R=25&L=60)
   const rawPath = pathname.split('?')[0].split('#')[0];
@@ -50,6 +71,14 @@ export function parsePathToRoute(pathname: string, hash?: string): AppRoute {
     return { view: 'terms' };
   }
 
+  // Static for-professors redirect fallback if navigated via SPA
+  if (cleanPath === '/for-professors' || cleanPath === '/for-professors.html') {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/for-professors.html';
+    }
+    return { view: 'home' };
+  }
+
   // Match /department/:departmentId
   const deptMatch = cleanPath.match(/^\/department\/([a-zA-Z0-9_-]+)$/);
   if (deptMatch) {
@@ -60,11 +89,14 @@ export function parsePathToRoute(pathname: string, hash?: string): AppRoute {
     return { view: 'not-found', attemptedPath: cleanPath };
   }
 
-  // Match /simulator/:simulatorId
+  // Match /simulator/:simulatorId (with ?embed=1 handler)
   const simMatch = cleanPath.match(/^\/simulator\/([a-zA-Z0-9_-]+)$/);
   if (simMatch) {
     const simId = simMatch[1];
     if (ALL_AVAILABLE_SIMULATORS.some((s) => s.id === simId)) {
+      if (isEmbedMode) {
+        return { view: 'embed', simulatorId: simId };
+      }
       return { view: 'simulator', simulatorId: simId };
     }
     return { view: 'not-found', attemptedPath: cleanPath };

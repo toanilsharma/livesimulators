@@ -18,6 +18,18 @@ interface EngineeringTheoryFormulasProps {
 export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps> = ({ simulator, compact = false }) => {
   const theory = getEngineeringTheory(simulator);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [citationCopied, setCitationCopied] = useState(false);
+
+  const currentYear = new Date().getFullYear();
+  const fullUrl = `https://livesimulators.com/simulator/${simulator.id}`;
+  const bibtexKey = `livesimulators_${simulator.id.replace(/-/g, '_')}_${currentYear}`;
+  const bibtexString = `@misc{${bibtexKey},
+  author = {Sharma, A.},
+  title = {{${simulator.title}}},
+  year = {${currentYear}},
+  howpublished = {LiveSimulators},
+  url = {${fullUrl}}
+}`;
 
   const handleCopyLatex = (latex: string, index: number) => {
     navigator.clipboard.writeText(latex);
@@ -231,8 +243,12 @@ export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps>
 
                   <div className="p-2.5 rounded bg-slate-900/60 font-mono text-xs text-slate-300 space-y-1">
                     <div className="text-[10px] text-slate-500 uppercase tracking-wider">Numerical Substitution:</div>
-                    <div className="text-slate-200 overflow-x-auto custom-scrollbar">{st.substitution}</div>
-                    <div className="text-emerald-400 font-bold pt-1">Result: {st.stepResult}</div>
+                    <div className="text-slate-200 overflow-x-auto custom-scrollbar">
+                      <MathView math={st.substitution} />
+                    </div>
+                    <div className="text-emerald-400 font-bold pt-1">
+                      Result: <MathView math={st.stepResult} />
+                    </div>
                   </div>
 
                   <p className="text-xs text-slate-400 leading-relaxed">
@@ -313,6 +329,50 @@ export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps>
                 <Download className="w-3.5 h-3.5 text-rose-400" />
                 <span>Download Worksheet PDF</span>
               </button>
+            </div>
+          </section>
+
+          {/* SECTION 5: HOW TO CITE THIS SIMULATOR */}
+          <section aria-labelledby="section-citation" className="space-y-3 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-between pb-1 flex-wrap gap-2">
+              <h3 id="section-citation" className="text-sm sm:text-base font-bold text-white flex items-center gap-2 font-mono">
+                <span className="text-cyan-400">5.</span>
+                <span>How to cite this simulator</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(bibtexString);
+                  if (typeof (window as any).gtag === 'function') {
+                    (window as any).gtag('event', 'cite_copy', { simulator: simulator.title });
+                  }
+                  setCitationCopied(true);
+                  setTimeout(() => setCitationCopied(false), 2000);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold font-mono text-xs transition-colors flex items-center gap-1.5 shadow"
+                title="Copy BibTeX citation to clipboard"
+              >
+                {citationCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{citationCopied ? 'Copied' : 'Copy citation'}</span>
+              </button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
+              <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+                Plain-Text Academic Citation:
+              </div>
+              <p className="text-slate-200 font-sans leading-relaxed select-all">
+                Sharma, A. ({currentYear}). {simulator.title}. LiveSimulators. Retrieved from {fullUrl}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+                BibTeX Entry (@misc):
+              </div>
+              <pre className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] text-cyan-300 overflow-x-auto custom-scrollbar select-all leading-relaxed">
+                <code className="bibtex">{bibtexString}</code>
+              </pre>
             </div>
           </section>
         </div>

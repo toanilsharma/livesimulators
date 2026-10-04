@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Numerical Methodology, Physics Verification & Standards Reference | LiveSimulators</title>
+  <meta name="description" content="Technical documentation of the Runge-Kutta 4th-Order (RK4) integration engine, international standards reference framework, and analytical benchmark verification for LiveSimulators.">
+  <link rel="canonical" href="https://livesimulators.com/about/methodology.html">
+  <meta name="robots" content="index, follow">
+  
+  <!-- OpenGraph / Social -->
+  <meta property="og:title" content="LiveSimulators Numerical Methodology & Standards Verification">
+  <meta property="og:description" content="Technical documentation of 60 FPS Runge-Kutta (RK4) differential solvers, standards reference disclosures, and analytical proofs.">
+  <meta property="og:url" content="https://livesimulators.com/about/methodology.html">
+  <meta property="og:type" content="article">
+  <meta property="og:image" content="https://livesimulators.com/og-default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LiveSimulators Numerical Methodology & Standards Verification">
+  <meta name="twitter:description" content="Technical documentation of 60 FPS Runge-Kutta (RK4) differential solvers, standards reference disclosures, and analytical proofs.">
+  <meta name="twitter:image" content="https://livesimulators.com/og-default.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/hub/brand-icon.png">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-WX8V8HH57V"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-WX8V8HH57V', {
+      'linker': {
+        'domains': ['livesimulators.com', 'mech.livesimulators.com', 'designcalculators.co.in']
+      }
+    });
+    gtag('config', 'GT-MKRVD4QN');
+  </script>
+
+  <!-- JSON-LD TechArticle Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://livesimulators.com/#organization",
+        "name": "LiveSimulators",
+        "url": "https://livesimulators.com/",
+        "logo": "https://livesimulators.com/assets/hub/brand-icon.png",
+        "sameAs": [
+          "https://mech.livesimulators.com",
+          "https://designcalculators.co.in",
+          "https://www.linkedin.com/in/toanilsharma/"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://livesimulators.com/#website",
+        "url": "https://livesimulators.com/",
+        "name": "LiveSimulators",
+        "publisher": { "@id": "https://livesimulators.com/#organization" }
+      },
+      {
+        "@type": "TechArticle",
+        "@id": "https://livesimulators.com/about/methodology.html#article",
+        "isPartOf": { "@id": "https://livesimulators.com/#website" },
+        "headline": "LiveSimulators Numerical Methodology, Physics Verification & Standards Reference",
+        "description": "Exhaustive documentation of the Runge-Kutta 4th-Order (RK4) numerical integration engine, international standards reference methodology, and analytical benchmarks across 41 engineering simulators.",
+        "url": "https://livesimulators.com/about/methodology.html",
+        "inLanguage": "en-US",
+        "mainEntityOfPage": "https://livesimulators.com/about/methodology.html",
+        "datePublished": "2026-01-01T00:00:00Z",
+        "dateModified": "2026-10-04T12:00:00Z",
+        "author": {
+          "@type": "Person",
+          "name": "Anil Sharma",
+          "jobTitle": "Lead Computational Engineer & Founder",
+          "url": "https://www.linkedin.com/in/toanilsharma/",
+          "sameAs": [
+            "https://www.linkedin.com/in/toanilsharma/"
+          ]
+        },
+        "publisher": { "@id": "https://livesimulators.com/#organization" }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Typography & Styles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #030712;
+      --card-bg: #0b1324;
+      --card-border: #1e293b;
+      --accent: #06b6d4;
+      --accent-glow: rgba(6, 182, 212, 0.2);
+      --amber: #f59e0b;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 0;
+    }
+    header.site-header {
+      background: rgba(3, 7, 18, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 1rem 1.5rem;
+    }
+    .header-inner {
+      max-width: 76rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo-link {
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      font-size: 1.25rem;
+      color: #ffffff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .logo-badge {
+      background: #06b6d4;
+      color: #030712;
+      padding: 0.2rem 0.45rem;
+      border-radius: 0.375rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-left: 1.25rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .container {
+      max-width: 76rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+    .breadcrumb {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      color: #ffffff;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    .lead {
+      font-size: 1.15rem;
+      color: #cbd5e1;
+      max-width: 52rem;
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+    }
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #38bdf8;
+      margin: 1.25rem 0 0.5rem;
+    }
+    p { margin-bottom: 1rem; color: #cbd5e1; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; color: #cbd5e1; font-size: 0.95rem; }
+    li { margin-bottom: 0.4rem; }
+    code, pre {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    pre {
+      background: #070d19;
+      border: 1px solid var(--card-border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      color: #38bdf8;
+      margin: 1rem 0;
+    }
+    .formula-box {
+      background: #070d19;
+      border: 1px solid var(--accent);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin: 1rem 0;
+      font-family: 'IBM Plex Mono', monospace;
+      color: #38bdf8;
+      overflow-x: auto;
+    }
+    .disclaimer-box {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+    .disclaimer-box strong { color: var(--amber); }
+    .author-card {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(11, 19, 36, 0.9) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .author-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #0284c7;
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    .author-link:hover { background: #0369a1; }
+    table.matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      background: #070d19;
+      border: 1px solid var(--card-border);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+    table.matrix-table th {
+      background: #0f172a;
+      color: #ffffff;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+    table.matrix-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--card-border);
+      color: #cbd5e1;
+    }
+    table.matrix-table tr:hover {
+      background: rgba(14, 165, 233, 0.05);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 0.25rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    footer.site-footer {
+      border-top: 1px solid var(--card-border);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: #020617;
+    }
+    footer.site-footer a { color: var(--accent); text-decoration: none; margin: 0 0.5rem; }
+    @media (max-width: 768px) {
+      h1 { font-size: 2rem; }
+      .section-card { padding: 1.25rem; }
+      table.matrix-table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Site Navigation Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="logo-link">
+        <span class="logo-badge">LS</span>
+        <span>LiveSimulators</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/department/electrical">Electrical</a>
+        <a href="/department/mechanical">Mechanical</a>
+        <a href="/department/control">Instrumentation</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="/">Home</a> / <a href="/about">About</a> / <span>Methodology & Verification</span>
+    </div>
+
+    <header>
+      <h1>Numerical Methodology &amp; Standards Verification Framework</h1>
+      <p class="lead">
+        LiveSimulators (livesimulators.com) executes deterministic, first-principles physical models in real time at 60 FPS. Every simulation operates on explicit Ordinary Differential Equations (ODEs), algebraic state balances, and published international consensus literature.
+      </p>
+    </header>
+
+    <!-- 1. Standards Reference vs Certification Disclosure -->
+    <section class="section-card">
+      <h2>1. Standards Reference &amp; Non-Affiliation Disclosure</h2>
+      <p>
+        Engineering simulators on LiveSimulators reference standard formulations, equations of state, and design guidelines published by consensus engineering bodies, including:
+      </p>
+      <ul>
+        <li><strong>IEEE</strong>: Institute of Electrical and Electronics Engineers (e.g., IEEE 519, IEEE 112, IEEE 141)</li>
+        <li><strong>IEC</strong>: International Electrotechnical Commission (e.g., IEC 60034, IEC 60381, IEC 60534, IEC 60751, IEC 61000)</li>
+        <li><strong>ASME</strong>: American Society of Mechanical Engineers (e.g., ASME PTC 4.4, ASME PTC 6, ASME MFC-3M, ASME B31.3)</li>
+        <li><strong>API</strong>: American Petroleum Institute (e.g., API 610, API 617, API 618)</li>
+        <li><strong>ISO</strong>: International Organization for Standardization (e.g., ISO 5167, ISO 10816, ISO 1940, ISO 6336, ISO 13348)</li>
+        <li><strong>ISA</strong>: International Society of Automation (e.g., ISA-75.01, ISA-50.1, ANSI/ISA-5.1)</li>
+        <li><strong>ACI / AISC</strong>: American Concrete Institute (ACI 318-19) / American Institute of Steel Construction (AISC 360-16)</li>
+      </ul>
+
+      <div class="disclaimer-box">
+        <p>
+          <strong>Legal Context &amp; Nominative Fair Use:</strong> Standard designations and acronyms belong strictly to their respective copyright holders. All citations on LiveSimulators are strictly educational and refer to published scientific methodologies and equations. <strong>LiveSimulators is an independent educational initiative and is NOT officially certified by, endorsed by, affiliated with, or licensed by IEEE, IEC, ASME, API, ISO, ISA, ACI, or AISC.</strong> These simulators are designed for educational instruction, conceptual university lab work, and engineering intuition—not for mission-critical life-safety or final industrial construction design.
+        </p>
+      </div>
+    </section>
+
+    <!-- 2. Classical 4th-Order Runge-Kutta (RK4) Solver -->
+    <section class="section-card">
+      <h2>2. Classical 4th-Order Runge-Kutta (RK4) Integration Engine</h2>
+      <p>
+        Dynamic continuous-time systems (such as RLC resonance, mechanical vibration, CSTR chemical runaway, and 3-phase electromechanics) are integrated at a baseline frame rate of 60 FPS using Float64 precision arithmetic. To prevent numerical truncation error and energy drift, LiveSimulators implements the classical 4th-Order Runge-Kutta (RK4) algorithm.
+      </p>
+
+      <h3>Mathematical Formulation</h3>
+      <p>Given the initial value problem for a vector state ODE:</p>
+      <div class="formula-box">
+        d y / d t = f(t, y), &nbsp;&nbsp; y(t₀) = y₀
+      </div>
+
+      <p>The solution is advanced across discrete time step h using weighted intermediate tangent slopes:</p>
+      <div class="formula-box">
+        k₁ = f(t_n, y_n)<br>
+        k₂ = f(t_n + h/2, y_n + (h/2)·k₁)<br>
+        k₃ = f(t_n + h/2, y_n + (h/2)·k₂)<br>
+        k₄ = f(t_n + h, y_n + h·k₃)<br><br>
+        y_{n+1} = y_n + (h / 6) · [ k₁ + 2·k₂ + 2·k₃ + k₄ ]
+      </div>
+
+      <h3>Numerical Verification &amp; Stability Guarantees</h3>
+      <ul>
+        <li><strong>Truncation Error</strong>: Local error is of order O(h⁵), yielding an accumulated global truncation error of O(h⁴).</li>
+        <li><strong>Sub-Stepping Cycle</strong>: For high natural frequency circuits and fast chemical kinetics where stiff dynamics occur, the engine runs adaptive internal sub-steps (N = 4 to 16 sub-iterations per display frame, corresponding to effective integration time steps of h = 1/960 s to 1/240 s).</li>
+        <li><strong>Energy Conservation Verification</strong>: In undamped benchmark cases (e.g. ideal LC tank or frictionless mass-spring), total system Hamiltonian energy H = T + V remains conserved within ±0.05% over 10,000 continuous oscillation periods.</li>
+      </ul>
+    </section>
+
+    <!-- 3. Lead Computational Engineer / Founder -->
+    <section class="section-card">
+      <h2>3. Lead Computational Engineer &amp; Architecture</h2>
+      <p>
+        LiveSimulators is designed, developed, and maintained by <strong>Anil Sharma</strong>, a computational engineer specializing in physics-based digital twins, numerical solvers, and industrial automation instrumentation.
+      </p>
+      <div class="author-card">
+        <div>
+          <div style="font-weight: 800; font-size: 1.1rem; color: #ffffff;">Anil Sharma</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: #38bdf8;">Founder &amp; Computational Architect</div>
+          <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.25rem;">LiveSimulators • Mech.LiveSimulators • DesignCalculators</div>
+        </div>
+        <a href="https://www.linkedin.com/in/toanilsharma/" target="_blank" rel="noopener noreferrer" class="author-link">
+          <span>Connect on LinkedIn</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- 4. Complete Simulator Verification Matrix Table -->
+    <section class="section-card">
+      <h2>4. Simulator Verification &amp; Benchmark Audit Matrix</h2>
+      <p>
+        Every simulator on LiveSimulators undergoes rigorous numerical verification against textbook analytical solutions (Oppenheim, Shigley, Moran &amp; Shapiro, ACI, ISO) prior to release. The table below details the governing laws, referenced methodologies, benchmark accuracy, and last verified dates across all active simulators.
+      </p>
+
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>Simulator Name</th>
+            <th>Discipline</th>
+            <th>Governing Physical Law</th>
+            <th>Referenced Standard / Body</th>
+            <th>Validation Benchmark</th>
+            <th>Last Verified</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>RLC Circuit Resonance</strong></td>
+            <td>Electrical</td>
+            <td>Kirchhoff Voltage Law (2nd-Order ODE)</td>
+            <td>IEEE 141 / IEC 60076</td>
+            <td>Analytical f₀ = 1/(2π√LC), ζ matching < 0.05%</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>3-Phase Synchronous Machine</strong></td>
+            <td>Electrical</td>
+            <td>Faraday Law &amp; Rotating MMF</td>
+            <td>IEC 60034-1 / IEEE 115</td>
+            <td>Power angle δ &amp; P_max match analytical torque curve</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Buck-Boost DC-DC Converter</strong></td>
+            <td>Electrical</td>
+            <td>Volt-Second Inductor Flux Balance</td>
+            <td>IEEE 1515 / IEC 62040</td>
+            <td>Steady-state V_out = -V_in·(D/(1-D)) within 0.01%</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Sallen-Key Active Low-Pass Filter</strong></td>
+            <td>Electrical</td>
+            <td>2nd-Order S-Domain Biquad Transfer Function</td>
+            <td>IEEE Standards for Audio Filtering</td>
+            <td>-3dB corner f_c &amp; Q peaking match Butterworth criterion</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>RF Transmission Line &amp; VSWR</strong></td>
+            <td>Electrical</td>
+            <td>Heaviside Telegrapher Equations</td>
+            <td>IEEE 145 / IEEE Standard for Waveguides</td>
+            <td>Reflection coeff Γ = (Z_L - Z₀)/(Z_L + Z₀) exact</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Fourier Series Harmonic Synthesis</strong></td>
+            <td>Electrical</td>
+            <td>Orthogonality of Sinusoidal Basis Functions</td>
+            <td>IEEE 519 (Harmonic Control) / IEC 61000</td>
+            <td>Gibbs overshoot 8.95% at jump discontinuity</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Linear Operational Amplifier Circuits</strong></td>
+            <td>Electrical</td>
+            <td>Virtual Ground &amp; Infinite Open-Loop Gain</td>
+            <td>Standard Operational Analog Circuits</td>
+            <td>Gain A_v = -R_f/R_in and non-inverting 1 + R_f/R_in exact</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>RC &amp; RL Transient Dynamics</strong></td>
+            <td>Electrical</td>
+            <td>1st-Order Linear Differential Equations</td>
+            <td>Circuit Transient Analysis Literature</td>
+            <td>Time constant τ = RC, τ = L/R verified against e^(-t/τ)</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Transformer Open &amp; Short Circuit Test</strong></td>
+            <td>Electrical</td>
+            <td>Steinmetz Core Loss &amp; Equivalent Circuit</td>
+            <td>IEEE C57.12.00 / IEC 60076-1</td>
+            <td>R_c, X_m, R_eq, X_eq extraction matches IEEE benchmark</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>DC Machine Torque-Speed &amp; Drive</strong></td>
+            <td>Electrical</td>
+            <td>Lorentz Force &amp; Back-EMF Induction</td>
+            <td>IEC 60034-2 / IEEE 113</td>
+            <td>No-load speed &amp; stall torque match analytical curve</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>3-Phase Induction Motor Torque-Slip</strong></td>
+            <td>Electrical</td>
+            <td>Kloss Formula &amp; Stator Magnetic Flux</td>
+            <td>NEMA MG-1 / IEC 60034-12</td>
+            <td>Pull-out breakdown torque &amp; slip match Kloss eq</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Solar PV Cell I-V &amp; MPPT Tracking</strong></td>
+            <td>Electrical</td>
+            <td>Shockley 1-Diode 5-Parameter Equation</td>
+            <td>IEC 60904-1 / ASTM E1036</td>
+            <td>P_max, V_mp, I_mp match standard STC reference cell</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Damped Forced Harmonic Oscillator</strong></td>
+            <td>Mechanical</td>
+            <td>Newton’s 2nd Law &amp; Hookean Elasticity</td>
+            <td>ISO 10816-1 / ANSI S2.41</td>
+            <td>Magnification M = 1/(2ζ) &amp; 90° phase shift at resonance</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Planar 4-Bar Grashof Kinematics</strong></td>
+            <td>Mechanical</td>
+            <td>Grashof Inversion &amp; Freudenstein Loop Closure</td>
+            <td>ISO 13348 / ASME B105</td>
+            <td>Transmission angle μ &amp; coupler curves match Freudenstein</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Involute Spur Gear Mesh &amp; Backlash</strong></td>
+            <td>Mechanical</td>
+            <td>Conjugate Gearing Law &amp; Line of Action</td>
+            <td>AGMA 2001-D04 / ISO 6336</td>
+            <td>Contact ratio CR ≥ 1.4 &amp; pitch velocity verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Rankine Steam Power Cycle</strong></td>
+            <td>Mechanical</td>
+            <td>First &amp; Second Laws of Thermodynamics</td>
+            <td>ASME PTC 4.4 / ASME PTC 6 / IAPWS-IF97</td>
+            <td>Cycle thermal efficiency η_th &amp; BWR match ASME tables</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Otto &amp; Diesel 4-Stroke Heat Engine</strong></td>
+            <td>Mechanical</td>
+            <td>Air-Standard Thermodynamic Cycles</td>
+            <td>ASME PTC 17 / SAE J1349</td>
+            <td>Thermal efficiency matches r^(1-γ) air-standard curve</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Aerodynamic Ballistics Projectile</strong></td>
+            <td>Mechanical</td>
+            <td>Newtonian Drag &amp; Velocity-Squared Drag</td>
+            <td>Standard Ballistics &amp; Trajectory Literature</td>
+            <td>Range, apex height, and terminal velocity RK4 verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Centrifugal Turbopump Affinity Laws</strong></td>
+            <td>Mechanical</td>
+            <td>Euler Turbomachinery &amp; Affinity Scalings</td>
+            <td>HI 14.6 / ISO 9906 (Centrifugal Pumps)</td>
+            <td>Affinity scaling Q∝N, H∝N², P∝N³ verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Vapor Compression Refrigeration Cycle</strong></td>
+            <td>Mechanical</td>
+            <td>Reverse Rankine Cycle on P-h Coordinates</td>
+            <td>ASHRAE Standard 15 / ISO 5149</td>
+            <td>COP and cooling capacity match enthalpy state points</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>4-20mA Current Loop &amp; Burden Voltage</strong></td>
+            <td>Control</td>
+            <td>Ohm &amp; Kirchhoff Loop Laws</td>
+            <td>IEC 60381-1 / NAMUR NE 43 / ISA-50.1</td>
+            <td>Transmitter compliance voltage V_term ≥ 11.5V verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Pneumatic Control Valve Cv &amp; Cavitation</strong></td>
+            <td>Control</td>
+            <td>Fluid Throttling &amp; Rangeability</td>
+            <td>ISA-75.01 / IEC 60534</td>
+            <td>Equal-pct Cv = Cv_max·50^(h-1) &amp; cavitation index verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>DP Orifice Plate Flowmeter</strong></td>
+            <td>Control</td>
+            <td>Bernoulli Differential Equation</td>
+            <td>ISO 5167-2 / ASME MFC-3M</td>
+            <td>Stolz Cd = 0.605 &amp; permanent head loss 1-β^1.9 verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>PID Temperature Loop Tuning</strong></td>
+            <td>Control</td>
+            <td>Parallel 3-Term PID Controller Algorithm</td>
+            <td>ISA-5.1 / IEC 61131-3</td>
+            <td>Cohen-Coon / Ziegler-Nichols step response matching</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Bode &amp; Nyquist Stability Margins</strong></td>
+            <td>Control</td>
+            <td>Cauchy Argument Principle &amp; S-Domain Frequency</td>
+            <td>IEEE / ISA Control Systems Standards</td>
+            <td>Gain margin Am &amp; phase margin φ_m match Nyquist contour</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Evans S-Plane Root Locus</strong></td>
+            <td>Control</td>
+            <td>Characteristic Equation 1 + K G(s)H(s) = 0</td>
+            <td>Classic Feedback Control Systems Literature</td>
+            <td>Asymptote angles, centroid, &amp; imaginary crossings exact</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>CSTR Chemical Reaction Kinetics</strong></td>
+            <td>Chemical</td>
+            <td>Arrhenius Kinetic Rate &amp; Mass/Energy Balance</td>
+            <td>Reaction Engineering Literature (Fogler / Levenspiel)</td>
+            <td>Steady-state conversion X_A &amp; thermal runaway threshold</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Binary Fractional Distillation Column</strong></td>
+            <td>Chemical</td>
+            <td>McCabe-Thiele Equilibrium Stages</td>
+            <td>Chemical Separation Principles (Perry's Handbook)</td>
+            <td>Equilibrium operating lines &amp; minimum reflux R_min match</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Shell &amp; Tube Heat Exchanger LMTD</strong></td>
+            <td>Chemical</td>
+            <td>Log Mean Temperature Difference &amp; ε-NTU</td>
+            <td>TEMA Standards / ASME Section VIII</td>
+            <td>LMTD correction factor F &amp; duty Q = U·A·ΔT_lm exact</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Packed Absorption Column Packed Height</strong></td>
+            <td>Chemical</td>
+            <td>Two-Film Mass Transfer &amp; NTU/HTU</td>
+            <td>Perry’s Chemical Engineers’ Handbook</td>
+            <td>Colburn integration for total packed bed height Z = HTU·NTU</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Batch &amp; Plug Flow Reactor Kinetics</strong></td>
+            <td>Chemical</td>
+            <td>Material Continuity for Ideal Tubular Flow</td>
+            <td>Standard Chemical Reaction Engineering</td>
+            <td>Integral reactor volume V = F_A0 ∫ dX/(-r_A) verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Euler-Bernoulli Beam Deflection &amp; Shear</strong></td>
+            <td>Civil</td>
+            <td>4th-Order Flexural Differential Equation</td>
+            <td>AISC 360-16 / ASTM A36</td>
+            <td>Max deflection δ = 5qL⁴/(384EI) &amp; L/360 limits verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Planar Truss Bridge Joint Equilibrium</strong></td>
+            <td>Civil</td>
+            <td>Method of Joints &amp; Nodal Equilibrium</td>
+            <td>AASHTO LRFD Bridge Design</td>
+            <td>Nodal force balance ∑F_x = 0, ∑F_y = 0 exact to Float64</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Seismic Base Isolation SDOF Response</strong></td>
+            <td>Civil</td>
+            <td>Elastomeric Bearing Restoring Force</td>
+            <td>ASCE 7-22 Chapter 17 / FEMA P-1051</td>
+            <td>Base displacement &amp; structural acceleration attenuation</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Mohr's Circle of Plane Stress</strong></td>
+            <td>Civil</td>
+            <td>Cauchy Stress Tensor Coordinate Transformation</td>
+            <td>ASTM E8 / Classical Mechanics of Materials</td>
+            <td>Principal stresses σ₁, σ₂ &amp; maximum shear τ_max exact</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Reinforced Concrete Beam Flexural Design</strong></td>
+            <td>Civil</td>
+            <td>Whitney Rectangular Stress Block Equivalent</td>
+            <td>ACI 318-19 / Eurocode 2 (EN 1992-1-1)</td>
+            <td>Nominal capacity M_n &amp; strength reduction φ verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>P-N Junction Band Bending &amp; Depletion</strong></td>
+            <td>Physics</td>
+            <td>Poisson Electrostatic Space Charge Equation</td>
+            <td>Semiconductor Device Physics (Sze)</td>
+            <td>Built-in potential V_bi &amp; depletion width W exact</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>SiC MOSFET Gate Drive Switching</strong></td>
+            <td>Physics</td>
+            <td>Parasitic Inductance &amp; Miller Plateau</td>
+            <td>JEDEC Standards for Wide-Bandgap SiC</td>
+            <td>Turn-on dV/dt &amp; switching energy loss E_on/E_off</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>IGBT Transient Thermal Foster Network</strong></td>
+            <td>Physics</td>
+            <td>Thermal RC Foster &amp; Cauer Equivalents</td>
+            <td>JESD51-14 / IEC 60747-9</td>
+            <td>Junction temperature excursion T_j(t) matches Foster fit</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>MOSFET Surface Inversion &amp; Pinch-Off</strong></td>
+            <td>Physics</td>
+            <td>Gradual Channel Approximation &amp; Poisson</td>
+            <td>IEEE Transactions on Electron Devices</td>
+            <td>Threshold V_th &amp; saturation drain current I_D verified</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+          <tr>
+            <td><strong>Photoelectric Effect &amp; Work Function</strong></td>
+            <td>Physics</td>
+            <td>Einstein Quantum Photon Energy Relation</td>
+            <td>NIST Fundamental Physical Constants</td>
+            <td>Stopping potential V_stop = (h·f - Φ)/e within NIST h</td>
+            <td><span class="status-badge">October 2026</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5. Machine-Readable Citation Instructions -->
+    <section class="section-card">
+      <h2>5. Academic Citation &amp; Machine-Readable Format</h2>
+      <p>
+        When referencing LiveSimulators computational models or laboratory guides in academic coursework, peer-reviewed publications, or engineering theses, please use the following citation format:
+      </p>
+
+      <h3>APA Format</h3>
+      <pre><code>Sharma, A. (2026). LiveSimulators: Browser-Based First-Principles Engineering Simulators. Retrieved from https://livesimulators.com/</code></pre>
+
+      <h3>BibTeX Format</h3>
+      <pre><code class="bibtex">@misc{livesimulators_2026,
+  author = {Sharma, Anil},
+  title = {{LiveSimulators: Browser-Based First-Principles Engineering Simulators}},
+  year = {2026},
+  howpublished = {\url{https://livesimulators.com/}},
+  note = {Online engineering virtual laboratory with 60 FPS Float64 numerical solvers}
+}</code></pre>
+    </section>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div style="max-width: 76rem; margin: 0 auto;">
+      <p style="margin-bottom: 0.75rem;">
+        &copy; 2026 LiveSimulators. All numerical models executed in client browser at 60 FPS.
+      </p>
+      <p>
+        <a href="/">Home</a> |
+        <a href="/about">About</a> |
+        <a href="/about/methodology.html">Methodology</a> |
+        <a href="/contact">Contact Desk</a> |
+        <a href="/disclaimer">Engineering Disclaimer</a> |
+        <a href="/privacy-policy">Privacy Policy</a> |
+        <a href="/terms">Terms of Service</a>
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

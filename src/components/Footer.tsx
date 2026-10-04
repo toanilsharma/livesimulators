@@ -21,7 +21,8 @@ import {
   Check,
   Zap,
   BarChart3,
-  Layers
+  Layers,
+  GraduationCap
 } from 'lucide-react';
 import { LABS, trackLabLaunch } from '../config/labs';
 import { navigateTo } from '../utils/routes';
@@ -397,6 +398,26 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <a 
+                  href="/about/methodology.html"
+                  className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group text-emerald-400 font-medium"
+                  id="footer-methodology-link"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Methodology &amp; Verification</span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/for-professors.html"
+                  className="hover:text-purple-300 transition-colors text-left flex items-center gap-1 group text-purple-400 font-medium"
+                  id="footer-for-professors-link"
+                >
+                  <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
+                  <span>For Professors &amp; LMS Embeds</span>
+                </a>
+              </li>
+              <li>
+                <a 
                   href="/contact"
                   onClick={(e) => {
                     e.preventDefault();
@@ -696,6 +717,8 @@ export const Footer: React.FC<FooterProps> = ({
 
           <div className="flex flex-wrap items-center gap-4 text-slate-400">
             <a href="/about" onClick={(e) => { e.preventDefault(); if (onNavigateToAbout) onNavigateToAbout(); }} className="hover:text-cyan-400 transition-colors">About</a>
+            <a href="/about/methodology.html" className="hover:text-cyan-400 transition-colors text-emerald-400">Methodology &amp; Verification</a>
+            <a href="/for-professors.html" className="hover:text-purple-300 transition-colors text-purple-400 font-medium">For Professors &amp; LMS</a>
             <a href="/contact" onClick={(e) => { e.preventDefault(); if (onNavigateToContact) onNavigateToContact(); }} className="hover:text-cyan-400 transition-colors">Contact</a>
             <a href="/cookie-policy" onClick={(e) => { e.preventDefault(); if (onNavigateToCookiePolicy) onNavigateToCookiePolicy(); }} className="hover:text-cyan-400 transition-colors">Cookie Policy</a>
             <a href="/disclaimer" onClick={(e) => { e.preventDefault(); if (onNavigateToDisclaimer) onNavigateToDisclaimer(); }} className="hover:text-cyan-400 transition-colors">Disclaimer</a>

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
+import { cleanLatexToPlainText } from '../utils/engineeringTheory';
 
 interface MathViewProps {
   math: string;
@@ -25,7 +26,8 @@ export const MathView: React.FC<MathViewProps> = ({ math, block = false, classNa
   }, [math, block]);
 
   if (!html) {
-    return <span className={`font-mono ${className}`}>{math}</span>;
+    const plain = cleanLatexToPlainText(math);
+    return <span className={`font-mono ${className}`}>{plain}</span>;
   }
 
   if (block) {

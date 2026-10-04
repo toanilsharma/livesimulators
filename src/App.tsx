@@ -31,7 +31,7 @@ import { JsonLd } from './components/JsonLd';
 export default function App() {
   const [route, setRoute] = useState<AppRoute>(() => {
     if (typeof window !== 'undefined') {
-      return parsePathToRoute(window.location.pathname, window.location.hash);
+      return parsePathToRoute(window.location.pathname, window.location.hash, window.location.search);
     }
     return { view: 'home' };
   });
@@ -43,14 +43,14 @@ export default function App() {
   useEffect(() => {
     // If visitor entered via legacy hash (e.g. #/about), cleanly replace with real path in address bar
     if (typeof window !== 'undefined' && window.location.hash && window.location.hash.startsWith('#/')) {
-      const targetRoute = parsePathToRoute(window.location.hash.slice(1));
+      const targetRoute = parsePathToRoute(window.location.hash.slice(1), undefined, window.location.search);
       const targetPath = routeToPath(targetRoute);
       window.history.replaceState({}, '', targetPath);
       setRoute(targetRoute);
     }
 
     const handleLocationChange = () => {
-      setRoute(parsePathToRoute(window.location.pathname, window.location.hash));
+      setRoute(parsePathToRoute(window.location.pathname, window.location.hash, window.location.search));
     };
 
     window.addEventListener('popstate', handleLocationChange);

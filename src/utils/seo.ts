@@ -2,6 +2,7 @@ import { AppRoute, DisciplineId, SimulatorItem } from '../types';
 import { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
 import { LABS } from '../config/labs';
 import { routeToPath, SITE_URL } from './routes';
+import { cleanLatexToPlainText } from './engineeringTheory';
 
 export interface RouteSeoMetadata {
   title: string;
@@ -458,7 +459,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
       const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || ALL_AVAILABLE_SIMULATORS[0];
       const dept = DISCIPLINES.find((d) => d.id === sim.discipline);
       const title = `Interactive ${sim.title} Simulator & Calculator | LiveSimulators`;
-      const description = `Interactive ${sim.title} simulator & calculator. ${sim.description} Governed by ${sim.physicalLaw} (${sim.equationDescription}: ${sim.governingEquation}). Solves real-time 60 FPS Float64 differential equations in your browser.`
+      const description = `Interactive ${sim.title} simulator & calculator. ${sim.description} Governed by ${sim.physicalLaw} (${sim.equationDescription}: ${cleanLatexToPlainText(sim.governingEquation)}). Solves real-time 60 FPS Float64 differential equations in your browser.`
         .replace(/\s+/g, ' ')
         .trim();
 
@@ -549,7 +550,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
     case 'embed': {
       const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === route.simulatorId) || ALL_AVAILABLE_SIMULATORS[0];
       const title = `Interactive ${sim.title} Simulator & Calculator (Embed) | LiveSimulators`;
-      const description = `Interactive virtual laboratory embed for ${sim.title}. Governed by ${sim.physicalLaw} (${sim.equationDescription}: ${sim.governingEquation}). Solves real-time Float64 differential equations in your browser.`
+      const description = `Interactive virtual laboratory embed for ${sim.title}. Governed by ${sim.physicalLaw} (${sim.equationDescription}: ${cleanLatexToPlainText(sim.governingEquation)}). Solves real-time Float64 differential equations in your browser.`
         .replace(/\s+/g, ' ')
         .trim();
       return {

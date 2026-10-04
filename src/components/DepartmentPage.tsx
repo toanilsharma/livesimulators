@@ -29,6 +29,7 @@ import {
   FEATURED_INSTRUMENTATION_SIMULATORS,
   FEATURED_CHEMICAL_SIMULATORS,
   FEATURED_SEMICONDUCTOR_SIMULATORS,
+  ALL_AVAILABLE_SIMULATORS,
 } from '../data/simulators';
 import { MathView } from './MathView';
 
@@ -1687,6 +1688,268 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Curriculum Track: Circuit Theory I Lab Sequence (Related Concepts) */}
+        {departmentId === 'electrical' && (
+          <section
+            aria-label="Curriculum Track: Circuit Theory I Lab Sequence"
+            className="rounded-2xl border border-cyan-900/60 bg-gradient-to-br from-slate-950 via-slate-900/90 to-slate-950 p-5 sm:p-6 shadow-xl space-y-4"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shrink-0">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                      Curriculum Track
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">Related Concepts Progression</span>
+                  </div>
+                  <h2 className="text-base sm:text-lg font-bold text-white mt-0.5">
+                    <a
+                      href="/simulator/rlc-resonance"
+                      onClick={(e) => {
+                        const target = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === 'rlc-resonance');
+                        if (!e.ctrlKey && !e.metaKey && !e.shiftKey && target) {
+                          e.preventDefault();
+                          onLaunchSimulator(target);
+                        }
+                      }}
+                      className="text-cyan-300 hover:text-cyan-200 underline decoration-cyan-500/40 underline-offset-4 transition-colors"
+                    >
+                      Circuit Theory I Lab Sequence
+                    </a>
+                  </h2>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 max-w-lg leading-relaxed">
+                A progressive experimental sequence spanning second-order differential equation resonance, active biquad filtering, spectral harmonic synthesis, and high-frequency transmission line wave dynamics.
+              </p>
+            </div>
+
+            {/* Sequence Flow Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                {
+                  id: 'rlc-resonance',
+                  step: '01',
+                  name: 'RLC Circuit Resonance',
+                  badge: '2nd-Order ODE',
+                  desc: 'Canonical series/parallel RLC frequency response, quality factor, and transient damping.',
+                  accent: 'border-cyan-800/60 hover:border-cyan-500 text-cyan-400',
+                },
+                {
+                  id: 'sallen-key-filter',
+                  step: '02',
+                  name: 'Sallen-Key Active Filter',
+                  badge: 'Active Biquad',
+                  desc: 'Op-amp frequency selectivity, Butterworth vs Chebyshev peaking, and phase roll-off.',
+                  accent: 'border-indigo-800/60 hover:border-indigo-500 text-indigo-400',
+                },
+                {
+                  id: 'fourier-synthesis',
+                  step: '03',
+                  name: 'Fourier Series Synthesis',
+                  badge: 'Harmonic Theory',
+                  desc: 'Harmonic decomposition of square and triangle waves, Gibbs phenomenon, and IEEE 519 THD.',
+                  accent: 'border-pink-800/60 hover:border-pink-500 text-pink-400',
+                },
+                {
+                  id: 'transmission-line',
+                  step: '04',
+                  name: 'RF Transmission Line',
+                  badge: 'Wave Propagation',
+                  desc: 'Distributed parameter telegrapher equations, impedance mismatch, reflections, and VSWR.',
+                  accent: 'border-amber-800/60 hover:border-amber-500 text-amber-400',
+                },
+              ].map((item, idx) => {
+                const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`relative rounded-xl bg-slate-900/80 border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-lg ${item.accent}`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
+                          Step {item.step}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">{item.badge}</span>
+                      </div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white mb-1">
+                        <a
+                          href={`/simulator/${item.id}`}
+                          onClick={(e) => {
+                            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && sim) {
+                              e.preventDefault();
+                              onLaunchSimulator(sim);
+                            }
+                          }}
+                          className="hover:text-cyan-300 transition-colors flex items-center justify-between"
+                        >
+                          <span>{item.name}</span>
+                          <ArrowRight className="w-3.5 h-3.5 shrink-0 opacity-70 group-hover:opacity-100" />
+                        </a>
+                      </h3>
+                      <p className="text-[11px] text-slate-400 leading-relaxed font-sans">{item.desc}</p>
+                    </div>
+                    <div className="pt-2.5 mt-2 border-t border-slate-800/80 flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {idx < 3 ? 'Advances to next →' : 'Sequence capstone'}
+                      </span>
+                      <a
+                        href={`/simulator/${item.id}`}
+                        onClick={(e) => {
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey && sim) {
+                            e.preventDefault();
+                            onLaunchSimulator(sim);
+                          }
+                        }}
+                        className="text-[11px] font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                      >
+                        <span>Launch</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Curriculum Track: Mechanical Dynamics Sequence (Related Concepts) */}
+        {departmentId === 'mechanical' && (
+          <section
+            aria-label="Curriculum Track: Mechanical Dynamics Sequence"
+            className="rounded-2xl border border-amber-900/60 bg-gradient-to-br from-slate-950 via-slate-900/90 to-slate-950 p-5 sm:p-6 shadow-xl space-y-4"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shrink-0">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                      Curriculum Track
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">Related Concepts Progression</span>
+                  </div>
+                  <h2 className="text-base sm:text-lg font-bold text-white mt-0.5">
+                    <a
+                      href="/simulator/harmonic-oscillator"
+                      onClick={(e) => {
+                        const target = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === 'harmonic-oscillator');
+                        if (!e.ctrlKey && !e.metaKey && !e.shiftKey && target) {
+                          e.preventDefault();
+                          onLaunchSimulator(target);
+                        }
+                      }}
+                      className="text-amber-300 hover:text-amber-200 underline decoration-amber-500/40 underline-offset-4 transition-colors"
+                    >
+                      Mechanical Dynamics Sequence
+                    </a>
+                  </h2>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 max-w-lg leading-relaxed">
+                A progressive mechanical engineering sequence connecting single-degree-of-freedom vibrations to multi-bar linkage kinematics, machine gearing, and thermodynamic steam cycles.
+              </p>
+            </div>
+
+            {/* Sequence Flow Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                {
+                  id: 'harmonic-oscillator',
+                  step: '01',
+                  name: 'Harmonic Oscillator',
+                  badge: 'Vibrations & SDOF',
+                  desc: 'Mass-spring-damper resonance, dynamic magnification factor M(ω), and 90° phase shift.',
+                  accent: 'border-amber-800/60 hover:border-amber-500 text-amber-400',
+                },
+                {
+                  id: 'four-bar-mechanism',
+                  step: '02',
+                  name: '4-Bar Mechanism',
+                  badge: 'Planar Kinematics',
+                  desc: 'Grashof mobility criterion, Freudenstein loop closure, and transmission angle tracking.',
+                  accent: 'border-orange-800/60 hover:border-orange-500 text-orange-400',
+                },
+                {
+                  id: 'spur-gear-mesh',
+                  step: '03',
+                  name: 'Spur Gear Mesh',
+                  badge: 'Machine Elements',
+                  desc: 'Conjugate involute tooth action, pitch line velocity, and AGMA 2001 contact ratio.',
+                  accent: 'border-emerald-800/60 hover:border-emerald-500 text-emerald-400',
+                },
+                {
+                  id: 'rankine-cycle',
+                  step: '04',
+                  name: 'Rankine Cycle',
+                  badge: 'Thermodynamics',
+                  desc: 'Steam boiler heat addition, non-isentropic turbine expansion, and thermal efficiency on T-s diagrams.',
+                  accent: 'border-cyan-800/60 hover:border-cyan-500 text-cyan-400',
+                },
+              ].map((item, idx) => {
+                const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`relative rounded-xl bg-slate-900/80 border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-lg ${item.accent}`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
+                          Step {item.step}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">{item.badge}</span>
+                      </div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white mb-1">
+                        <a
+                          href={`/simulator/${item.id}`}
+                          onClick={(e) => {
+                            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && sim) {
+                              e.preventDefault();
+                              onLaunchSimulator(sim);
+                            }
+                          }}
+                          className="hover:text-amber-300 transition-colors flex items-center justify-between"
+                        >
+                          <span>{item.name}</span>
+                          <ArrowRight className="w-3.5 h-3.5 shrink-0 opacity-70 group-hover:opacity-100" />
+                        </a>
+                      </h3>
+                      <p className="text-[11px] text-slate-400 leading-relaxed font-sans">{item.desc}</p>
+                    </div>
+                    <div className="pt-2.5 mt-2 border-t border-slate-800/80 flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {idx < 3 ? 'Advances to next →' : 'Sequence capstone'}
+                      </span>
+                      <a
+                        href={`/simulator/${item.id}`}
+                        onClick={(e) => {
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey && sim) {
+                            e.preventDefault();
+                            onLaunchSimulator(sim);
+                          }
+                        }}
+                        className="text-[11px] font-mono font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1"
+                      >
+                        <span>Launch</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Catalog Control Bar: Subfields, Search & Difficulty Filter */}
         <div className="space-y-3 bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-md">

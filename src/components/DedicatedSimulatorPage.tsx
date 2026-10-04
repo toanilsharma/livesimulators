@@ -59,6 +59,7 @@ import { getLiveResultSummary, getDetailedWhyItHappened } from '../utils/simulat
 import { MathWorkerBridge, SimulationMetric } from '../utils/mathWorkerBridge';
 import { RelatedPhysicsConcepts } from './RelatedPhysicsConcepts';
 import { getCrossDisciplineEquivalents } from '../data/crossDisciplineEquivalents';
+import { TOP_FLAGSHIP_EMBED_SLUGS } from '../utils/routes';
 
 interface DedicatedSimulatorPageProps {
   simulator: SimulatorItem;
@@ -75,6 +76,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   onSelectSimulator,
   isEmbed = false,
 }) => {
+  // Check if embed mode is active via prop OR query param ?embed=1
+  const isEmbedMode = isEmbed || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('embed') === '1');
+
   // Initialize parameters
   const [params, setParams] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
@@ -2355,8 +2359,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
 
   return (
     <div className="h-full w-full max-h-full flex flex-col bg-[#080d16] text-slate-100 overflow-hidden select-none">
-      {/* 1. Sleek, Compact Navigation & Action Header (h-12 / ~48px) */}
-      <header className="h-12 px-3 sm:px-5 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0 z-30 shadow-md">
+      {/* 1. Sleek, Compact Navigation & Action Header (Hidden in embed mode) */}
+      {!isEmbedMode && (
+        <header className="h-12 px-3 sm:px-5 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0 z-30 shadow-md">
         {/* Left: Breadcrumbs & Title */}
         {isEmbed ? (
           <div className="flex items-center gap-2 min-w-0">
@@ -2684,6 +2689,41 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
           </div>
         </div>
       </header>
+      )}
+
+      {/* Top Flagship Simulator Embed Panel (Prompt Requirements 1-3) */}
+      {TOP_FLAGSHIP_EMBED_SLUGS.includes(simulator.id as any) && !isEmbedMode && (
+        <div className="px-2 sm:px-3 pt-1.5 pb-0 shrink-0">
+          <details className="p-2 sm:px-3 sm:py-2 bg-slate-900/90 border border-purple-500/30 rounded-xl text-xs shadow-sm">
+            <summary className="font-mono font-bold text-purple-300 cursor-pointer hover:text-purple-200 select-none flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Code className="w-3.5 h-3.5 text-purple-400" />
+                <span>Embed this lab</span>
+              </span>
+              <span className="text-[10px] font-normal text-slate-500 hidden sm:inline">Click to reveal LMS iframe snippet</span>
+            </summary>
+            <div className="mt-2 space-y-1.5 pt-1.5 border-t border-slate-800/80">
+              <textarea
+                readOnly
+                rows={3}
+                onClick={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.select();
+                  document.execCommand('copy');
+                  if (typeof (window as any).gtag === 'function') {
+                    (window as any).gtag('event', 'embed_copy', { simulator: simulator.title });
+                  }
+                }}
+                className="w-full bg-slate-950 text-purple-300 border border-slate-800 rounded-lg p-2 font-mono text-[11px] focus:outline-none focus:border-purple-500 cursor-pointer select-all resize-y"
+                defaultValue={`<iframe src="https://livesimulators.com/simulator/${simulator.id}?embed=1" width="100%" height="600" frameborder="0" title="${simulator.title}"></iframe>`}
+              />
+              <p className="text-[11px] text-slate-400 m-0">
+                Please credit LiveSimulators when embedding in your course materials.
+              </p>
+            </div>
+          </details>
+        </div>
+      )}
 
       {/* Snapshot Toast notification */}
       {snapshotToast && (
@@ -2693,48 +2733,54 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
         </div>
       )}
 
-      {/* Mobile-only Segmented Control (< lg) */}
-      <div className="lg:hidden flex items-center bg-slate-950 border-b border-slate-800 p-1 shrink-0">
-        <button
-          onClick={() => setMobileTab('workbench')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-            mobileTab === 'workbench'
-              ? 'bg-cyan-500 text-slate-950 shadow'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          Simulation Canvas
-        </button>
-        <button
-          onClick={() => setMobileTab('parameters')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-            mobileTab === 'parameters'
-              ? 'bg-cyan-500 text-slate-950 shadow'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          Parameters ({simulator.parameters.length})
-        </button>
-        <button
-          onClick={() => setMobileTab('analysis')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-            mobileTab === 'analysis'
-              ? 'bg-cyan-500 text-slate-950 shadow'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          Theory &amp; Insights
-        </button>
-      </div>
+      {/* Mobile-only Segmented Control (< lg) (Hidden in embed mode) */}
+      {!isEmbedMode && (
+        <div className="lg:hidden flex items-center bg-slate-950 border-b border-slate-800 p-1 shrink-0">
+          <button
+            onClick={() => setMobileTab('workbench')}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
+              mobileTab === 'workbench'
+                ? 'bg-cyan-500 text-slate-950 shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Simulation Canvas
+          </button>
+          <button
+            onClick={() => setMobileTab('parameters')}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
+              mobileTab === 'parameters'
+                ? 'bg-cyan-500 text-slate-950 shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Parameters ({simulator.parameters.length})
+          </button>
+          <button
+            onClick={() => setMobileTab('analysis')}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
+              mobileTab === 'analysis'
+                ? 'bg-cyan-500 text-slate-950 shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Theory &amp; Insights
+          </button>
+        </div>
+      )}
 
-      {/* 3. Main Workbench Workspace (Fits 100% of remaining screen height, Zero page scroll) */}
-      <main className="flex-1 min-h-0 w-full p-1.5 sm:p-2.5 overflow-hidden">
-        <div className="h-full w-full grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5 overflow-hidden">
+      {/* 3. Main Workbench Workspace (Fits 100% of screen height; in embed mode canvas takes full area) */}
+      <main className={`flex-1 min-h-0 w-full ${isEmbedMode ? 'p-0' : 'p-1.5 sm:p-2.5'} overflow-hidden`}>
+        <div className={`h-full w-full ${isEmbedMode ? 'flex flex-col' : 'grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5'} overflow-hidden`}>
           
-          {/* PRIMARY WORKBENCH STAGE: Giant Interactive Simulation Canvas (Desktop: 7 cols, ~58.3% width) */}
+          {/* PRIMARY WORKBENCH STAGE: Giant Interactive Simulation Canvas */}
           <div
-            className={`lg:col-span-7 xl:col-span-7 2xl:col-span-7 h-full flex flex-col min-h-0 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl relative ${
-              mobileTab === 'parameters' || mobileTab === 'analysis' ? 'hidden lg:flex' : 'flex'
+            className={`${
+              isEmbedMode
+                ? 'w-full h-full flex-1 rounded-none border-0'
+                : 'lg:col-span-7 xl:col-span-7 2xl:col-span-7 rounded-xl border border-slate-800'
+            } h-full flex flex-col min-h-0 bg-slate-950 overflow-hidden shadow-2xl relative ${
+              !isEmbedMode && (mobileTab === 'parameters' || mobileTab === 'analysis') ? 'hidden lg:flex' : 'flex'
             }`}
           >
             {/* Canvas Header Strip */}
@@ -2770,6 +2816,39 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                 isCrtMode ? 'bg-[#021006] shadow-[inset_0_0_80px_rgba(34,197,94,0.12)]' : 'bg-[#060b13]'
               }`}
             >
+              {/* Embed mode floating quick controls */}
+              {isEmbedMode && (
+                <div className="absolute top-2 right-2 z-40 flex items-center gap-1.5 bg-slate-950/85 backdrop-blur-md border border-slate-800 rounded-lg px-2.5 py-1 shadow-lg text-[11px] font-mono">
+                  <button
+                    onClick={() => setIsRunning(!isRunning)}
+                    className="text-slate-300 hover:text-white flex items-center gap-1"
+                    title={isRunning ? 'Pause' : 'Run'}
+                  >
+                    {isRunning ? <Pause className="w-3 h-3 text-amber-400" /> : <Play className="w-3 h-3 text-emerald-400" />}
+                    <span className="text-[10px]">{isRunning ? 'Pause' : 'Run'}</span>
+                  </button>
+                  <span className="text-slate-700">|</span>
+                  <button
+                    onClick={handleResetDefaults}
+                    className="text-slate-300 hover:text-white flex items-center gap-1"
+                    title="Reset Parameters"
+                  >
+                    <RotateCcw className="w-3 h-3 text-cyan-400" />
+                    <span className="text-[10px]">Reset</span>
+                  </button>
+                  <span className="text-slate-700">|</span>
+                  <a
+                    href={`https://livesimulators.com/simulator/${simulator.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:underline flex items-center gap-0.5 text-[10px]"
+                    title="Open full interactive lab on LiveSimulators.com"
+                  >
+                    <span>LiveSimulators</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+              )}
               <canvas
                 ref={canvasRef}
                 className="interactive-canvas w-full h-full block absolute inset-0 cursor-crosshair touch-none"
@@ -2909,12 +2988,13 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
             </div>
           </div>
 
-          {/* RIGHT DESK: INSPECTOR & INTELLIGENCE CONSOLE (Desktop: 5 cols, ~41.7% width - 15% wider for readable text) */}
-          <div
-            className={`lg:col-span-5 xl:col-span-5 2xl:col-span-5 h-full flex flex-col min-h-0 gap-2 overflow-hidden ${
-              mobileTab === 'workbench' ? 'hidden lg:flex' : 'flex'
-            }`}
-          >
+          {/* RIGHT DESK: INSPECTOR & INTELLIGENCE CONSOLE (Desktop: 5 cols - Hidden in embed mode) */}
+          {!isEmbedMode && (
+            <div
+              className={`lg:col-span-5 xl:col-span-5 2xl:col-span-5 h-full flex flex-col min-h-0 gap-2 overflow-hidden ${
+                mobileTab === 'workbench' ? 'hidden lg:flex' : 'flex'
+              }`}
+            >
             {/* Top Deck: Parameter Controls */}
             <div
               className={`flex flex-col min-h-0 bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 shadow-lg overflow-hidden shrink-0 ${
@@ -3190,6 +3270,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         ))}
                       </div>
                     )}
+
+                    {/* Cross-Discipline Related Concepts Link in Default Insight View */}
+                    <RelatedPhysicsConcepts compact currentSimulatorId={simulator.id} onSelectSimulator={onSelectSimulator} />
                   </div>
                 )}
 
@@ -3357,6 +3440,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               </div>
             </div>
           </div>
+          )}
 
         </div>
       </main>

@@ -177,6 +177,14 @@ export const AboutPage: React.FC<AboutPageProps> = ({
                 <span>LinkedIn Profile</span>
                 <ExternalLink className="w-3 h-3 text-blue-400" />
               </a>
+              <a
+                href="/about/methodology.html"
+                className="px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-2 transition-colors"
+                id="about-methodology-btn"
+              >
+                <span>Methodology &amp; Verification</span>
+                <ArrowRight className="w-3 h-3 text-emerald-400" />
+              </a>
               <button
                 onClick={onNavigateToContact}
                 className="px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-display font-bold flex items-center gap-2 transition-colors"

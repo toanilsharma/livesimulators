@@ -461,3 +461,229 @@ function generateFallbackTheory(sim: SimulatorItem): EngineeringTheoryData {
     },
   };
 }
+
+function replaceBalancedFractions(input: string): string {
+  let str = input;
+  let iterations = 0;
+  while (iterations < 10) {
+    iterations++;
+    const match = str.match(/\\?frac\{/);
+    if (!match || match.index === undefined) break;
+
+    const startIndex = match.index;
+    const firstBraceOpen = str.indexOf('{', startIndex);
+    if (firstBraceOpen === -1) break;
+
+    let depth = 0;
+    let firstBraceClose = -1;
+    for (let i = firstBraceOpen; i < str.length; i++) {
+      if (str[i] === '{') depth++;
+      else if (str[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          firstBraceClose = i;
+          break;
+        }
+      }
+    }
+    if (firstBraceClose === -1) break;
+
+    const secondBraceOpen = str.indexOf('{', firstBraceClose);
+    if (secondBraceOpen === -1 || str.slice(firstBraceClose + 1, secondBraceOpen).trim() !== '') {
+      break;
+    }
+
+    depth = 0;
+    let secondBraceClose = -1;
+    for (let i = secondBraceOpen; i < str.length; i++) {
+      if (str[i] === '{') depth++;
+      else if (str[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          secondBraceClose = i;
+          break;
+        }
+      }
+    }
+    if (secondBraceClose === -1) break;
+
+    const num = str.slice(firstBraceOpen + 1, firstBraceClose);
+    const den = str.slice(secondBraceOpen + 1, secondBraceClose);
+
+    const replacement = `(${num.trim()} / ${den.trim()})`;
+    str = str.slice(0, startIndex) + replacement + str.slice(secondBraceClose + 1);
+  }
+  return str;
+}
+
+function replaceBalancedSquareRoots(input: string): string {
+  let str = input;
+  let iterations = 0;
+  while (iterations < 10) {
+    iterations++;
+    const match = str.match(/\\?sqrt\{/);
+    if (!match || match.index === undefined) break;
+
+    const startIndex = match.index;
+    const firstBraceOpen = str.indexOf('{', startIndex);
+    if (firstBraceOpen === -1) break;
+
+    let depth = 0;
+    let firstBraceClose = -1;
+    for (let i = firstBraceOpen; i < str.length; i++) {
+      if (str[i] === '{') depth++;
+      else if (str[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          firstBraceClose = i;
+          break;
+        }
+      }
+    }
+    if (firstBraceClose === -1) break;
+
+    const content = str.slice(firstBraceOpen + 1, firstBraceClose);
+    str = str.slice(0, startIndex) + `√(${content.trim()})` + str.slice(firstBraceClose + 1);
+  }
+  return str;
+}
+
+function replaceBalancedTextWrappers(input: string): string {
+  let str = input;
+  let iterations = 0;
+  while (iterations < 10) {
+    iterations++;
+    const match = str.match(/\\?(text|mathrm|mathbf|mathrm|operatorname)\{/);
+    if (!match || match.index === undefined) break;
+
+    const startIndex = match.index;
+    const firstBraceOpen = str.indexOf('{', startIndex);
+    if (firstBraceOpen === -1) break;
+
+    let depth = 0;
+    let firstBraceClose = -1;
+    for (let i = firstBraceOpen; i < str.length; i++) {
+      if (str[i] === '{') depth++;
+      else if (str[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          firstBraceClose = i;
+          break;
+        }
+      }
+    }
+    if (firstBraceClose === -1) break;
+
+    const content = str.slice(firstBraceOpen + 1, firstBraceClose);
+    str = str.slice(0, startIndex) + ` ${content.trim()} ` + str.slice(firstBraceClose + 1);
+  }
+  return str;
+}
+
+/**
+ * Converts a raw LaTeX mathematical expression into a clean, human-readable plain-text string.
+ * Strips all raw LaTeX tokens (\frac, \text, \mathbf, \left, \right, brackets) and replaces
+ * mathematical symbols with clean Unicode equivalents for screen readers, LLMs, and plain-text fallbacks.
+ */
+export function cleanLatexToPlainText(latex: string): string {
+  if (!latex) return '';
+  let str = latex.trim();
+
+  // Clean raw LaTeX bracket markers like \[P-01\] -> [P-01]
+  str = str.replace(/\\\[/g, '[').replace(/\\\]/g, ']');
+  str = str.replace(/\\\(|\\\)/g, '');
+
+  // Handle common text concatenation artifacts like textto -> to
+  str = str.replace(/\\text\{to\}/gi, ' to ');
+  str = str.replace(/\\textto\b/gi, ' to ');
+  str = str.replace(/\btextto\b/gi, ' to ');
+
+  // Balanced fraction and square root parsing
+  str = replaceBalancedFractions(str);
+  str = replaceBalancedSquareRoots(str);
+  str = replaceBalancedTextWrappers(str);
+
+  // Fallback regex fraction resolution
+  for (let i = 0; i < 3; i++) {
+    str = str.replace(/\\?frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1 / $2)');
+    str = str.replace(/\\?sqrt\{([^{}]+)\}/g, '√($1)');
+    str = str.replace(/\\?sqrt\[([^{}]+)\]\{([^{}]+)\}/g, '$1√($2)');
+    str = str.replace(/\\?(?:text|mathrm|mathbf)\{([^{}]+)\}/g, ' $1 ');
+  }
+
+  // Any remaining unbraced frac tokens: e.g. \frac 1 2 -> (1 / 2)
+  str = str.replace(/\\?frac\s+(\S+)\s+(\S+)/g, '($1 / $2)');
+  str = str.replace(/\\?frac\b/g, '');
+
+  str = str.replace(/\\hat\{([^{}]+)\}/g, '$1^');
+  str = str.replace(/\\vec\{([^{}]+)\}/g, 'vec($1)');
+  str = str.replace(/\\left|\\right/g, '');
+
+  // Dot derivatives
+  str = str.replace(/\\ddot\{([^{}]+)\}/g, '$1̈');
+  str = str.replace(/\\dot\{([^{}]+)\}/g, '$1̇');
+
+  // Math Greek symbols & operators map
+  const symbolMap: Record<string, string> = {
+    '\\alpha': 'α',
+    '\\beta': 'β',
+    '\\gamma': 'γ',
+    '\\Delta': 'Δ',
+    '\\delta': 'δ',
+    '\\epsilon': 'ε',
+    '\\varepsilon': 'ε',
+    '\\zeta': 'ζ',
+    '\\eta': 'η',
+    '\\theta': 'θ',
+    '\\lambda': 'λ',
+    '\\mu': 'μ',
+    '\\nu': 'ν',
+    '\\pi': 'π',
+    '\\rho': 'ρ',
+    '\\sigma': 'σ',
+    '\\tau': 'τ',
+    '\\phi': 'φ',
+    '\\varphi': 'φ',
+    '\\psi': 'ψ',
+    '\\Psi': 'Ψ',
+    '\\omega': 'ω',
+    '\\Omega': 'Ω',
+    '\\Phi': 'Φ',
+    '\\sum': '∑',
+    '\\int': '∫',
+    '\\partial': '∂',
+    '\\nabla': '∇',
+    '\\times': '×',
+    '\\cdot': '·',
+    '\\pm': '±',
+    '\\le': '≤',
+    '\\ge': '≥',
+    '\\approx': '≈',
+    '\\ne': '≠',
+    '\\infty': '∞',
+    '\\hbar': 'ħ',
+    '\\quad': '  ',
+    '\\qquad': '    ',
+    '\\,': ' ',
+    '\\;': ' ',
+    '\\!': '',
+    '\\iff': '⟺',
+    '\\implies': '⟹',
+    '\\to': '→',
+    '\\angle': '∠',
+  };
+
+  for (const [k, v] of Object.entries(symbolMap)) {
+    str = str.split(k).join(v);
+  }
+
+  // Remove stray LaTeX backslashes before words
+  str = str.replace(/\\([a-zA-Z]+)/g, '$1');
+
+  // Clean unmatched braces and cleanup spaces
+  str = str.replace(/[{}]/g, '');
+  str = str.replace(/\s+/g, ' ').trim();
+
+  return str;
+}
+
