@@ -53,13 +53,17 @@ function generateLlmsTxt(): { summary: string; full: string } {
   }
 
   summaryLines.push('');
+  summaryLines.push('## Mechanical Engineering Digital Twins (Subdomain)');
+  summaryLines.push('Full-fidelity mechanical simulators at https://mech.livesimulators.com covering turbomachinery (referencing published API 610/617/618 literature), rotor dynamics (ISO 1940/API 684), process piping (ASME B31.3), and tribology (AGMA 2001/ISO 281). Independent educational platform; not affiliated with, approved, or endorsed by any standards body.');
+
+  summaryLines.push('');
   summaryLines.push('## Companion Engineering Portals');
   summaryLines.push('- [DesignCalculators.co.in](https://designcalculators.co.in): Free multi-disciplinary engineering calculators (Electrical, Mechanical, Instrumentation) referencing published standards (IEEE, IEC, ASME, API, ISA).');
   summaryLines.push('- [ReliabilityTools.co.in](https://reliabilitytools.co.in): Free plant reliability, asset uptime analytics, 2P/3P Weibull failure modeling, MTBF/MTTR, RCA, and IEC 61508/61511 SIL verification.');
 
   summaryLines.push('');
   summaryLines.push('## Standards Reference & Non-Affiliation Notice');
-  summaryLines.push('All standard designations and acronyms (IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI) belong to their respective owners and are referenced solely for technical identification and academic study. LiveSimulators is an independent educational platform and makes no claim of endorsement or official affiliation.');
+  summaryLines.push('All standard designations and acronyms (IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI, AGMA) belong to their respective owners and are referenced solely for technical identification and academic study. LiveSimulators is an independent educational platform and makes no claim of endorsement, certification, copyright ownership, or official affiliation.');
 
   summaryLines.push('');
   summaryLines.push('## Full Technical Documentation');
@@ -148,6 +152,7 @@ function renderContentForRoute(route: AppRoute): string {
             <a href="/department/${d.id}" style="color:#38bdf8; text-decoration:none;">${escapeHtml(d.name)} (${d.code})</a>
           </h3>
           <p style="color:#94a3b8; font-size:0.875rem; line-height:1.5; margin-bottom:0.75rem;">${escapeHtml(d.description)}</p>
+          ${d.id === 'mechanical' ? '<div style="margin-bottom:0.75rem;"><a href="https://mech.livesimulators.com" target="_blank" rel="noopener" style="color:#f59e0b; font-size:0.8rem; font-family:monospace; text-decoration:underline;">Advanced Turbomachinery &amp; Rotor Dynamics &rarr;</a></div>' : ''}
           <div style="font-family:monospace; color:#38bdf8; font-size:0.8rem; margin-bottom:0.75rem;">Core Formulation: ${escapeHtml(d.coreEquation)}</div>
           <div style="color:#64748b; font-size:0.75rem;">Active Simulators: ${d.activeSimulatorsCount} | Subfields: ${escapeHtml(d.subfields.join(', '))}</div>
         </article>
@@ -241,6 +246,22 @@ function renderContentForRoute(route: AppRoute): string {
           <h2 style="font-size:1.5rem; font-weight:bold; color:#ffffff; margin-bottom:1.5rem;">Interactive Workbenches in ${escapeHtml(dept.name)}</h2>
           ${simCardsHtml || '<p style="color:#94a3b8;">No simulators currently in this category.</p>'}
         </section>
+
+        ${dept.id === 'mechanical' ? `
+        <section style="margin-top:3rem; padding:2rem; background:linear-gradient(135deg, rgba(120,53,15,0.3), #0b1324); border-radius:1rem; border:1px solid rgba(245,158,11,0.4);">
+          <span style="font-family:monospace; font-size:0.75rem; color:#f59e0b; text-transform:uppercase; letter-spacing:0.05em; font-weight:bold;">Specialized Subdomain Workbench • API 610 / 617 / 618 Ref • ASME B31.3 Ref • AGMA 2001 Ref</span>
+          <h2 style="font-size:1.75rem; font-weight:bold; color:#ffffff; margin:0.75rem 0;">Advanced Mechanical Digital Twins</h2>
+          <p style="color:#cbd5e1; font-size:0.95rem; line-height:1.6; margin-bottom:1rem; max-width:48rem;">
+            For full-fidelity turbomachinery, rotor dynamics, and industrial process simulations referencing published methodologies from API 610, API 617, API 618, ASME B31.3, and AGMA standards literature for educational and technical exploration, visit our dedicated mechanical engineering workbench.
+          </p>
+          <div style="font-family:monospace; font-size:0.75rem; color:#94a3b8; margin-bottom:1.5rem; line-height:1.5; border-top:1px solid rgba(245,158,11,0.2); padding-top:0.75rem;">
+            Non-Affiliation Notice: All standard designations (API, ASME, AGMA, ISO, IEEE) are cited strictly for technical identification and academic literature context under nominative fair use. LiveSimulators is an independent educational platform and is not affiliated with, endorsed by, certified by, or sponsored by any standards organization, nor does it claim copyright in published standards.
+          </div>
+          <a href="https://mech.livesimulators.com" target="_blank" rel="noopener" style="display:inline-block; padding:0.75rem 1.5rem; background:#f59e0b; color:#030712; border-radius:0.5rem; font-weight:bold; text-decoration:none; font-size:0.9rem;">
+            Launch Mechanical Digital Twins &rarr;
+          </a>
+        </section>
+        ` : ''}
       </div>
       `;
     }

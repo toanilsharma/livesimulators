@@ -47,8 +47,8 @@ export const DedicatedLabPage: React.FC<DedicatedLabPageProps> = ({ labId, onBac
   };
 
   return (
-    <div className={`min-h-screen bg-[#070b14] text-slate-100 ${isFullscreen ? 'fixed inset-0 z-50 overflow-hidden' : 'py-5 sm:py-7 px-3 sm:px-6 lg:px-8'}`}>
-      <div className={`${isFullscreen ? 'h-full flex flex-col' : 'max-w-7xl mx-auto space-y-5 sm:space-y-6'}`}>
+    <div className={`min-h-screen bg-[#070b14] text-slate-100 ${isFullscreen ? 'fixed inset-0 z-50 overflow-hidden' : 'py-5 sm:py-7 px-3 sm:px-6 lg:px-8 xl:px-12 2xl:px-16'}`}>
+      <div className={`${isFullscreen ? 'h-full flex flex-col' : 'w-full max-w-[1920px] mx-auto space-y-5 sm:space-y-6'}`}>
 
         {/* Top Navigation & Status HUD */}
         <div className={`flex flex-wrap items-center justify-between gap-3 ${isFullscreen ? 'px-4 py-2.5 bg-slate-950/95 border-b border-slate-800 shrink-0' : 'pb-4 border-b border-slate-800'}`}>

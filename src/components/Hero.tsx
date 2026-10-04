@@ -217,8 +217,10 @@ export const Hero: React.FC<HeroProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = rect.width ? canvas.width / rect.width : 1;
+    const scaleY = rect.height ? canvas.height / rect.height : 1;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     stateRef.current.shockwaves.push({
       x,
@@ -237,9 +239,11 @@ export const Hero: React.FC<HeroProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
+    const scaleX = rect.width ? canvas.width / rect.width : 1;
+    const scaleY = rect.height ? canvas.height / rect.height : 1;
     setHoverPos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
     });
   };
 
@@ -406,9 +410,9 @@ export const Hero: React.FC<HeroProps> = ({
 
         // 3-Phase 4-Wire Standard Busbars (R, Y, B, N)
         // Color Code: R = Red (#ef4444), Y = Yellow (#eab308), B = Blue (#2563eb), N = Neutral (#64748b)
-        const busX = 54;
-        const busY1 = 32;
-        const busY2 = h * 0.56;
+        const busX = 46;
+        const busY1 = 26;
+        const busY2 = h * 0.54;
         const busbars = [
           { code: 'R', name: 'Phase R (0°)', offset: -24, color: '#ef4444', isPhase: true, phaseLag: 0 },
           { code: 'Y', name: 'Phase Y (-120°)', offset: -8, color: '#eab308', isPhase: true, phaseLag: (2 * Math.PI) / 3 },
@@ -474,10 +478,10 @@ export const Hero: React.FC<HeroProps> = ({
         // Central 4-Pole AC Stator Stage & Rotating Magnetic Field (R-Y-B-N)
         // Synchronous Speed: Ns = 120 * f / P = 30 * f RPM (deterministic physics)
         // =====================================================================
-        const machX = w * 0.42;
-        const machY = h * 0.30;
-        const statorR = 52;
-        const rotorR = 34;
+        const machX = w * 0.40;
+        const machY = h * 0.28;
+        const statorR = 54;
+        const rotorR = 36;
 
         // Terminal Block atop Stator with standard R, Y, B, N terminals
         const tbY = machY - statorR - 15;
@@ -628,18 +632,18 @@ export const Hero: React.FC<HeroProps> = ({
         // Stator Stage Labels with live deterministic RPM
         ctx.font = '9px "IBM Plex Mono", monospace';
         ctx.fillStyle = '#e2e8f0';
-        ctx.fillText('4-POLE AC STAGE (R-Y-B-N)', machX - 56, machY + statorR + 18);
+        ctx.fillText('4-POLE AC STAGE (R-Y-B-N)', machX - 56, machY + statorR + 15);
         ctx.fillStyle = '#64748b';
         ctx.font = '8px "IBM Plex Mono", monospace';
-        ctx.fillText(`P=4 • Ns=${syncRPM} RPM • Nr=${rotorRPM} RPM`, machX - 58, machY + statorR + 28);
+        ctx.fillText(`P=4 • Ns=${syncRPM} RPM • Nr=${rotorRPM} RPM`, machX - 58, machY + statorR + 25);
 
         // =====================================================================
         // 3-Phase Rotating Phasor Wheel with Neutral Reference (Right of Machine)
         // Standard R, Y, B Phasor Vectors at 120° Spacing with Neutral Star Point (N)
         // =====================================================================
-        const pwX = w * 0.78;
+        const pwX = w * 0.77;
         const pwY = machY;
-        const pwR = 36;
+        const pwR = 38;
 
         ctx.fillStyle = '#090e17';
         ctx.strokeStyle = '#1e293b';
@@ -692,19 +696,19 @@ export const Hero: React.FC<HeroProps> = ({
 
         ctx.font = '9px "IBM Plex Mono", monospace';
         ctx.fillStyle = '#e2e8f0';
-        ctx.fillText('PHASOR (R-Y-B)', pwX - 32, pwY + pwR + 18);
+        ctx.fillText('PHASOR (R-Y-B)', pwX - 32, pwY + pwR + 15);
         ctx.fillStyle = isFault ? '#ef4444' : '#64748b';
         ctx.font = '8px "IBM Plex Mono", monospace';
-        ctx.fillText(isFault ? 'ASYMMETRICAL FAULT' : '120° BALANCED', pwX - 38, pwY + pwR + 28);
+        ctx.fillText(isFault ? 'ASYMMETRICAL FAULT' : '120° BALANCED', pwX - 38, pwY + pwR + 25);
 
         // =====================================================================
         // Bottom Digital Phosphor Oscilloscope & Harmonic Spectrum
         // Shows R, Y, B & N Standard Color Traces (wave cycles scale with frequency f)
         // =====================================================================
-        const scX = 20;
-        const scY = h * 0.64;
-        const scW = w - 40;
-        const scH = h * 0.31;
+        const scX = 16;
+        const scY = h * 0.58;
+        const scW = w - 32;
+        const scH = h * 0.38;
 
         ctx.fillStyle = '#060a12';
         ctx.strokeStyle = '#1e293b';
@@ -809,11 +813,11 @@ export const Hero: React.FC<HeroProps> = ({
         // 1. Left Half: Epicyclic Planetary Gearset (Willis Equation)
         // Fixed Ring: Zr = 52T, Sun: Zs = 20T, Planets: Zp = 16T
         // Kinematic Ratio: i = 1 + Zr / Zs = 1 + 52/20 = 3.60:1
-        const pgX = w * 0.20;
-        const pgY = h * 0.44;
-        const sunR = 20;
-        const planetR = 16;
-        const ringR = sunR + 2 * planetR; // 52px matches 52 teeth exactly
+        const pgX = w * 0.22;
+        const pgY = h * 0.48;
+        const sunR = 25;
+        const planetR = 19;
+        const ringR = sunR + 2 * planetR; // 63px scaled
 
         // Outer Ring Gear (Stationary casing with 52 teeth)
         ctx.strokeStyle = '#475569';
@@ -826,7 +830,7 @@ export const Hero: React.FC<HeroProps> = ({
         for (let i = 0; i < 26; i++) {
           const a = (i * 2 * Math.PI) / 26;
           ctx.beginPath();
-          ctx.moveTo(pgX + Math.cos(a) * (ringR - 5), pgY + Math.sin(a) * (ringR - 5));
+          ctx.moveTo(pgX + Math.cos(a) * (ringR - 6), pgY + Math.sin(a) * (ringR - 6));
           ctx.lineTo(pgX + Math.cos(a) * ringR, pgY + Math.sin(a) * ringR);
           ctx.stroke();
         }
@@ -880,10 +884,10 @@ export const Hero: React.FC<HeroProps> = ({
 
         ctx.font = '9px "IBM Plex Mono", monospace';
         ctx.fillStyle = '#06b6d4';
-        ctx.fillText('WILLIS EPICYCLIC GEARS', pgX - 52, pgY + ringR + 18);
+        ctx.fillText('WILLIS EPICYCLIC GEARS', pgX - 52, pgY + ringR + 16);
         ctx.fillStyle = '#64748b';
         ctx.font = '8px "IBM Plex Mono", monospace';
-        ctx.fillText('Zs=20 • Zp=16 • Zr=52 (3.60:1)', pgX - 58, pgY + ringR + 28);
+        ctx.fillText('Zs=20 • Zp=16 • Zr=52 (3.60:1)', pgX - 58, pgY + ringR + 26);
 
         // 2. Right Half: 4-Bar Grashof Kinematic Mechanism with Analytical Loop Closure
         // Ground AD: r1=110, Crank AB: r2=36, Coupler BC: r3=96, Rocker CD: r4=74
@@ -892,9 +896,9 @@ export const Hero: React.FC<HeroProps> = ({
         const r2 = 36;
         const r3 = 96;
         const r4 = 74;
-        const scale = 0.85;
-        const ox = w * 0.44;
-        const oy = h * 0.54;
+        const scale = 0.90;
+        const ox = w * 0.46;
+        const oy = h * 0.52;
 
         const theta2 = state.crankAngle;
         const A = { x: ox, y: oy };
@@ -1046,10 +1050,10 @@ export const Hero: React.FC<HeroProps> = ({
 
         // 1. Left Half: 4-Story Seismically Isolated Building Frame
         const bldgX = w * 0.22;
-        const baseY = h * 0.80;
+        const baseY = h * 0.82;
         const stories = 4;
-        const storyH = 34;
-        const bldgW = 85;
+        const storyH = 42;
+        const bldgW = 95;
 
         // Vibrating Shake Table Ground Plate
         ctx.fillStyle = '#1e293b';
@@ -1119,13 +1123,13 @@ export const Hero: React.FC<HeroProps> = ({
 
         ctx.font = '9px "IBM Plex Mono", monospace';
         ctx.fillStyle = isQuake ? '#ef4444' : '#06b6d4';
-        ctx.fillText('ASCE 7-22 BASE ISOLATED', bldgX - 54, baseY + 36);
+        ctx.fillText('ASCE 7-22 BASE ISOLATED', bldgX - 54, baseY + 32);
 
         // 2. Right Half: Warren Truss Bridge with Moving AASHTO Heavy Truck Load
-        const trussStartX = w * 0.48;
-        const trussW = w * 0.48;
-        const trussBaseY = h * 0.44;
-        const trussH = 58;
+        const trussStartX = w * 0.46;
+        const trussW = w * 0.50;
+        const trussBaseY = h * 0.38;
+        const trussH = 62;
         const bays = 5;
         const bayW = trussW / bays;
 
@@ -1205,7 +1209,7 @@ export const Hero: React.FC<HeroProps> = ({
         // Exact piecewise linear triangle peaking at xp:
         // For x <= xp: M(x) = RA * x
         // For x >= xp: M(x) = RB * (L - x)
-        const bmdTop = h * 0.65;
+        const bmdTop = h * 0.62;
         const bmdScale = 0.009 * (civilLoad / 50);
 
         ctx.fillStyle = 'rgba(6, 182, 212, 0.14)';
@@ -1214,7 +1218,7 @@ export const Hero: React.FC<HeroProps> = ({
         ctx.beginPath();
         ctx.moveTo(trussStartX, bmdTop);
         // Triangle vertex under truck
-        const peakY = bmdTop + Math.min(42, Mmax * bmdScale);
+        const peakY = bmdTop + Math.min(44, Mmax * bmdScale);
         ctx.lineTo(trussStartX + xp, peakY);
         ctx.lineTo(trussStartX + trussW, bmdTop);
         ctx.closePath();
@@ -1244,10 +1248,10 @@ export const Hero: React.FC<HeroProps> = ({
         const co = state.pidCO;
 
         // 1. Left: Industrial Liquid Reservoir
-        const tankX = 28;
-        const tankY = 42;
-        const tankW = 95;
-        const tankH = 150;
+        const tankX = 22;
+        const tankY = 28;
+        const tankW = 105;
+        const tankH = h * 0.68;
 
         const liquidH = (pv / 100) * tankH;
         const liquidY = tankY + tankH - liquidH;
@@ -1282,7 +1286,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         // Ultrasonic Radar Level Sensor [LT-101] on top emitting acoustic pulses
         const sensorX = tankX + tankW / 2;
-        const sensorY = tankY - 10;
+        const sensorY = tankY - 8;
         ctx.fillStyle = '#06b6d4';
         ctx.fillRect(sensorX - 12, sensorY, 24, 10);
 
@@ -1313,8 +1317,8 @@ export const Hero: React.FC<HeroProps> = ({
         ctx.strokeStyle = '#10b981';
         ctx.setLineDash([3, 3]);
         ctx.beginPath();
-        ctx.moveTo(tankX - 12, spY);
-        ctx.lineTo(tankX + tankW + 12, spY);
+        ctx.moveTo(tankX - 10, spY);
+        ctx.lineTo(tankX + tankW + 10, spY);
         ctx.stroke();
         ctx.setLineDash([]);
 
@@ -1326,8 +1330,8 @@ export const Hero: React.FC<HeroProps> = ({
 
         // 2. Center: Centrifugal Impeller Pump with Fluid Pipeline
         const pumpX = tankX + tankW + 42;
-        const pumpY = tankY + tankH - 20;
-        const pumpR = 18;
+        const pumpY = tankY + tankH - 24;
+        const pumpR = 20;
 
         // Pipeline connection
         ctx.strokeStyle = '#475569';
@@ -1385,10 +1389,10 @@ export const Hero: React.FC<HeroProps> = ({
         ctx.fillText(`CO:${co.toFixed(0)}%`, vX - 14, vY + 18);
 
         // 3. Right: Dual-Trace Digital Process Scope (ISA-5.1 Standard Colors: SP=Green, PV=Cyan, CO=Amber)
-        const scX = w * 0.48;
-        const scY = 32;
-        const scW = w - scX - 18;
-        const scH = h * 0.78;
+        const scX = w * 0.46;
+        const scY = 24;
+        const scW = w - scX - 16;
+        const scH = h * 0.86;
 
         ctx.fillStyle = '#060a12';
         ctx.strokeStyle = '#1e293b';
@@ -1485,12 +1489,12 @@ export const Hero: React.FC<HeroProps> = ({
         // 1. Left: Jacketed Continuous Stirred Tank Reactor (CSTR) Vessel
         const rX = w * 0.22;
         const rY = h * 0.52;
-        const rW = 120;
-        const rH = 160;
+        const rW = 130;
+        const rH = 200;
 
         // Outer Cooling Jacket Shell (Annulus)
         const jW = rW + 28;
-        const jH = rH - 15;
+        const jH = rH - 18;
         const jX = rX - jW / 2;
         const jY = rY - rH / 2 + 18;
 
@@ -1637,10 +1641,10 @@ export const Hero: React.FC<HeroProps> = ({
         ctx.fillText('TT', vX + rW - 18, vY + 98);
 
         // 2. Right: Van Heerden Energy Balance & Reaction Rate Scope
-        const scX = w * 0.48;
-        const scY = 32;
-        const scW = w - scX - 18;
-        const scH = h * 0.78;
+        const scX = w * 0.46;
+        const scY = 24;
+        const scW = w - scX - 16;
+        const scH = h * 0.86;
 
         ctx.fillStyle = '#060a12';
         ctx.strokeStyle = '#1e293b';
@@ -1768,10 +1772,10 @@ export const Hero: React.FC<HeroProps> = ({
         }
 
         // 1. Left: Abrupt P-N Junction Energy Band Diagram (Ec, Ev, Ef)
-        const bdX = 25;
-        const bdY = 32;
-        const bdW = w * 0.44;
-        const bdH = h * 0.78;
+        const bdX = 18;
+        const bdY = 24;
+        const bdW = w * 0.43;
+        const bdH = h * 0.86;
         const jX = bdX + bdW / 2;
 
         ctx.fillStyle = '#060a12';
@@ -1934,18 +1938,18 @@ export const Hero: React.FC<HeroProps> = ({
         });
 
         // 2. Right: Live Shockley Diode I-V Graph & Carrier Scope
-        const scX = w * 0.48;
-        const scY = 32;
-        const scW = w - scX - 18;
-        const scH = h * 0.78;
+        const scX = w * 0.47;
+        const scY = 24;
+        const scW = w - scX - 16;
+        const scH = h * 0.86;
 
         ctx.fillStyle = '#060a12';
         ctx.strokeStyle = '#1e293b';
         ctx.fillRect(scX, scY, scW, scH);
         ctx.strokeRect(scX, scY, scW, scH);
 
-        const ivOriginX = scX + scW * 0.55;
-        const ivOriginY = scY + scH * 0.68;
+        const ivOriginX = scX + scW * 0.52;
+        const ivOriginY = scY + scH * 0.66;
 
         ctx.strokeStyle = 'rgba(51, 65, 85, 0.6)';
         ctx.lineWidth = 1;
@@ -2081,15 +2085,15 @@ export const Hero: React.FC<HeroProps> = ({
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[340px] bg-cyan-950/20 rounded-full blur-[130px] pointer-events-none" />
       <div className="absolute top-1/3 right-10 w-[450px] h-[380px] bg-amber-950/15 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 relative z-10">
         
         {/* =================================================================== */}
         {/* TWO-COLUMN HERO GRID: LEFT INFO & BUTTONS | RIGHT COMPACT SIMULATOR */}
         {/* =================================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
           
           {/* LEFT COLUMN: Brand Signal, Mission, & Department Navigation */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="lg:col-span-5 space-y-3.5 sm:space-y-4">
             
             {/* Top Eyebrow Pill */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
@@ -2098,8 +2102,8 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-[1.14]">
-              <span className="block text-cyan-400 text-xs sm:text-sm lg:text-base font-mono font-semibold tracking-wider uppercase mb-3">
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold text-white tracking-tight leading-[1.12]">
+              <span className="block text-cyan-400 text-xs sm:text-sm font-mono font-semibold tracking-wider uppercase mb-2">
                 LiveSimulators • Interactive Engineering Simulations
               </span>
               Don't Just Read <br />
@@ -2109,23 +2113,23 @@ export const Hero: React.FC<HeroProps> = ({
               See It Happen.
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed">
               Explore interactive engineering simulations and virtual physics laboratories. Experience living differential formulations,
               transient dynamics, and real-time control directly in your browser.
             </p>
 
             {/* Dual-Track Quick Stage Action Strip */}
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <button
                 onClick={() => {
                   const el = document.getElementById('industrial-labs');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="flex-1 flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-cyan-500/15 to-blue-500/15 border border-amber-500/60 hover:border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)] text-left group transition-all"
+                className="flex-1 flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-cyan-500/15 to-blue-500/15 border border-amber-500/60 hover:border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)] text-left group transition-all"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-300">
-                    <ShieldCheck className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-300">
+                    <ShieldCheck className="w-3.5 h-3.5" />
                   </div>
                   <div>
                     <div className="text-[10px] font-mono text-amber-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -2143,11 +2147,11 @@ export const Hero: React.FC<HeroProps> = ({
                   const el = document.getElementById('departments-hub');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="flex-1 flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 text-left group transition-all"
+                className="flex-1 flex items-center justify-between p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 text-left group transition-all"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
-                    <Zap className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
+                    <Zap className="w-3.5 h-3.5" />
                   </div>
                   <div>
                     <div className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">Students & Faculty</div>
@@ -2159,19 +2163,19 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
 
             {/* Department Navigation Hub */}
-            <div className="space-y-2.5 pt-1">
-              <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+            <div className="space-y-2 pt-0.5">
+              <div className="text-[10.5px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
                 <span>Dedicated Departments</span>
                 <span className="text-cyan-400 text-[10px]">SELECT TO LAUNCH</span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
                 <button
                   onClick={() => {
                     setActiveDept('electrical');
                     onSelectDepartment('electrical');
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all group ${
+                  className={`p-2.5 rounded-xl border text-left transition-all group ${
                     activeDept === 'electrical'
                       ? 'bg-cyan-950/70 border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
@@ -2181,7 +2185,7 @@ export const Hero: React.FC<HeroProps> = ({
                     <Zap className="w-4 h-4 text-cyan-400" />
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                  <div className="mt-2 text-xs font-bold text-white group-hover:text-cyan-300">Electrical</div>
+                  <div className="mt-1.5 text-xs font-bold text-white group-hover:text-cyan-300">Electrical</div>
                   <div className="text-[10px] text-slate-400">Power, Flux & Machines</div>
                 </button>
 
@@ -2190,7 +2194,7 @@ export const Hero: React.FC<HeroProps> = ({
                     setActiveDept('mechanical');
                     onSelectDepartment('mechanical');
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all group ${
+                  className={`p-2.5 rounded-xl border text-left transition-all group ${
                     activeDept === 'mechanical'
                       ? 'bg-amber-950/70 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
@@ -2200,7 +2204,7 @@ export const Hero: React.FC<HeroProps> = ({
                     <Cpu className="w-4 h-4 text-amber-400" />
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                  <div className="mt-2 text-xs font-bold text-white group-hover:text-amber-300">Mechanical</div>
+                  <div className="mt-1.5 text-xs font-bold text-white group-hover:text-amber-300">Mechanical</div>
                   <div className="text-[10px] text-slate-400">Gears & Kinematics</div>
                 </button>
 
@@ -2209,7 +2213,7 @@ export const Hero: React.FC<HeroProps> = ({
                     setActiveDept('chemical');
                     onSelectDepartment('chemical');
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all group ${
+                  className={`p-2.5 rounded-xl border text-left transition-all group ${
                     activeDept === 'chemical'
                       ? 'bg-purple-950/70 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
@@ -2219,7 +2223,7 @@ export const Hero: React.FC<HeroProps> = ({
                     <FlaskConical className="w-4 h-4 text-purple-400" />
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                  <div className="mt-2 text-xs font-bold text-white group-hover:text-purple-300">Chemical</div>
+                  <div className="mt-1.5 text-xs font-bold text-white group-hover:text-purple-300">Chemical</div>
                   <div className="text-[10px] text-slate-400">CSTR & Runaway Kinetics</div>
                 </button>
 
@@ -2228,7 +2232,7 @@ export const Hero: React.FC<HeroProps> = ({
                     setActiveDept('physics');
                     onSelectDepartment('physics');
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all group ${
+                  className={`p-2.5 rounded-xl border text-left transition-all group ${
                     activeDept === 'physics'
                       ? 'bg-sky-950/70 border-sky-500/60 shadow-[0_0_15px_rgba(56,189,248,0.2)]'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
@@ -2238,7 +2242,7 @@ export const Hero: React.FC<HeroProps> = ({
                     <Atom className="w-4 h-4 text-sky-400" />
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                  <div className="mt-2 text-xs font-bold text-white group-hover:text-sky-300">Semiconductors</div>
+                  <div className="mt-1.5 text-xs font-bold text-white group-hover:text-sky-300">Semiconductors</div>
                   <div className="text-[10px] text-slate-400">Bandgap & P-N Physics</div>
                 </button>
 
@@ -2247,7 +2251,7 @@ export const Hero: React.FC<HeroProps> = ({
                     setActiveDept('control');
                     onSelectDepartment('control');
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all group ${
+                  className={`p-2.5 rounded-xl border text-left transition-all group ${
                     activeDept === 'control'
                       ? 'bg-emerald-950/70 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
@@ -2257,7 +2261,7 @@ export const Hero: React.FC<HeroProps> = ({
                     <Sliders className="w-4 h-4 text-emerald-400" />
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                  <div className="mt-2 text-xs font-bold text-white group-hover:text-emerald-300">Instrumentation</div>
+                  <div className="mt-1.5 text-xs font-bold text-white group-hover:text-emerald-300">Instrumentation</div>
                   <div className="text-[10px] text-slate-400">PID & Process Controls</div>
                 </button>
 
@@ -2266,7 +2270,7 @@ export const Hero: React.FC<HeroProps> = ({
                     setActiveDept('civil');
                     onSelectDepartment('civil');
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all group ${
+                  className={`p-2.5 rounded-xl border text-left transition-all group ${
                     activeDept === 'civil'
                       ? 'bg-pink-950/70 border-pink-500/60 shadow-[0_0_15px_rgba(236,72,153,0.2)]'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850'
@@ -2276,19 +2280,19 @@ export const Hero: React.FC<HeroProps> = ({
                     <Building2 className="w-4 h-4 text-pink-400" />
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-pink-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                  <div className="mt-2 text-xs font-bold text-white group-hover:text-pink-300">Civil</div>
+                  <div className="mt-1.5 text-xs font-bold text-white group-hover:text-pink-300">Civil</div>
                   <div className="text-[10px] text-slate-400">FEA, Bridges & Seismic</div>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: The Compact, Sleek Living Simulation Workbench */}
-          <div className="lg:col-span-7">
-            <div className="rounded-2xl border border-slate-700/80 bg-slate-900/95 shadow-2xl shadow-cyan-950/40 overflow-hidden flex flex-col">
+          {/* RIGHT COLUMN: The Living Simulation Workbench - Smartly Justified & Full-Height */}
+          <div className="lg:col-span-7 flex flex-col h-full">
+            <div className="h-full flex flex-col rounded-2xl border border-slate-700/80 bg-slate-900/95 shadow-2xl shadow-cyan-950/40 overflow-hidden">
               
-              {/* Compact Top Control Bar */}
-              <div className="px-3.5 py-2.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+              {/* Top Control Bar */}
+              <div className="px-3.5 py-2.5 bg-slate-950/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
                 
                 {/* Department Selector Tabs */}
                 <div className="flex items-center gap-1 p-0.5 bg-slate-900 rounded-lg border border-slate-800 flex-wrap">
@@ -2449,17 +2453,17 @@ export const Hero: React.FC<HeroProps> = ({
                 </div>
               </div>
 
-              {/* Compact Living Simulation Canvas */}
-              <div className="relative bg-[#050811] select-none">
+              {/* Smartly Justified Living Simulation Canvas - Reduced Height by 20% */}
+              <div className="relative bg-[#050811] select-none flex-1 w-full min-h-[300px] sm:min-h-[340px] lg:min-h-[390px] xl:min-h-[410px] flex flex-col overflow-hidden">
                 <canvas
                   ref={canvasRef}
-                  width={640}
-                  height={340}
-                  style={{ aspectRatio: '640 / 340' }}
+                  width={720}
+                  height={380}
+                  style={{ aspectRatio: 'auto' }}
                   onClick={handleCanvasClick}
                   onMouseMove={handleCanvasMouseMove}
                   onMouseLeave={() => setHoverPos(null)}
-                  className="interactive-canvas w-full h-[260px] sm:h-[300px] lg:h-[330px] block cursor-crosshair aspect-[640/340]"
+                  className="interactive-canvas w-full h-full flex-1 block cursor-crosshair select-none"
                 />
 
                 {/* Overlaid Telemetry Indicator */}
@@ -2484,8 +2488,8 @@ export const Hero: React.FC<HeroProps> = ({
                 </div>
               </div>
 
-              {/* Compact Bottom Slider & Full Simulator Launcher */}
-              <div className="p-3 bg-slate-950 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs font-mono">
+              {/* Bottom Slider & Full Simulator Launcher */}
+              <div className="p-3 bg-slate-950 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs font-mono shrink-0">
                 
                 {/* Responsive Parameter Slider */}
                 <div className="flex items-center gap-2 flex-1 min-w-[180px]">

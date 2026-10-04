@@ -74,7 +74,7 @@ export const AudiencePillars: React.FC<AudiencePillarsProps> = ({ onExploreForAu
 
   return (
     <section id="audiences" className="py-16 lg:py-24 border-b border-slate-800 bg-[#060a12] relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
         
         {/* Header */}
         <div className="max-w-3xl space-y-3 mb-12">

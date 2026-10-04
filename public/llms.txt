@@ -59,12 +59,15 @@
 - [SafeOps UPS](https://livesimulators.com/lab/safeops-ups): Double-conversion topology, static bypass transitions, and battery string impedance.. Discipline: instrumentation | 2 Interactive Modules | Reference: IEC 62040-3 / Uptime Tier IV.
 - [ElectroLive Electrical Safety](https://livesimulators.com/lab/electrolive-electrical-safety): Arc flash incident energy, NFPA 70E boundary calculations, and touch/step potential.. Discipline: electrical | 9 Interactive Modules | Reference: NFPA 70E / IEEE 1584 / OSHA.
 
+## Mechanical Engineering Digital Twins (Subdomain)
+Full-fidelity mechanical simulators at https://mech.livesimulators.com covering turbomachinery (referencing published API 610/617/618 literature), rotor dynamics (ISO 1940/API 684), process piping (ASME B31.3), and tribology (AGMA 2001/ISO 281). Independent educational platform; not affiliated with, approved, or endorsed by any standards body.
+
 ## Companion Engineering Portals
 - [DesignCalculators.co.in](https://designcalculators.co.in): Free multi-disciplinary engineering calculators (Electrical, Mechanical, Instrumentation) referencing published standards (IEEE, IEC, ASME, API, ISA).
 - [ReliabilityTools.co.in](https://reliabilitytools.co.in): Free plant reliability, asset uptime analytics, 2P/3P Weibull failure modeling, MTBF/MTTR, RCA, and IEC 61508/61511 SIL verification.
 
 ## Standards Reference & Non-Affiliation Notice
-All standard designations and acronyms (IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI) belong to their respective owners and are referenced solely for technical identification and academic study. LiveSimulators is an independent educational platform and makes no claim of endorsement or official affiliation.
+All standard designations and acronyms (IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI, AGMA) belong to their respective owners and are referenced solely for technical identification and academic study. LiveSimulators is an independent educational platform and makes no claim of endorsement, certification, copyright ownership, or official affiliation.
 
 ## Full Technical Documentation
 - [Complete Equations, Mathematical Proofs & Benchmark Tests](https://livesimulators.com/llms-full.txt): Detailed mathematical derivations, analytical validation benchmarks, and complete parameter tables for all simulators.

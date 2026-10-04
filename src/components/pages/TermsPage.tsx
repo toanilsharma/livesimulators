@@ -114,7 +114,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({
               and reside in the public domain.
             </p>
             <p className="text-slate-400 text-xs leading-relaxed">
-              <strong>Third-Party Trademarks & Non-Affiliation:</strong> All standard designations and acronyms (including but not limited to IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI, NEC, DIN, BS, and IS) referenced on LiveSimulators or linked companion portals are the trademarks of their respective owners. Neither LiveSimulators nor its companion tools are approved, endorsed, certified, or sponsored by, or affiliated with, any standards organization. All citations are made strictly for educational reference and descriptive identification under nominative fair use.
+              <strong>Third-Party Trademarks &amp; Non-Affiliation:</strong> All standard designations and acronyms (including but not limited to IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI, AGMA, NEC, DIN, BS, and IS) referenced on LiveSimulators or linked companion portals are the trademarks of their respective owners. Neither LiveSimulators nor its companion tools are approved, endorsed, certified, or sponsored by, or affiliated with, any standards organization, nor does LiveSimulators claim any copyright ownership in third-party standard specifications. All citations are made strictly for educational reference and descriptive identification under nominative fair use.
             </p>
           </section>
 

@@ -167,6 +167,41 @@ export const LABS: LabItem[] = [
     standardBadge: 'NFPA 70E / IEEE 1584 / OSHA',
     deploymentType: 'Life-Safety Compliance Suite',
   },
+  {
+    id: 'mechanical-digital-twins',
+    name: 'Mechanical Digital Twins',
+    tagline: 'High-fidelity turbomachinery, rotor dynamics, and industrial process piping fluid transients.',
+    dept: 'mechanical',
+    accent: '#f59e0b', // Amber/Orange
+    modules: 12,
+    shot: '/assets/labs/mechanical-twins.png',
+    external: true,
+    url: 'https://mech.livesimulators.com',
+    embedUrl: 'https://mech.livesimulators.com',
+    standaloneUrl: 'https://mech.livesimulators.com',
+    moduleList: [
+      { id: 'centrifugal-compressor', name: 'Centrifugal Compressor Stage', tag: 'Polytropic Head, Impeller Pressure Ratio & Surge Margin (API 617 ref)' },
+      { id: 'rotor-dynamics', name: 'Rotor Dynamics & Orbits', tag: 'Hydrodynamic Journal Bearing Oil Film & Orbit Whiskers (API 684 ref)' },
+      { id: 'process-pump', name: 'Process Pump Workbench', tag: 'Impeller Affinity Laws, NPSHr vs NPSHa & Cavitation (API 610 ref)' },
+      { id: 'recip-compressor', name: 'Reciprocating Compressor P-V', tag: 'Multi-Stage Indicator Diagram & Clearance Pockets (API 618 ref)' },
+      { id: 'piping-stress', name: 'Piping Thermal Stress & Loops', tag: 'Thermal Expansion, Sustained & Occasional Loads (ASME B31.3 ref)' },
+      { id: 'water-hammer', name: 'Fluid Water Hammer & Shockwaves', tag: 'Joukowsky Pressure Surge Transient & Fast-Closing Valves' },
+      { id: 'steam-turbine', name: 'Industrial Steam Turbine Stage', tag: 'Willans Line, Euler Velocity Triangles & Enthalpy Drop' },
+      { id: 'gas-turbine', name: 'Gas Turbine Dynamic Twin', tag: 'Compressor-Combustor-Turbine Spool Inertia & Flameout Margin' },
+      { id: 'bearing-lubrication', name: 'Hydrodynamic Journal Bearings', tag: 'Reynolds 2D Pressure Distribution & Sommerfeld Number' },
+      { id: 'gear-mesh', name: 'Gear Mesh Contact & Bending Stress', tag: 'Involute Line of Action, Contact Ratio & Pitting Factor (AGMA 2001 ref)' },
+      { id: 'heat-exchanger-dynamic', name: 'TEMA Exchanger Dynamic Balance', tag: 'Counter-Current LMTD, Fouling & Temperature Cross' },
+      { id: 'mechanical-seal', name: 'Mechanical Seal Plan Simulator', tag: 'Barrier Fluid Thermosiphon, Flush Quench & Face Leakage (API 682 ref)' }
+    ],
+    sectors: ['Oil & Gas / LNG', 'Power Generation', 'Refineries & Petrochem', 'Turbomachinery OEMs'],
+    capabilities: [
+      'Centrifugal compressor stage polytropic head & surge margin dynamics',
+      'Rotor dynamic stability, hydrodynamic bearing oil whirl & orbit Lissajous plots',
+      'Industrial process piping thermal flexibility & fluid transient water hammer'
+    ],
+    standardBadge: 'API / ASME / AGMA Ref',
+    deploymentType: 'Turbomachinery Pro Suite',
+  },
 ];
 
 /**

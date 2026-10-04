@@ -271,7 +271,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Main Minimal World-Class Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 h-16 flex items-center justify-between">
         
         {/* LIVE SIMULATORS Wordmark */}
         <a 
@@ -392,6 +392,32 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <ChevronRight className="w-3 h-3 group-hover/hub:translate-x-0.5 transition-transform" />
                         </a>
                       </div>
+
+                      {/* Secondary Link under Mechanical: Mechanical Digital Twins (API/ASME) */}
+                      {dept.id === 'mechanical' && (
+                        <div className="mb-2.5">
+                          <a
+                            href="https://mech.livesimulators.com"
+                            target="_blank"
+                            rel="noopener"
+                            className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-amber-950/25 to-slate-900 border border-amber-500/40 hover:border-amber-400 text-amber-300 hover:text-white transition-all group/twin shadow-sm"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                              <span className="text-xs font-bold font-mono tracking-tight text-white group-hover/twin:text-amber-200">
+                                Mechanical Digital Twins (API/ASME)
+                              </span>
+                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                Subdomain
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold font-mono flex items-center gap-1 text-amber-400 group-hover/twin:text-amber-300 group-hover/twin:translate-x-0.5 transition-transform shrink-0">
+                              <span>Launch Workbench</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </span>
+                          </a>
+                        </div>
+                      )}
 
                       {/* Simulators Grid (2 Columns, Clean Cards) */}
                       <div className="grid grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
@@ -792,6 +818,26 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {/* Expanded Simulators List */}
                   {isExpanded && (
                     <div className="border-t border-slate-800/80 bg-slate-950/70 p-2 space-y-1 animate-in fade-in duration-150">
+                      {dept.id === 'mechanical' && (
+                        <a
+                          href="https://mech.livesimulators.com"
+                          target="_blank"
+                          rel="noopener"
+                          className="w-full min-h-[44px] flex items-center justify-between p-2.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-left transition-colors group mb-1.5"
+                        >
+                          <div className="flex flex-col pr-2">
+                            <span className="text-xs font-bold text-amber-300 group-hover:text-amber-200 transition-colors flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                              Mechanical Digital Twins (API/ASME)
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 mt-0.5">
+                              Turbomachinery, Rotor Dynamics &amp; ASME B31.3
+                            </span>
+                          </div>
+                          <ArrowRight className="w-3.5 h-3.5 text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </a>
+                      )}
+
                       {dept.simulators.map((sim) => (
                         <a
                           key={sim.id}

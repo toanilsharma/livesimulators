@@ -42,7 +42,7 @@ export const PersonaStageSelector: React.FC<PersonaStageSelectorProps> = ({
   return (
     <section 
       id="profile-stage-selector"
-      className="relative z-20 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto -mt-6 sm:-mt-8"
+      className="relative z-20 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 w-full max-w-[1920px] mx-auto -mt-6 sm:-mt-8"
       aria-label="Engineering Experience Stage Selector"
     >
       {/* Background Frame */}

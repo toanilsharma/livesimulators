@@ -41,7 +41,7 @@ export const TrustPrinciples: React.FC = () => {
       {/* Subtle Technical Radial Glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[650px] h-[450px] bg-blue-950/15 rounded-full blur-[140px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-16">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 relative z-10 space-y-16">
         
         {/* ================================================================= */}
         {/* Technical Document Header Strip & Heading */}

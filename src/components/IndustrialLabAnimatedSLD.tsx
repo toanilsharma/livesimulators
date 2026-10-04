@@ -88,6 +88,8 @@ export const IndustrialLabAnimatedSLD: React.FC<IndustrialLabAnimatedSLDProps> =
         renderPowerSystemsSLD(ctx, w, h, time, particles, accentColor, isFaultActive);
       } else if (labId === 'safeops-ups') {
         renderSafeOpsUpsSLD(ctx, w, h, time, particles, accentColor, isFaultActive);
+      } else if (labId === 'mechanical-digital-twins') {
+        renderMechanicalTwinsSLD(ctx, w, h, time, particles, accentColor, isFaultActive);
       } else {
         renderElectroLiveSafetySLD(ctx, w, h, time, sparks, accentColor, isFaultActive);
       }
@@ -1462,5 +1464,220 @@ function renderElectroLiveSafetySLD(
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 9px "IBM Plex Mono", monospace';
     ctx.fillText('⚡ LEAKAGE DETECTED • 30mA RCD TRIPPED IN 18ms • HUMAN PROTECTED (0V)', w / 2 - 170, h - 14);
+  }
+}
+
+// ============================================================================
+// 5. MECHANICAL DIGITAL TWINS: Turbomachinery Compressor Stage & Rotor Orbit
+// ============================================================================
+function renderMechanicalTwinsSLD(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  time: number,
+  particles: { t: number; speed: number; offsetY: number }[],
+  accent: string,
+  isFault: boolean = false
+) {
+  // Title HUD
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillText(
+    isFault
+      ? 'TWIN: [ALARM] API 617 COMPRESSOR SURGE DETECTED ➔ ASV RAPID RECYCLE OPEN'
+      : 'TWIN: API 617 CENTRIFUGAL COMPRESSOR ➔ ROTOR ORBIT & BEARING DYNAMICS',
+    16,
+    20
+  );
+
+  // Live Engineering Readouts Box
+  const rpm = isFault ? Math.round(9800 + Math.sin(time * 5) * 450) : 10480;
+  const surgeMargin = isFault ? (-4.5 + Math.sin(time * 4) * 2.2).toFixed(1) : (18.5 + Math.sin(time * 0.4) * 0.8).toFixed(1);
+  const vib = isFault ? (68.4 + Math.random() * 12.0).toFixed(1) : (13.6 + Math.sin(time * 0.7) * 1.2).toFixed(1);
+  const polyEff = isFault ? '42.8' : (84.6 + Math.sin(time * 0.5) * 0.6).toFixed(1);
+
+  ctx.fillStyle = isFault ? 'rgba(30, 10, 15, 0.92)' : 'rgba(15, 23, 42, 0.85)';
+  ctx.strokeStyle = isFault ? '#ef4444' : 'rgba(51, 65, 85, 0.8)';
+  ctx.lineWidth = isFault ? 1.5 : 1;
+  ctx.beginPath();
+  ctx.roundRect(w - 205, 10, 190, 72, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = isFault ? '#f87171' : '#f59e0b';
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillText(isFault ? 'STATUS: SURGE VIOLATION (TRIP)' : 'STATUS: STABLE BASELINE', w - 195, 26);
+  ctx.fillStyle = isFault ? '#ef4444' : '#f8fafc';
+  ctx.fillText(`SHAFT SPEED: ${rpm} RPM`, w - 195, 40);
+  ctx.fillText(`VIBRATION: ${vib} μm pk-pk (API 670)`, w - 195, 54);
+  ctx.fillStyle = isFault ? '#f87171' : '#34d399';
+  ctx.fillText(`SURGE MARGIN: ${surgeMargin}% • EFF: ${polyEff}%`, w - 195, 68);
+
+  // 1. Draw Centrifugal Compressor Casing & Impeller (Left/Center: cx=170, cy=180)
+  const cx = 175;
+  const cy = 185;
+  const rOuter = 75;
+  const rHub = 22;
+
+  // Casing Volute Spiral
+  ctx.strokeStyle = isFault ? 'rgba(239, 68, 68, 0.5)' : 'rgba(245, 158, 11, 0.35)';
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.arc(cx, cy, rOuter + 8, -Math.PI * 0.1, Math.PI * 1.5);
+  ctx.stroke();
+
+  // Impeller Disc Background
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.strokeStyle = isFault ? '#ef4444' : '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, rOuter, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Impeller Backward-Leaned Blades (Spinning)
+  const numBlades = 12;
+  const spinSpeed = isFault ? time * 1.2 : time * 3.5;
+  for (let b = 0; b < numBlades; b++) {
+    const angle = (b * (2 * Math.PI) / numBlades) + spinSpeed;
+    ctx.strokeStyle = isFault ? '#f87171' : '#fbbf24';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    const x1 = cx + Math.cos(angle) * rHub;
+    const y1 = cy + Math.sin(angle) * rHub;
+    // Curved backward curve
+    const xMid = cx + Math.cos(angle + 0.3) * (rOuter * 0.6);
+    const yMid = cy + Math.sin(angle + 0.3) * (rOuter * 0.6);
+    const x2 = cx + Math.cos(angle + 0.5) * rOuter;
+    const y2 = cy + Math.sin(angle + 0.5) * rOuter;
+    ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(xMid, yMid, x2, y2);
+    ctx.stroke();
+  }
+
+  // Shaft Hub
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.arc(cx, cy, rHub, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#94a3b8';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Suction Piping (Left arrow) & Discharge Piping (Top right)
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.7)';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(16, cy);
+  ctx.lineTo(cx - rOuter - 8, cy);
+  ctx.stroke();
+
+  // Gas Flow Streamline Particles
+  particles.forEach((p, idx) => {
+    if (idx < 16) {
+      const flowT = (p.t + time * (isFault ? -0.4 : 0.8)) % 1;
+      const normalizedT = flowT < 0 ? flowT + 1 : flowT;
+      const px = 20 + normalizedT * (cx - 20);
+      const py = cy + p.offsetY;
+      ctx.fillStyle = isFault ? '#ef4444' : '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // Label Suction & Discharge
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillText('GAS INLET (P1)', 20, cy - 12);
+  ctx.fillText('DISCHARGE (P2)', cx + 45, cy - rOuter - 18);
+
+  // 2. Draw Rotor Dynamics Orbit Lissajous Display (Right: ox=460, oy=185)
+  const ox = 450;
+  const oy = 185;
+  const orbitRadius = 60;
+
+  // Orbit Scope Screen
+  ctx.fillStyle = 'rgba(2, 6, 23, 0.95)';
+  ctx.strokeStyle = 'rgba(51, 65, 85, 0.8)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(ox, oy, orbitRadius + 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Bearing Clearance Circle (Dashed boundary)
+  ctx.strokeStyle = isFault ? 'rgba(239, 68, 68, 0.8)' : 'rgba(100, 116, 139, 0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.arc(ox, oy, orbitRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Crosshairs
+  ctx.strokeStyle = 'rgba(51, 65, 85, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(ox - orbitRadius - 8, oy);
+  ctx.lineTo(ox + orbitRadius + 8, oy);
+  ctx.moveTo(ox, oy - orbitRadius - 8);
+  ctx.lineTo(ox, oy + orbitRadius + 8);
+  ctx.stroke();
+
+  // Dynamic Rotor Center Orbit Trajectory (Lissajous)
+  const orbitAmp = isFault ? orbitRadius * 0.94 : orbitRadius * 0.42;
+  const orbitPhase = isFault ? 1.8 : 0.6;
+  ctx.strokeStyle = isFault ? '#ef4444' : '#10b981';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  for (let a = 0; a <= Math.PI * 2; a += 0.08) {
+    const lx = ox + Math.sin(a * 2 + time * 2) * orbitAmp;
+    const ly = oy + Math.sin(a * 2 + orbitPhase + time * 2) * (orbitAmp * 0.75);
+    if (a === 0) ctx.moveTo(lx, ly);
+    else ctx.lineTo(lx, ly);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  // Current Shaft Center Point & Keyphasor Mark
+  const curX = ox + Math.sin(time * 6) * orbitAmp;
+  const curY = oy + Math.sin(time * 6 + orbitPhase) * (orbitAmp * 0.75);
+  ctx.fillStyle = isFault ? '#f87171' : '#34d399';
+  ctx.beginPath();
+  ctx.arc(curX, curY, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Keyphasor dot
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(ox + Math.sin(0) * orbitAmp, oy + Math.sin(orbitPhase) * (orbitAmp * 0.75), 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Orbit HUD Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillText('BEARING JOURNAL ORBIT (API 684)', ox - 75, oy - orbitRadius - 22);
+  ctx.fillStyle = isFault ? '#ef4444' : '#10b981';
+  ctx.fillText(isFault ? 'CLEARANCE LIMIT EXCEEDED' : 'FLUID WEDGE STABLE', ox - 55, oy + orbitRadius + 28);
+
+  // Bottom Status Banner
+  if (isFault) {
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.92)';
+    ctx.beginPath();
+    ctx.roundRect(w / 2 - 195, h - 28, 390, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.fillText('🌀 REVERSE FLOW FLUTTER • ANTI-SURGE VALVE OPEN • RECYCLE LOOP ACTIVE', w / 2 - 185, h - 14);
+  } else {
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.beginPath();
+    ctx.roundRect(w / 2 - 180, h - 28, 360, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    ctx.fillText('HYDRODYNAMIC JOURNAL 4.8 MPa • API 610/617 DIGITAL TWIN 60 FPS', w / 2 - 165, h - 14);
   }
 }

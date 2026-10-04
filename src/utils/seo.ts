@@ -167,7 +167,10 @@ export const ORGANIZATION_SCHEMA = {
     contactType: 'customer service',
     availableLanguage: ['English'],
   },
-  sameAs: ['https://www.linkedin.com/in/toanilsharma/'],
+  sameAs: [
+    'https://mech.livesimulators.com',
+    'https://designcalculators.co.in',
+  ],
 };
 
 // Base WebSite Schema (Site-wide SearchAction)

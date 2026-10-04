@@ -1596,8 +1596,8 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
   });
 
   return (
-    <div className="min-h-screen bg-[#080d16] text-slate-100 py-5 sm:py-8 px-3 sm:px-6 lg:px-8 relative overflow-x-hidden w-full max-w-full">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+    <div className="min-h-screen bg-[#080d16] text-slate-100 py-5 sm:py-8 px-3 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 relative overflow-x-hidden w-full max-w-full">
+      <div className="w-full max-w-[1920px] mx-auto space-y-6 sm:space-y-8">
         
         {/* Navigation Breadcrumb Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
@@ -1670,11 +1670,11 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
               {departmentConfig.description}
             </p>
 
-            {/* Standards Complied With */}
+            {/* Standards Referenced */}
             <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800/80">
               <span className="text-xs font-mono font-semibold text-slate-400 flex items-center gap-1.5 mr-1">
                 <Award className="w-3.5 h-3.5 text-cyan-400" />
-                Verified Standards:
+                Referenced Standards Literature:
               </span>
               {departmentConfig.standards.map((std, i) => (
                 <span
@@ -1763,7 +1763,7 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
         </div>
 
         {/* Simulators Grid: Sleek, Home-Page Proportion, Distinctive Previews */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-4.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-4.5">
           {filteredSimulators.map((sim) => {
             const subCat = getSimulatorSubCategory(sim.type);
 
@@ -1848,6 +1848,54 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
             );
           })}
         </div>
+
+        {/* Dedicated Subdomain Feature Section for Mechanical Digital Twins */}
+        {departmentId === 'mechanical' && (
+          <section className="relative mt-8 sm:mt-12 rounded-2xl bg-gradient-to-br from-amber-950/40 via-slate-900/90 to-[#080d16] border border-amber-500/40 p-6 sm:p-8 shadow-2xl overflow-hidden">
+            {/* Ambient Background Glow */}
+            <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="max-w-3xl space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    Specialized Subdomain Workbench
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-slate-400">
+                    <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60">API 610 / 617 / 618 Ref</span>
+                    <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60">ASME B31.3 Ref</span>
+                    <span className="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700/60">AGMA 2001 Ref</span>
+                  </div>
+                </div>
+
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
+                  Advanced Mechanical Digital Twins
+                </h2>
+
+                <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
+                  For full-fidelity turbomachinery, rotor dynamics, and industrial process simulations referencing published methodologies from API 610, API 617, API 618, ASME B31.3, and AGMA standards literature for educational and technical exploration, visit our dedicated mechanical engineering workbench.
+                </p>
+
+                <p className="text-[11px] text-slate-400 leading-relaxed font-sans pt-2 border-t border-amber-500/20">
+                  <strong className="text-amber-400/90 font-mono">Standards Citation &amp; Non-Affiliation Notice:</strong> All standard designations (including API, ASME, AGMA, ISO, and IEEE) are cited exclusively for technical identification and academic literature context under nominative fair use. LiveSimulators is an independent educational platform and is not affiliated with, endorsed by, certified by, or sponsored by any standards organization, nor does it claim copyright in published standards.
+                </p>
+              </div>
+
+              <div className="shrink-0">
+                <a
+                  href="https://mech.livesimulators.com"
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-display font-bold text-sm sm:text-base shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 active:scale-95 transition-all duration-200"
+                >
+                  <span>Launch Mechanical Digital Twins →</span>
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Empty State if Search yielded no results */}
         {filteredSimulators.length === 0 && (

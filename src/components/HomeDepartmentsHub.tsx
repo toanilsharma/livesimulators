@@ -228,7 +228,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
   };
 
   return (
-    <section id="departments-hub" className="py-14 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20">
+    <section id="departments-hub" className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 w-full max-w-[1920px] mx-auto scroll-mt-20">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-xs font-mono font-semibold uppercase tracking-wider text-blue-300 mb-4 shadow-sm">
@@ -313,6 +313,19 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
                     <p className="text-xs text-slate-300 line-clamp-1">
                       {dept.tagline}
                     </p>
+
+                    {dept.id === 'mechanical' && (
+                      <div className="mt-1.5">
+                        <a
+                          href="https://mech.livesimulators.com"
+                          target="_blank"
+                          rel="noopener"
+                          className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-amber-400 hover:text-amber-300 hover:underline transition-colors"
+                        >
+                          <span>Advanced Turbomachinery &amp; Rotor Dynamics →</span>
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -331,7 +344,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
               </div>
 
               {/* 2. SUB-CATEGORY SIMULATORS DIRECTLY BELOW (Compact, informative, clickable cards) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 sm:gap-3">
                 {dept.simulators.map((sim) => (
                   <div
                     key={sim.id}

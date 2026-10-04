@@ -123,13 +123,13 @@ export const DisclaimerPage: React.FC<DisclaimerPageProps> = ({
               3. Standards Citations, Third-Party Trademarks & Non-Affiliation
             </h3>
             <p>
-              References to industry standards bodies and technical designations—including but not limited to IEEE, ASME, AISC, IEC, ISO, API, ISA, NFPA, ASTM, ANSI, DIN, BS, or IS—are provided strictly for academic citation, educational cross-referencing, and technical identification of published engineering formulations.
+              References to industry standards bodies and technical designations—including but not limited to IEEE, ASME, AISC, IEC, ISO, API, ISA, NFPA, ASTM, ANSI, AGMA, DIN, BS, or IS—are provided strictly for academic citation, educational cross-referencing, and technical identification of published engineering formulations.
             </p>
             <p>
-              LiveSimulators, its companion portals (including DesignCalculators.co.in and ReliabilityTools.co.in), and founder Anil Sharma are wholly independent educational entities. No simulator, calculation suite, software tool, or laboratory module on this website is endorsed, sponsored, affiliated with, certified by, or approved by any national or international standards development organization, professional society, or accreditation agency.
+              LiveSimulators, its companion portals (including DesignCalculators.co.in and ReliabilityTools.co.in), and founder Anil Sharma are wholly independent educational entities. No simulator, calculation suite, software tool, or laboratory module on this website is endorsed, sponsored, affiliated with, certified by, or approved by any national or international standards development organization, professional society, or accreditation agency, nor does LiveSimulators claim any copyright in third-party standard specifications.
             </p>
             <p className="text-slate-400 text-xs leading-relaxed">
-              All trademarks, service marks, registered names, standard numbers, and trade dress remain the exclusive property of their respective trademark holders. Mention of these designations does not imply any official relationship, license, partnership, or endorsement. Users seeking authoritative compliance verification must obtain official copies of published standards directly from the respective standards-issuing organizations.
+              All trademarks, service marks, registered names, standard numbers, and trade dress remain the exclusive property of their respective trademark holders. Mention of these designations does not imply any official relationship, license, partnership, copyright transfer, or endorsement. Users seeking authoritative compliance verification must obtain official copies of published standards directly from the respective standards-issuing organizations.
             </p>
           </section>
 

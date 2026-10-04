@@ -209,7 +209,7 @@ export const Footer: React.FC<FooterProps> = ({
       <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-cyan-950/15 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Main Footer Directory */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 relative z-10">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12 lg:py-16 relative z-10">
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
@@ -670,14 +670,14 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
 
         {/* Small Educational-Purpose Statement & Non-Affiliation Trademark Notice */}
-        <div className="mt-10 pt-8 border-t border-slate-900 text-[11px] text-slate-500 font-sans leading-relaxed max-w-5xl space-y-2">
+        <div className="mt-10 pt-8 border-t border-slate-900 text-[11px] text-slate-500 font-sans leading-relaxed w-full space-y-2">
           <p>
             LiveSimulators provides interactive engineering learning experiences and conceptual visualizations. 
             Simulations are intended for education and exploration; users should consult applicable standards, engineering 
             documentation, and qualified professionals for real-world design, safety, or operational decisions.
           </p>
           <p className="text-[10px] text-slate-500">
-            <strong>Non-Affiliation & Standards Reference Notice:</strong> All product names, trademarks, and standard designations (including IEEE, IEC, ASME, API, ISO, ISA, NFPA, and ASTM) belong to their respective proprietary owners. Mention of any standard, code, or organization is strictly for academic cross-referencing, educational identification, and computational modeling context only, and does not constitute or imply any endorsement, sponsorship, affiliation, certification, or approval by any standards organization.
+            <strong>Non-Affiliation &amp; Standards Reference Notice:</strong> All product names, trademarks, and standard designations (including IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, and AGMA) belong to their respective proprietary owners. Mention of any standard, code, or organization is strictly for academic cross-referencing, educational identification, and computational modeling context only, and does not constitute or imply any endorsement, sponsorship, affiliation, certification, copyright ownership, or approval by any standards organization.
           </p>
         </div>
 
