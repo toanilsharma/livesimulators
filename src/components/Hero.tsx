@@ -2633,13 +2633,25 @@ export const Hero: React.FC<HeroProps> = ({
                     {isRunning ? <Pause className="w-3.5 h-3.5 text-amber-400" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
                   </button>
 
-                  <button
-                    onClick={() => onLaunchSimulator && onLaunchSimulator(getActiveSimulator())}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.25)] font-sans"
+                  <a
+                    href={`/simulator/${getActiveSimulator().id}`}
+                    onClick={(e) => {
+                      if (typeof (window as any).gtag === 'function') {
+                        (window as any).gtag('event', 'simulator_launch', { simulator: getActiveSimulator().title });
+                      }
+                      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                        e.preventDefault();
+                        if (onLaunchSimulator) {
+                          onLaunchSimulator(getActiveSimulator());
+                        }
+                      }
+                    }}
+                    className="launch-button px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.25)] font-sans"
+                    rel="noopener"
                   >
-                    <span>Open Workbench</span>
+                    <span>Launch</span>
                     <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
+                  </a>
                 </div>
               </div>
 

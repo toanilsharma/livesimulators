@@ -325,11 +325,11 @@ export const IndustrialLabsSection: React.FC = () => {
 
                   <div className="flex items-center gap-2 shrink-0">
                     {/* Standalone CNAME / Netlify External Portal */}
-                    {lab.standaloneUrl && (
+                    {lab.standaloneUrl && !lab.external && (
                       <a
                         href={lab.standaloneUrl}
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel="noopener"
                         onClick={() => trackLabLaunch(lab.id, 'standalone_external_btn')}
                         title="Open direct standalone portal in full browser window"
                         className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-mono font-bold bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 transition-all hover:border-slate-500"
@@ -343,12 +343,14 @@ export const IndustrialLabsSection: React.FC = () => {
                     <a
                       href={lab.url}
                       target={lab.external ? '_blank' : undefined}
-                      rel={lab.external ? 'noopener noreferrer' : undefined}
+                      rel={lab.external ? 'noopener' : undefined}
                       onClick={(e) => {
                         trackLabLaunch(lab.id, 'home_card');
                         if (!lab.external) {
-                          e.preventDefault();
-                          navigateTo(lab.url);
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                            e.preventDefault();
+                            navigateTo(lab.url);
+                          }
                         }
                       }}
                       className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-display font-extrabold transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-95 shrink-0"
@@ -358,7 +360,7 @@ export const IndustrialLabsSection: React.FC = () => {
                         boxShadow: `0 0 18px ${lab.accent}40`,
                       }}
                     >
-                      <span>Launch Pro Lab</span>
+                      <span>{lab.external ? 'Portal Launch Pro Lab' : 'Launch Pro Lab'}</span>
                       {lab.external ? <ExternalLink className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
                     </a>
                   </div>

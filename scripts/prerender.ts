@@ -225,7 +225,7 @@ function renderContentForRoute(route: AppRoute): string {
           <p style="color:#94a3b8; font-size:0.875rem; line-height:1.5; margin-bottom:0.75rem;">${escapeHtml(s.description)}</p>
           <div style="font-family:monospace; color:#38bdf8; font-size:0.8rem; margin-bottom:0.75rem;">Equation: ${escapeHtml(s.governingEquation)}</div>
           <div style="color:#64748b; font-size:0.75rem; margin-bottom:1rem;">Standard: ${escapeHtml(s.standardReference || 'IEEE/ASME Standard')}</div>
-          <a href="/simulator/${s.id}" style="display:inline-block; padding:0.5rem 1rem; background:#06b6d4; color:#030712; border-radius:0.5rem; font-weight:bold; text-decoration:none; font-size:0.8rem;">Launch Workbench &rarr;</a>
+          <a href="/simulator/${s.id}" onclick="gtag('event', 'simulator_launch', {'simulator': '${escapeHtml(s.title).replace(/'/g, "\\'")}'});" style="display:inline-block; padding:0.5rem 1rem; background:#06b6d4; color:#030712; border-radius:0.5rem; font-weight:bold; text-decoration:none; font-size:0.8rem;">Launch Workbench &rarr;</a>
         </article>
       `
       ).join('');
@@ -523,6 +523,21 @@ function renderContentForRoute(route: AppRoute): string {
                 </div>
               `).join('')}
             </section>` : ''}
+            <!-- Telemetry & Student Lab Tools -->
+            <section style="margin-top:1.5rem; padding:1.25rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.75rem; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1rem;">
+              <div>
+                <div style="font-size:0.9rem; font-weight:bold; color:#ffffff; font-family:monospace;">Laboratory Submission &amp; LMS Integration</div>
+                <div style="font-size:0.8rem; color:#94a3b8; margin-top:0.25rem;">Download calculation worksheet or embed this 60 FPS simulator directly into Canvas / Moodle.</div>
+              </div>
+              <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <button type="button" onclick="gtag('event', 'worksheet_download', {'simulator': '${escapeHtml(sim.title).replace(/'/g, "\\'")}'}); window.print();" style="padding:0.5rem 1rem; background:#881337; color:#fecdd3; border:1px solid #e11d48; border-radius:0.5rem; font-size:0.8rem; font-weight:bold; cursor:pointer;">
+                  Worksheet PDF 🖨️
+                </button>
+                <button type="button" onclick="gtag('event', 'embed_copy', {'simulator': '${escapeHtml(sim.title).replace(/'/g, "\\'")}'}); navigator.clipboard.writeText('<iframe src=&quot;https://livesimulators.com/embed/${sim.id}&quot; width=&quot;100%&quot; height=&quot;650&quot; style=&quot;border:1px solid #1e293b; border-radius:12px;&quot; allow=&quot;fullscreen&quot;></iframe>'); alert('LMS embed code copied to clipboard!');" style="padding:0.5rem 1rem; background:#581c87; color:#f3e8ff; border:1px solid #a855f7; border-radius:0.5rem; font-size:0.8rem; font-weight:bold; cursor:pointer;">
+                  Copy LMS Embed Code 📋
+                </button>
+              </div>
+            </section>
           </div>
         </details>
       </article>
@@ -538,7 +553,7 @@ function renderContentForRoute(route: AppRoute): string {
             <span style="font-family:monospace; font-size:0.75rem; color:#38bdf8; letter-spacing:0.05em;">LIVESIMULATORS • VIRTUAL LAB EMBED</span>
             <h1 style="font-size:1.5rem; font-weight:800; color:#ffffff; margin:0.25rem 0;">${escapeHtml(sim.title)}</h1>
           </div>
-          <a href="/simulator/${sim.id}" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem; font-weight:bold; color:#06b6d4; text-decoration:none; padding:0.4rem 0.8rem; background:#0f172a; border:1px solid #1e293b; border-radius:0.5rem;">Launch Full Lab ↗</a>
+          <a href="/simulator/${sim.id}" onclick="gtag('event', 'simulator_launch', {'simulator': '${escapeHtml(sim.title).replace(/'/g, "\\'")}'});" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem; font-weight:bold; color:#06b6d4; text-decoration:none; padding:0.4rem 0.8rem; background:#0f172a; border:1px solid #1e293b; border-radius:0.5rem;">Launch Full Lab ↗</a>
         </header>
         <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">${escapeHtml(sim.description)}</p>
         <div style="font-family:monospace; color:#38bdf8; font-size:0.9rem; padding:0.75rem; background:#0f172a; border-radius:0.5rem; margin-bottom:1rem;">

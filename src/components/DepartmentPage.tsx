@@ -1771,7 +1771,12 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
               <div
                 key={sim.id}
                 id={`sim-card-${sim.id}`}
-                onClick={() => onLaunchSimulator(sim)}
+                onClick={() => {
+                  if (typeof (window as any).gtag === 'function') {
+                    (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
+                  }
+                  onLaunchSimulator(sim);
+                }}
                 className={`group p-4 rounded-2xl border border-slate-800 bg-slate-900/80 hover:bg-slate-850 cursor-pointer transition-all duration-200 flex flex-col justify-between shadow-sm hover:shadow-lg hover:-translate-y-0.5 ${departmentConfig.simCardHover}`}
               >
                 <div className="space-y-3">
@@ -1839,10 +1844,24 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
                     {sim.badge}
                   </span>
 
-                  <span className="text-xs font-bold font-mono text-slate-300 group-hover:text-white flex items-center gap-1 shrink-0 transition-colors">
+                  <a
+                    href={`/simulator/${sim.id}`}
+                    className="launch-button text-xs font-bold font-mono text-slate-300 group-hover:text-white flex items-center gap-1 shrink-0 transition-colors"
+                    rel="noopener"
+                    onClick={(e) => {
+                      if (typeof (window as any).gtag === 'function') {
+                        (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
+                      }
+                      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onLaunchSimulator(sim);
+                      }
+                    }}
+                  >
                     <span>Launch</span>
                     <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </span>
+                  </a>
                 </div>
               </div>
             );

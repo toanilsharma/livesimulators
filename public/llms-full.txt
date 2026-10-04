@@ -165,7 +165,7 @@ Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculat
 - **Equation Description**: Fourier harmonic expansion of an ideal 50% duty cycle square wave.
 - **Referenced Standards**: IEEE 519 (Recommended Practice for Harmonic Control in Electric Power)
 - **Analytical Proof & Mathematical Derivation**: Fourier basis functions are orthogonal over period T. Truncating the square wave expansion at N harmonics produces Gibbs phenomenon overshoot at jump discontinuities converging analytically to (2/π) ∫₀^π (sin(u)/u) du - 1 ≈ 8.9490%.
-- **Benchmark Validation Test**: IEEE 519 benchmark: Fundamental peak is 4/π ≈ 1.2732. Peak overshoot of synthesized square wave for N = 15 is 1.0895 times nominal pulse height (8.95% Gibbs overshoot). Total Harmonic Distortion (THD) conforms to IEEE 519 calculation formula.
+- **Benchmark Validation Test**: IEEE 519 benchmark: Fundamental peak is 4/π ≈ 1.2732. Peak overshoot of synthesized square wave for N = 15 is 1.0895 times nominal pulse height (8.95% Gibbs overshoot). Total Harmonic Distortion (THD) evaluated using published IEEE 519 formulas.
 - **Industrial Practical Insights**: Industrial variable frequency drives generate 5th, 7th, 11th, and 13th current harmonics. IEEE 519 enforces strict limits on Total Demand Distortion (TDD < 5% at Point of Common Coupling) to prevent transformer core overheating.
 - **Tunable Parameters**:
   - `Number of Harmonics` (N): Range [1 to 31 ], Default: 7 . Highest odd harmonic included in the partial sum
@@ -468,7 +468,7 @@ Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculat
 - **Equation Description**: Base circle radius and contact ratio formula along the line of action.
 - **Referenced Standards**: AGMA 2001-D04 / ISO 6336 / DIN 3962 (Involute Spur Gear Rating & Geometry)
 - **Analytical Proof & Mathematical Derivation**: Involute tooth profiles obey the Fundamental Law of Gearing: the common normal to tooth profiles at contact always passes through the fixed pitch point P. Pitch diameters are d₁ = m z₁, d₂ = m z₂. Base radii are r_b1 = (d₁/2) cos(α), r_b2 = (d₂/2) cos(α). Path of contact length g_α = √(r_a1² - r_b1²) + √(r_a2² - r_b2²) - C sin(α). Contact ratio CR = g_α / (π m cos(α)). Under AGMA 2001, CR must exceed 1.20 to guarantee smooth tooth handover.
-- **Benchmark Validation Test**: AGMA 2001 benchmark: module m = 4 mm, z₁ = 18, z₂ = 48, α = 20°. Pitch diameters d₁ = 72 mm, d₂ = 192 mm; center distance C = 132 mm. Path of contact g_α = 18.27 mm; base pitch p_b = 11.808 mm. Contact ratio CR = 18.27 / 11.808 = 1.547 (AGMA compliant).
+- **Benchmark Validation Test**: AGMA 2001 benchmark: module m = 4 mm, z₁ = 18, z₂ = 48, α = 20°. Pitch diameters d₁ = 72 mm, d₂ = 192 mm; center distance C = 132 mm. Path of contact g_α = 18.27 mm; base pitch p_b = 11.808 mm. Contact ratio CR = 18.27 / 11.808 = 1.547 (satisfies AGMA design guideline CR ≥ 1.4).
 - **Industrial Practical Insights**: AGMA 2001 specifies minimum contact ratio CR ≥ 1.4 for industrial gear drives to prevent impact noise and tooth scuffing. AGMA bending stress formula evaluates tooth root bending fatigue life exceeding 10⁷ cycles.
 - **Tunable Parameters**:
   - `Gear Module m` (m): Range [2 to 10 mm], Default: 4 mm. Metric tooth size pitch module

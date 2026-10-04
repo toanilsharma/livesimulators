@@ -92,3 +92,36 @@ export function trackLabLaunchEvent(labId: string, source: string): void {
     source,
   });
 }
+
+/**
+ * 7. simulator_launch
+ * Fired when a user launches an engineering simulator.
+ * Params: { simulator: string }
+ */
+export function trackSimulatorLaunch(simulatorName: string): void {
+  trackEvent('simulator_launch', {
+    simulator: simulatorName,
+  });
+}
+
+/**
+ * 8. embed_copy
+ * Fired when a user copies the LMS / iFrame embed code for a simulator.
+ * Params: { simulator: string }
+ */
+export function trackEmbedCopy(simulatorName: string): void {
+  trackEvent('embed_copy', {
+    simulator: simulatorName,
+  });
+}
+
+/**
+ * 9. worksheet_download
+ * Fired when a user downloads or prints a laboratory calculation worksheet / PDF.
+ * Params: { simulator: string }
+ */
+export function trackWorksheetDownload(simulatorName: string): void {
+  trackEvent('worksheet_download', {
+    simulator: simulatorName,
+  });
+}

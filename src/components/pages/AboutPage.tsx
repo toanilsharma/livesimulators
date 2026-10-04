@@ -208,13 +208,20 @@ export const AboutPage: React.FC<AboutPageProps> = ({
             <h4 className="font-display font-bold text-white text-base">Ready to experience engineering in action?</h4>
             <p className="text-xs text-slate-400 mt-0.5">Explore our comprehensive library of live simulators across all engineering disciplines.</p>
           </div>
-          <button
-            onClick={onBackToHome}
-            className="px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-display font-bold text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all flex-shrink-0"
+          <a
+            href="/"
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                onBackToHome();
+              }
+            }}
+            className="launch-button px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-display font-bold text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all flex-shrink-0"
+            rel="noopener"
           >
             <span>Launch Simulators</span>
             <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          </a>
         </div>
 
       </div>

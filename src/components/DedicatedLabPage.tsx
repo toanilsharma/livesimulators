@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { LABS, LabItem } from '../config/labs';
 import { navigateTo } from '../utils/routes';
+import { trackEmbedCopy } from '../utils/analytics';
 
 interface DedicatedLabPageProps {
   labId: string;
@@ -406,6 +407,7 @@ export const DedicatedLabPage: React.FC<DedicatedLabPageProps> = ({ labId, onBac
                     const snippet = `<iframe src="https://livesimulators.com/lab/${lab.id}" width="100%" height="${embedHeight}" style="border:1px solid #1e293b; border-radius:12px; max-width:100%;" allow="fullscreen" loading="lazy"></iframe>`;
                     navigator.clipboard.writeText(snippet);
                     setEmbedCopied(true);
+                    trackEmbedCopy(lab.name);
                     setTimeout(() => setEmbedCopied(false), 2500);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all flex items-center gap-1.5 ${

@@ -58,6 +58,7 @@
 - [Power Systems Lab](https://livesimulators.com/lab/power-systems-lab): Transmission line power flow, transient swing stability, and symmetrical fault analysis.. Discipline: electrical | 25 Interactive Modules | Reference: IEEE 141 / NERC PRC-002.
 - [SafeOps UPS](https://livesimulators.com/lab/safeops-ups): Double-conversion topology, static bypass transitions, and battery string impedance.. Discipline: instrumentation | 2 Interactive Modules | Reference: IEC 62040-3 / Uptime Tier IV.
 - [ElectroLive Electrical Safety](https://livesimulators.com/lab/electrolive-electrical-safety): Arc flash incident energy, NFPA 70E boundary calculations, and touch/step potential.. Discipline: electrical | 9 Interactive Modules | Reference: NFPA 70E / IEEE 1584 / OSHA.
+- [Mechanical Digital Twins](https://livesimulators.com/lab/mechanical-digital-twins): High-fidelity turbomachinery, rotor dynamics, and industrial process piping fluid transients.. Discipline: mechanical | 12 Interactive Modules | Reference: API / ASME / AGMA Ref.
 
 ## Mechanical Engineering Digital Twins (Subdomain)
 Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference the methodologies of API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) publications for educational and preliminary design purposes.

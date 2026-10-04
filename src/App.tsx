@@ -25,7 +25,7 @@ import { ALL_AVAILABLE_SIMULATORS, FEATURED_ELECTRICAL_SIMULATORS } from './data
 import { SimulatorItem, DisciplineId, AudiencePersona, AppRoute } from './types';
 import { parsePathToRoute, routeToPath, navigateTo } from './utils/routes';
 import { applySeoMetadata } from './utils/seo';
-import { trackSimulatorOpen } from './utils/analytics';
+import { trackSimulatorOpen, trackSimulatorLaunch } from './utils/analytics';
 import { JsonLd } from './components/JsonLd';
 
 export default function App() {
@@ -80,6 +80,10 @@ export default function App() {
   // Navigate to a dedicated simulator page
   const handleLaunchSimulator = (simulator: SimulatorItem) => {
     trackSimulatorOpen(simulator.discipline, simulator.id);
+    trackSimulatorLaunch(simulator.title);
+    if (typeof (window as any).gtag === 'function') {
+      (window as any).gtag('event', 'simulator_launch', { simulator: simulator.title });
+    }
     navigateTo(`/simulator/${simulator.id}`);
   };
 

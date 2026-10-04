@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { BookOpen, AlertTriangle, Calculator, Award, ChevronDown, CheckCircle2, Copy, Check } from 'lucide-react';
+import { BookOpen, AlertTriangle, Calculator, Award, ChevronDown, CheckCircle2, Copy, Check, Download, FileText } from 'lucide-react';
 import { SimulatorItem } from '../types';
 import { MathView } from './MathView';
 import { getEngineeringTheory } from '../utils/engineeringTheory';
+import { trackWorksheetDownload } from '../utils/analytics';
 
 interface EngineeringTheoryFormulasProps {
   simulator: SimulatorItem;
@@ -284,6 +285,35 @@ export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps>
                 Standard Textbooks: <span className="text-slate-300">{simulator.textbookReferences}</span>
               </p>
             )}
+
+            {/* Worksheet PDF Download / Print Action */}
+            <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-xl">
+              <div>
+                <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5 font-mono">
+                  <FileText className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Student &amp; Lab Worksheet PDF</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5 font-sans">
+                  Formatted calculation sheet with governing formulas &amp; benchmark answers for laboratory submission.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof (window as any).gtag === 'function') {
+                    (window as any).gtag('event', 'worksheet_download', { 'simulator': simulator.title });
+                  }
+                  trackWorksheetDownload(simulator.title);
+                  window.print();
+                }}
+                className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 hover:border-rose-400 text-xs font-mono font-bold text-rose-300 hover:text-white transition-all flex items-center gap-1.5"
+                title="Print or Save Laboratory Worksheet PDF"
+              >
+                <Download className="w-3.5 h-3.5 text-rose-400" />
+                <span>Download Worksheet PDF</span>
+              </button>
+            </div>
           </section>
         </div>
       </details>

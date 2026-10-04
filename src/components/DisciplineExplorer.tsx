@@ -189,13 +189,19 @@ export const DisciplineExplorer: React.FC<DisciplineExplorerProps> = ({
                   </div>
                 </div>
 
-                <button
-                  onClick={() => onSelectDisciplineToFilter(currentInfo.id)}
+                <a
+                  href={`/department/${currentInfo.id}`}
+                  onClick={(e) => {
+                    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                      e.preventDefault();
+                      onSelectDisciplineToFilter(currentInfo.id);
+                    }
+                  }}
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs font-mono transition-colors shadow-[0_0_15px_rgba(6,182,212,0.2)]"
                 >
                   <span>Launch {currentInfo.name.split('&')[0]} Simulators</span>
                   <ArrowRight className="w-4 h-4" />
-                </button>
+                </a>
               </div>
 
               {/* Quick specs box */}

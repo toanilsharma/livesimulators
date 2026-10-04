@@ -331,15 +331,21 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
 
                 {/* Right: Department Explore Action Button */}
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                  <button
-                    onClick={() => onSelectDepartment(dept.id)}
+                  <a
+                    href={`/department/${dept.id}`}
+                    onClick={(e) => {
+                      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                        e.preventDefault();
+                        onSelectDepartment(dept.id);
+                      }
+                    }}
                     id={`btn-explore-${dept.id}`}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 ${dept.buttonClass}`}
                     title={`Open full ${dept.name} hub`}
                   >
                     <span>Explore Department</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  </a>
                 </div>
               </div>
 
@@ -349,7 +355,12 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
                   <div
                     key={sim.id}
                     id={`card-sim-${sim.id}`}
-                    onClick={() => onLaunchSimulator(sim)}
+                    onClick={() => {
+                      if (typeof (window as any).gtag === 'function') {
+                        (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
+                      }
+                      onLaunchSimulator(sim);
+                    }}
                     className={`group p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 hover:bg-slate-850 cursor-pointer transition-all duration-200 flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-0.5 ${dept.simCardHover}`}
                   >
                     <div>
@@ -380,10 +391,24 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
                         {sim.badge}
                       </span>
 
-                      <span className="text-[11px] font-bold font-mono text-slate-300 group-hover:text-white flex items-center gap-1 shrink-0 transition-colors">
+                      <a
+                        href={`/simulator/${sim.id}`}
+                        className="launch-button text-[11px] font-bold font-mono text-slate-300 group-hover:text-white flex items-center gap-1 shrink-0 transition-colors"
+                        rel="noopener"
+                        onClick={(e) => {
+                          if (typeof (window as any).gtag === 'function') {
+                            (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
+                          }
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onLaunchSimulator(sim);
+                          }
+                        }}
+                      >
                         <span>Launch</span>
                         <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </span>
+                      </a>
                     </div>
                   </div>
                 ))}
@@ -419,10 +444,20 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
                         {fCard.badge}
                       </span>
 
-                      <span className="text-[11px] font-bold font-mono text-slate-300 group-hover:text-white flex items-center gap-1 shrink-0 transition-colors">
+                      <a
+                        href={`/department/${dept.id}`}
+                        className="text-[11px] font-bold font-mono text-slate-300 group-hover:text-white flex items-center gap-1 shrink-0 transition-colors"
+                        onClick={(e) => {
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onSelectDepartment(dept.id);
+                          }
+                        }}
+                      >
                         <span>Explore</span>
                         <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </span>
+                      </a>
                     </div>
                   </div>
                 ))}

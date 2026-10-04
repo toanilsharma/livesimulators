@@ -459,10 +459,24 @@ export const ConceptDiscovery: React.FC<ConceptDiscoveryProps> = ({
                 <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
                   {isLive ? (
                     <div className="w-full flex items-center justify-between font-mono">
-                      <span className="text-cyan-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                        <span>Explore Simulator</span>
+                      <a
+                        href={concept.simulatorId ? `/simulator/${concept.simulatorId}` : '#'}
+                        className="launch-button text-cyan-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1"
+                        rel="noopener"
+                        onClick={(e) => {
+                          if (typeof (window as any).gtag === 'function') {
+                            (window as any).gtag('event', 'simulator_launch', { simulator: concept.title });
+                          }
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleTileClick(concept);
+                          }
+                        }}
+                      >
+                        <span>Launch</span>
                         <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
+                      </a>
                       <span className="text-[10px] text-slate-500 font-sans">Interactive</span>
                     </div>
                   ) : (

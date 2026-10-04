@@ -22,6 +22,7 @@ import { SimulatorItem } from '../types';
 import { MathView } from './MathView';
 import { soundEngine } from '../utils/audio';
 import { navigateTo } from '../utils/routes';
+import { trackSimulatorLaunch } from '../utils/analytics';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -206,6 +207,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           onClose();
           navigateTo(current.item.url);
         } else {
+          trackSimulatorLaunch(current.item.title);
           onSelectSimulator(current.item);
           onClose();
         }
@@ -407,6 +409,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 <button
                   key={sim.id}
                   onClick={() => {
+                    trackSimulatorLaunch(sim.title);
                     onSelectSimulator(sim);
                     onClose();
                   }}

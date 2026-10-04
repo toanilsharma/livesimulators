@@ -22,7 +22,7 @@ import {
 import { LABS, trackLabLaunch } from '../config/labs';
 import { navigateTo } from '../utils/routes';
 import { soundEngine } from '../utils/audio';
-import { trackSimulatorOpen } from '../utils/analytics';
+import { trackSimulatorOpen, trackSimulatorLaunch } from '../utils/analytics';
 import { 
   FEATURED_ELECTRICAL_SIMULATORS,
   FEATURED_MECHANICAL_SIMULATORS,
@@ -227,11 +227,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     onSelectDiscipline(disciplineId);
   };
 
-  const handleSimulatorClick = (simulatorId: string, disciplineId: string) => {
+  const handleSimulatorClick = (simulatorId: string, disciplineId: string, simulatorTitle?: string) => {
     setActiveDropdown(null);
     setMobileMenuOpen(false);
     soundEngine.playRelayClick();
     trackSimulatorOpen(disciplineId, simulatorId);
+    if (simulatorTitle) {
+      trackSimulatorLaunch(simulatorTitle);
+    }
     if (onLaunchSimulator) {
       onLaunchSimulator(simulatorId);
     } else {
@@ -427,7 +430,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             href={`/simulator/${sim.id}`}
                             onClick={(e) => {
                               e.preventDefault();
-                              handleSimulatorClick(sim.id, sim.discipline);
+                              handleSimulatorClick(sim.id, sim.discipline, sim.title);
                             }}
                             className="group/item flex flex-col justify-between p-2.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/90 border border-slate-800/80 hover:border-slate-700/80 transition-all text-left relative overflow-hidden"
                           >
@@ -556,7 +559,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                 href={`/simulator/${sim.id}`}
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  handleSimulatorClick(sim.id, sim.discipline);
+                                  handleSimulatorClick(sim.id, sim.discipline, sim.title);
                                 }}
                                 className="block p-2 rounded-lg bg-slate-900/60 hover:bg-slate-800 border border-slate-800/80 hover:border-slate-700 transition-all text-left group"
                               >
@@ -581,13 +584,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span className="text-slate-400 font-mono text-[10px]">
                       Complete Multi-Disciplinary Engineering Suite
                     </span>
-                    <button
-                      onClick={() => scrollToSection('engineering-departments')}
+                    <a
+                      href="/#engineering-departments"
+                      onClick={(e) => {
+                        if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                          e.preventDefault();
+                          scrollToSection('engineering-departments');
+                        }
+                      }}
                       className="font-semibold text-slate-300 hover:text-purple-300 flex items-center gap-1 transition-colors"
                     >
                       <span>Explore All 6 Disciplines</span>
                       <ArrowRight className="w-3 h-3" />
-                    </button>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -740,14 +749,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {/* Primary Navigation CTA: "Explore Simulators" */}
-          <button
-            onClick={() => scrollToSection('engineering-departments')}
+          <a
+            href="/#engineering-departments"
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                scrollToSection('engineering-departments');
+              }
+            }}
             className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 rounded-lg transition-all shadow-[0_0_20px_rgba(6,182,212,0.25)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] font-display shrink-0"
             id="nav-explore-simulators-cta"
           >
             <span>Explore Simulators</span>
             <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          </a>
 
           {/* Mobile Menu Toggle Button (Min 44px Touch Target) */}
           <button
@@ -844,7 +859,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           href={`/simulator/${sim.id}`}
                           onClick={(e) => {
                             e.preventDefault();
-                            handleSimulatorClick(sim.id, sim.discipline);
+                            handleSimulatorClick(sim.id, sim.discipline, sim.title);
                           }}
                           className="w-full min-h-[44px] flex items-center justify-between p-2.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800/60 text-left transition-colors group"
                         >

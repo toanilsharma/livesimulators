@@ -569,7 +569,12 @@ export const FeaturedElectrical: React.FC<FeaturedElectricalProps> = ({ onLaunch
           {filteredSimulators.map((sim) => (
             <div
               key={sim.id}
-              onClick={() => onLaunchSimulator(sim)}
+              onClick={() => {
+                if (typeof (window as any).gtag === 'function') {
+                  (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
+                }
+                onLaunchSimulator(sim);
+              }}
               className="group relative rounded-xl border border-slate-800 bg-slate-900/70 hover:bg-slate-900/95 hover:border-cyan-500/60 transition-all duration-300 flex flex-col overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(6,182,212,0.18)] hover:-translate-y-1 cursor-pointer"
               id={`card-sim-${sim.id}`}
             >
@@ -653,12 +658,24 @@ export const FeaturedElectrical: React.FC<FeaturedElectricalProps> = ({ onLaunch
                     <span>Real-time ODE</span>
                   </div>
 
-                  <span
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-slate-800 group-hover:bg-cyan-500 text-slate-200 group-hover:text-slate-950 font-bold text-xs transition-all shadow-sm"
+                  <a
+                    href={`/simulator/${sim.id}`}
+                    className="launch-button flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-slate-800 group-hover:bg-cyan-500 text-slate-200 group-hover:text-slate-950 font-bold text-xs transition-all shadow-sm"
+                    rel="noopener"
+                    onClick={(e) => {
+                      if (typeof (window as any).gtag === 'function') {
+                        (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
+                      }
+                      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onLaunchSimulator(sim);
+                      }
+                    }}
                   >
-                    <span>Launch Simulator</span>
+                    <span>Launch</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
-                  </span>
+                  </a>
                 </div>
 
               </div>

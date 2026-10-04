@@ -193,25 +193,37 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
           
           {/* Primary Action Button */}
-          <button
-            onClick={handleExploreAll}
+          <a
+            href="/#engineering-departments"
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                handleExploreAll();
+              }
+            }}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-slate-950 font-bold text-base transition-all duration-200 shadow-[0_0_35px_rgba(6,182,212,0.35)] hover:shadow-[0_0_50px_rgba(6,182,212,0.5)] font-display"
             id="cta-explore-all-simulators"
           >
             <span>Explore All Simulators</span>
             <ArrowRight className="w-4 h-4" />
-          </button>
+          </a>
 
           {/* Secondary Action Button */}
-          <button
-            onClick={handleStartElectrical}
+          <a
+            href="/department/electrical"
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                handleStartElectrical();
+              }
+            }}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/60 text-slate-200 hover:text-white font-semibold text-base transition-all duration-200 font-display shadow-lg"
             id="cta-start-with-electrical"
           >
             <Zap className="w-4 h-4 text-cyan-400" />
             <span>Start with Electrical</span>
             <ArrowRight className="w-4 h-4 text-slate-400" />
-          </button>
+          </a>
 
         </div>
 

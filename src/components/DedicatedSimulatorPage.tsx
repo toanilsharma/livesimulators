@@ -38,7 +38,8 @@ import {
   Copy,
   Check,
   Tv,
-  Network
+  Network,
+  FileText
 } from 'lucide-react';
 import { SimulatorItem, DisciplineId } from '../types';
 import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
@@ -51,7 +52,7 @@ import { renderBeamBending, renderTrussAnalysis, renderSeismicIsolation, renderM
 import { renderCurrentLoop, renderControlValve, renderOrificeFlow, renderPidLoop, renderRtd, renderBodePlot, renderRootLocus } from './instrumentation/renderers';
 import { renderDistillationColumn, renderHeatExchanger, renderGasAbsorption, renderBatchPfr } from './process/renderers';
 import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel, renderPhotoelectric } from './semiconductor/renderers';
-import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare } from '../utils/analytics';
+import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare, trackEmbedCopy, trackWorksheetDownload } from '../utils/analytics';
 import { WhyItHappenedCard } from './WhyItHappenedCard';
 import { EngineeringTheoryFormulas } from './EngineeringTheoryFormulas';
 import { getLiveResultSummary, getDetailedWhyItHappened } from '../utils/simulatorExplanations';
@@ -2535,6 +2536,22 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
             <Download className="w-3.5 h-3.5 text-emerald-400" />
           </button>
 
+          {/* Worksheet PDF Download */}
+          <button
+            onClick={() => {
+              if (typeof (window as any).gtag === 'function') {
+                (window as any).gtag('event', 'worksheet_download', { 'simulator': simulator.title });
+              }
+              trackWorksheetDownload(simulator.title);
+              window.print();
+            }}
+            className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-rose-300 hover:text-white transition-colors flex items-center gap-1 hidden md:flex"
+            title="Download / Print Laboratory Worksheet PDF"
+          >
+            <FileText className="w-3.5 h-3.5 text-rose-400" />
+            <span className="hidden xl:inline">Worksheet PDF</span>
+          </button>
+
           {/* Fullscreen Toggle */}
           <button
             onClick={toggleFullscreen}
@@ -3495,6 +3512,10 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       const snippet = `<iframe src="https://livesimulators.com/embed/${simulator.id}" width="100%" height="${embedHeight}" style="border:1px solid #1e293b; border-radius:12px; max-width:100%;" allow="fullscreen" loading="lazy"></iframe>`;
                       navigator.clipboard.writeText(snippet);
                       setEmbedCopied(true);
+                      if (typeof (window as any).gtag === 'function') {
+                        (window as any).gtag('event', 'embed_copy', { 'simulator': simulator.title });
+                      }
+                      trackEmbedCopy(simulator.title);
                       setTimeout(() => setEmbedCopied(false), 2500);
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all flex items-center gap-1.5 ${
