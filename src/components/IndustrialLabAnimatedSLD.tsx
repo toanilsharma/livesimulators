@@ -130,13 +130,13 @@ function renderPowerElectronicsSLD(
 ) {
   // Title HUD
   ctx.fillStyle = '#94a3b8';
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
   ctx.fillText(
     isFault 
       ? 'SLD: [EMERGENCY] SHOOT-THROUGH FAULT DETECTED ➔ DESAT CLAMP ACTIVE'
       : 'SLD: 3Φ AC 415V ➔ 6-PULSE SCR BRIDGE ➔ LC CHOKE ➔ DC BUS', 
     16, 
-    20
+    44
   );
 
   // Live Electrical Readouts Box
@@ -530,13 +530,13 @@ function renderPowerSystemsSLD(
 ) {
   // Title HUD
   ctx.fillStyle = '#94a3b8';
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
   ctx.fillText(
     isFault 
       ? 'SLD: [EMERGENCY] 3Φ BUS FAULT DETECTED ➔ RELAY 52 TRIPPED CB-52'
       : 'SLD: 400kV GRID ➔ GSU XFMR ➔ LINE PI-MODEL ➔ CB-52 ➔ FEEDER', 
     16, 
-    20
+    44
   );
 
   // Live Power Flow Readouts Box
@@ -850,13 +850,13 @@ function renderSafeOpsUpsSLD(
 ) {
   // Title HUD
   ctx.fillStyle = '#94a3b8';
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
   ctx.fillText(
     isFault
       ? 'SLD: [OUTAGE] MAINS POWER LOST ➔ BATTERY INVERTER SUPPORTING TIER IV LOAD'
       : 'SLD: RECTIFIER ➔ 400V DC BUS / BATTERY ➔ INVERTER ➔ STATIC BYPASS', 
     16, 
-    20
+    44
   );
 
   // Live UPS Status Box
@@ -1093,13 +1093,13 @@ function renderElectroLiveSafetySLD(
 ) {
   // Title HUD
   ctx.fillStyle = '#94a3b8';
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
   ctx.fillText(
     isFault
       ? 'SLD: [LEAKAGE FAULT] CHASSIS ENERGIZED ➔ 30mA RCD DETECTED 180mA ➔ TRIPPED IN 18ms'
       : 'SLD: 415V TN-S ➔ 30mA RCD / ELCB CORE ➔ MOTOR CHASSIS ➔ V_TOUCH & V_STEP (IEEE 80)', 
     16, 
-    20
+    44
   );
 
   // Live Electrical Safety Readouts Box
@@ -1481,13 +1481,13 @@ function renderMechanicalTwinsSLD(
 ) {
   // Title HUD
   ctx.fillStyle = '#94a3b8';
-  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
   ctx.fillText(
     isFault
       ? 'TWIN: [ALARM] API 617 COMPRESSOR SURGE DETECTED ➔ ASV RAPID RECYCLE OPEN'
       : 'TWIN: API 617 CENTRIFUGAL COMPRESSOR ➔ ROTOR ORBIT & BEARING DYNAMICS',
     16,
-    20
+    44
   );
 
   // Live Engineering Readouts Box
