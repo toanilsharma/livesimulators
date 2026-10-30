@@ -47,7 +47,10 @@ export type SimulatorType =
   | 'refrigeration_cycle'
   | 'root_locus'
   | 'batch_pfr'
-  | 'rc_beam';
+  | 'rc_beam'
+  | 'column_buckling'
+  | 'liquid_extraction'
+  | 'quantum_tunneling';
 
 export interface ParameterDef {
   id: string;

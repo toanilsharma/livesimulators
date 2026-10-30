@@ -1388,3 +1388,248 @@ export function renderRcBeam(rc: RenderContext, p: RcBeamParams) {
   ctx.fillText(isTensionControlled ? 'DUCTILE FAILURE (Tension-controlled)' : 'BRITTLE / TRANSITION', w - 340, 31);
 }
 
+
+export interface ColumnBucklingParams {
+  lengthL: number;
+  axialLoadP: number;
+  kFactor: number;
+  elasticModulusE: number;
+  momentOfInertiaIy: number;
+  imperfectionDelta0: number;
+  timeSec: number;
+}
+
+export function renderColumnBuckling(
+  rc: RenderContext,
+  p: ColumnBucklingParams
+) {
+  const { ctx, w, h } = rc;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  ctx.fillStyle = '#060b14';
+  ctx.fillRect(0, 0, w, h);
+
+  // Split layout
+  const splitX = Math.floor(w * 0.46);
+
+  // Calculations
+  const E_Pa = p.elasticModulusE * 1e9;
+  const I_m4 = p.momentOfInertiaIy * 1e-6;
+  const KL = p.kFactor * p.lengthL;
+  const Pcr_N = (Math.PI * Math.PI * E_Pa * I_m4) / (KL * KL);
+  const Pcr_kN = Pcr_N / 1000;
+  const P_kN = p.axialLoadP;
+  const loadRatio = Math.min(1.25, P_kN / Math.max(1, Pcr_kN));
+  const isBuckled = loadRatio >= 1.0;
+
+  // P-Delta amplification factor
+  const pDeltaAmp = loadRatio < 0.98 ? 1 / (1 - loadRatio) : 50;
+  const maxLateralMm = Math.min(180, p.imperfectionDelta0 * pDeltaAmp);
+
+  // --- LEFT PANE: Physical Column Elevation & Buckled Shape ---
+  const leftW = splitX - 20;
+  const colX = 15 + leftW * 0.5;
+  const colTopY = 70;
+  const colBotY = h - 60;
+  const colSpanPx = colBotY - colTopY;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.4)';
+  ctx.lineWidth = 1;
+  for (let x = 10; x < splitX - 10; x += 25) {
+    ctx.beginPath(); ctx.moveTo(x, 40); ctx.lineTo(x, h - 20); ctx.stroke();
+  }
+
+  // Undeflected Plumb Line
+  ctx.strokeStyle = 'rgba(100, 116, 139, 0.5)';
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(colX, colTopY); ctx.lineTo(colX, colBotY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Lateral breathing animation
+  const breathe = Math.sin(p.timeSec * 3.5) * 4;
+  const dynamicLateralMm = maxLateralMm + (isBuckled ? breathe : breathe * 0.3);
+  const mmToPx = Math.min(1.2, (leftW * 0.35) / Math.max(10, maxLateralMm));
+
+  // Buckled Column Member Line
+  ctx.strokeStyle = isBuckled ? '#f43f5e' : '#06b6d4';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  const numSteps = 60;
+  for (let s = 0; s <= numSteps; s++) {
+    const frac = s / numSteps;
+    const y = colTopY + frac * colSpanPx;
+    // Buckling mode shape according to K factor
+    let shape = Math.sin(frac * Math.PI);
+    if (p.kFactor <= 0.6) shape = 0.5 * (1 - Math.cos(2 * Math.PI * frac)); // Fixed-Fixed
+    else if (p.kFactor >= 1.8) shape = 1 - Math.cos(0.5 * Math.PI * frac); // Cantilever
+    const latPx = shape * dynamicLateralMm * mmToPx;
+    const x = colX + latPx;
+    if (s === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Wide-Flange Flange Edges (Visual Thickness)
+  ctx.strokeStyle = isBuckled ? 'rgba(244, 63, 94, 0.4)' : 'rgba(6, 182, 212, 0.35)';
+  ctx.lineWidth = 1.2;
+  for (let side of [-6, 6]) {
+    ctx.beginPath();
+    for (let s = 0; s <= numSteps; s++) {
+      const frac = s / numSteps;
+      const y = colTopY + frac * colSpanPx;
+      let shape = Math.sin(frac * Math.PI);
+      if (p.kFactor <= 0.6) shape = 0.5 * (1 - Math.cos(2 * Math.PI * frac));
+      else if (p.kFactor >= 1.8) shape = 1 - Math.cos(0.5 * Math.PI * frac);
+      const latPx = shape * dynamicLateralMm * mmToPx;
+      const x = colX + latPx + side;
+      if (s === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Top Boundary Pin / Roller Hinge
+  ctx.fillStyle = '#1e293b';
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(colX, colTopY, 6, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+
+  // Bottom Base Support Plate
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.moveTo(colX - 18, colBotY); ctx.lineTo(colX + 18, colBotY);
+  ctx.lineTo(colX + 12, colBotY + 12); ctx.lineTo(colX - 12, colBotY + 12);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Axial Force Vector Arrow (Rose #f43f5e)
+  ctx.strokeStyle = '#f43f5e';
+  ctx.fillStyle = '#f43f5e';
+  ctx.lineWidth = 2.8;
+  const arrowLen = Math.min(45, 15 + loadRatio * 25);
+  ctx.beginPath();
+  ctx.moveTo(colX, colTopY - arrowLen);
+  ctx.lineTo(colX, colTopY - 6);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(colX, colTopY - 4);
+  ctx.lineTo(colX - 6, colTopY - 14);
+  ctx.lineTo(colX + 6, colTopY - 14);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText(`P = ${P_kN.toFixed(0)} kN`, colX + 14, colTopY - 18);
+
+  // Lateral Deflection Readout at Mid-Height
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  const midY = (colTopY + colBotY) * 0.5;
+  ctx.fillText(`Δ_max = ${dynamicLateralMm.toFixed(1)} mm`, colX + (dynamicLateralMm * mmToPx) + 12, midY + 4);
+
+  // Boundary condition note
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`K = ${p.kFactor.toFixed(2)} | L = ${p.lengthL.toFixed(1)}m | KL = ${KL.toFixed(1)}m`, 20, colBotY + 28);
+
+  // --- RIGHT PANE: AISC 360-16 Column Strength Curve ---
+  const plotLeft = splitX + 35;
+  const plotRight = w - 25;
+  const plotTop = 75;
+  const plotBot = h - 60;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBot - plotTop;
+
+  // Plot Panel
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(plotLeft - 15, plotTop - 25, plotW + 30, plotH + 45);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(plotLeft - 15, plotTop - 25, plotW + 30, plotH + 45);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText('AISC 360-16 COLUMN STRENGTH CURVE (F_cr vs SLENDERNESS λ)', plotLeft, plotTop - 10);
+
+  // Axes
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.7)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(plotLeft, plotTop); ctx.lineTo(plotLeft, plotBot);
+  ctx.lineTo(plotRight, plotBot);
+  ctx.stroke();
+
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('SLENDERNESS RATIO λ = KL / r', plotLeft + plotW * 0.35, plotBot + 18);
+
+  // AISC Curve: F_y = 350 MPa, λ_c = 4.71 * sqrt(E/Fy) ≈ 112.7
+  const Fy = 350;
+  const lamTrans = 112.7;
+  const maxLam = 200;
+
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  for (let s = 0; s <= 50; s++) {
+    const lam = (s / 50) * maxLam;
+    let Fcr = 0;
+    const Fe = (Math.PI * Math.PI * 200000) / Math.max(1, lam * lam);
+    if (lam <= lamTrans) {
+      Fcr = Math.pow(0.658, Fy / Math.max(1, Fe)) * Fy;
+    } else {
+      Fcr = 0.877 * Fe;
+    }
+    const x = plotLeft + (lam / maxLam) * plotW;
+    const y = plotBot - (Fcr / Fy) * (plotH * 0.9);
+    if (s === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Active Operating Slenderness on Plot
+  const ry_cm = Math.sqrt(p.momentOfInertiaIy / 17.1) * 10; // Approx radius of gyration
+  const lambdaActual = Math.min(maxLam, (KL * 100) / Math.max(1, ry_cm));
+  const FeAct = (Math.PI * Math.PI * 200000) / Math.max(1, lambdaActual * lambdaActual);
+  const FcrAct = lambdaActual <= lamTrans ? Math.pow(0.658, Fy / FeAct) * Fy : 0.877 * FeAct;
+
+  const actX = plotLeft + (lambdaActual / maxLam) * plotW;
+  const actY = plotBot - (FcrAct / Fy) * (plotH * 0.9);
+
+  ctx.fillStyle = isBuckled ? '#f43f5e' : '#10b981';
+  ctx.beginPath();
+  ctx.arc(actX, actY, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inelastic vs Elastic Division Line
+  const divX = plotLeft + (lamTrans / maxLam) * plotW;
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+  ctx.setLineDash([2, 2]);
+  ctx.beginPath();
+  ctx.moveTo(divX, plotTop); ctx.lineTo(divX, plotBot);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillText('INELASTIC', plotLeft + 20, plotTop + 20);
+  ctx.fillText('ELASTIC EULER', divX + 15, plotTop + 20);
+
+  // Top Telemetry HUD
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.fillRect(20, 10, w - 40, 34);
+  ctx.strokeStyle = isBuckled ? '#f43f5e' : '#10b981';
+  ctx.strokeRect(20, 10, w - 40, 34);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`P_cr = ${Pcr_kN.toFixed(0)} kN`, 35, 31);
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText(`P = ${P_kN.toFixed(0)} kN (${(loadRatio * 100).toFixed(1)}%)`, 185, 31);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`P-Δ AMP: ${pDeltaAmp.toFixed(2)}x`, 365, 31);
+  ctx.fillStyle = isBuckled ? '#f43f5e' : '#10b981';
+  ctx.fillText(isBuckled ? 'CRITICAL BUCKLING FAILURE (P ≥ Pcr)' : 'STABLE COMPRESSIVE EQUILIBRIUM (PASS)', w - 380, 31);
+}

@@ -260,6 +260,12 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
         return 'BSIM4 MOSFET Channel';
       case 'photoelectric':
         return 'Photoelectric Work Function';
+      case 'column_buckling':
+        return 'Euler Column Buckling & P-Delta';
+      case 'liquid_extraction':
+        return 'Liquid-Liquid Extraction (LLE)';
+      case 'quantum_tunneling':
+        return 'Quantum Resonant Tunneling NDR';
       default:
         return sim.badge || 'Live Simulation';
     }
@@ -453,7 +459,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
                         <SimulatorCardPreview
                           type={sim.type}
                           accentColor={sim.accentColor || dept.accentColor}
-                          height={46}
+                          height={54}
                           showFps={false}
                         />
                       </div>

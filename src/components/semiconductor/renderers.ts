@@ -1167,3 +1167,221 @@ export function renderPhotoelectric(rc: RenderContext, p: PhotoelectricParams) {
   ctx.restore();
 }
 
+
+export interface QuantumTunnelingParams {
+  barrierHeightV0: number;
+  barrierWidthD: number;
+  wellWidthW: number;
+  biasVoltageVa: number;
+  tempK: number;
+  timeSec: number;
+}
+
+export function renderQuantumTunneling(
+  rc: RenderContext,
+  p: QuantumTunnelingParams
+) {
+  const { ctx, w, h } = rc;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  ctx.fillStyle = '#060b14';
+  ctx.fillRect(0, 0, w, h);
+
+  const splitX = Math.floor(w * 0.46);
+
+  // Physical calculations
+  const m_star = 0.067 * 9.109e-31; // GaAs electron effective mass
+  const hbar = 1.0545718e-34;
+  const q = 1.6021766e-19;
+  const V0_J = p.barrierHeightV0 * q;
+  const d_m = p.barrierWidthD * 1e-9;
+  const w_m = p.wellWidthW * 1e-9;
+
+  // Ground state quasi-bound energy in well E1 ≈ pi^2 hbar^2 / (2 m* w^2)
+  const E1_J = (Math.PI * Math.PI * hbar * hbar) / (2 * m_star * w_m * w_m);
+  const E1_meV = (E1_J / q) * 1000;
+  const Vpeak_V = (2 * E1_J) / q; // Resonance peak bias
+
+  // Resonant transmission condition
+  const biasV = p.biasVoltageVa;
+  const isResonant = Math.abs(biasV - Vpeak_V) < 0.035;
+  const pvcr = Math.max(2.0, (6.8 * (300 / Math.max(50, p.tempK))));
+
+  // --- LEFT PANE: Double-Barrier Quantum Well Heterostructure (AlGaAs/GaAs/AlGaAs) ---
+  const leftW = splitX - 25;
+  const qLeft = 20;
+  const qRight = 20 + leftW;
+  const qBot = h - 60;
+  const qTop = 75;
+  const qH = qBot - qTop;
+  const bHeightPx = qH * 0.75;
+
+  // Barrier widths and positions in pixels
+  const b1X = qLeft + leftW * 0.30;
+  const bW = leftW * 0.12;
+  const b2X = qLeft + leftW * 0.54;
+
+  // Barrier fills
+  ctx.fillStyle = 'rgba(51, 65, 85, 0.5)';
+  ctx.fillRect(b1X, qBot - bHeightPx, bW, bHeightPx);
+  ctx.fillRect(b2X, qBot - bHeightPx, bW, bHeightPx);
+
+  // Potential Energy Profile V(x) Outline
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(qLeft, qBot);
+  ctx.lineTo(b1X, qBot);
+  ctx.lineTo(b1X, qBot - bHeightPx);
+  ctx.lineTo(b1X + bW, qBot - bHeightPx);
+  ctx.lineTo(b1X + bW, qBot);
+  ctx.lineTo(b2X, qBot);
+  ctx.lineTo(b2X, qBot - bHeightPx);
+  ctx.lineTo(b2X + bW, qBot - bHeightPx);
+  ctx.lineTo(b2X + bW, qBot);
+  ctx.lineTo(qRight, qBot);
+  ctx.stroke();
+
+  // Bound State E1 in Quantum Well (Violet)
+  const e1PxY = qBot - (E1_meV / (p.barrierHeightV0 * 1000)) * bHeightPx;
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(b1X + bW, e1PxY); ctx.lineTo(b2X, e1PxY);
+  ctx.stroke();
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#a855f7';
+  ctx.fillText(`E1 = ${E1_meV.toFixed(1)} meV`, b1X + bW + 4, e1PxY - 5);
+
+  // Schrödinger Wavefunction Real[Ψ(x)] (Cyan #38bdf8)
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  const waveAmp = isResonant ? 14 : 7;
+  for (let x = qLeft; x <= qRight; x++) {
+    let psi = 0;
+    if (x < b1X) {
+      psi = Math.sin((x - qLeft) * 0.45 - p.timeSec * 8) * waveAmp;
+    } else if (x >= b1X && x < b1X + bW) {
+      const f = (x - b1X) / bW;
+      psi = Math.sin(-p.timeSec * 8) * waveAmp * Math.exp(-2.5 * f);
+    } else if (x >= b1X + bW && x < b2X) {
+      const f = (x - (b1X + bW)) / (b2X - (b1X + bW));
+      psi = Math.sin(f * Math.PI) * (waveAmp * 1.5) * Math.cos(p.timeSec * 8);
+    } else if (x >= b2X && x < b2X + bW) {
+      const f = (x - b2X) / bW;
+      psi = Math.sin(p.timeSec * 8) * (isResonant ? waveAmp : waveAmp * 0.2) * Math.exp(-2.5 * f);
+    } else {
+      psi = Math.sin((x - (b2X + bW)) * 0.45 - p.timeSec * 8) * (isResonant ? waveAmp : waveAmp * 0.2);
+    }
+    const py = e1PxY - psi;
+    if (x === qLeft) ctx.moveTo(x, py);
+    else ctx.lineTo(x, py);
+  }
+  ctx.stroke();
+
+  // Region labels
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('EMITTER', qLeft + 10, qBot + 18);
+  ctx.fillText('AlGaAs BARRIER', b1X - 20, qBot - bHeightPx - 8);
+  ctx.fillText('GaAs WELL', b1X + bW + 5, qBot + 18);
+  ctx.fillText('COLLECTOR', qRight - 70, qBot + 18);
+
+  // --- RIGHT PANE: Resonant Tunneling Diode (RTD) NDR I-V Characteristic ---
+  const plotLeft = splitX + 35;
+  const plotRight = w - 25;
+  const plotTop = 75;
+  const plotBot = h - 55;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBot - plotTop;
+
+  // Panel Background
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(plotLeft - 15, plotTop - 25, plotW + 30, plotH + 45);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(plotLeft - 15, plotTop - 25, plotW + 30, plotH + 45);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('RTD NEGATIVE DIFFERENTIAL RESISTANCE (NDR) I-V CURVE', plotLeft, plotTop - 10);
+
+  // Axes
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.7)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(plotLeft, plotTop); ctx.lineTo(plotLeft, plotBot);
+  ctx.lineTo(plotRight, plotBot);
+  ctx.stroke();
+
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('BIAS VOLTAGE V_a [V]', plotLeft + plotW * 0.4, plotBot + 18);
+
+  // NDR N-Shaped Curve: (0,0) -> Peak (Vpk, Ipk) -> Valley (Vvy, Ivy) -> Thermionic rise
+  const vMax = 0.35;
+  const vPkNorm = Vpeak_V / vMax;
+  const vVyNorm = (Vpeak_V + 0.08) / vMax;
+
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let s = 0; s <= 60; s++) {
+    const frac = s / 60;
+    let iNorm = 0;
+    if (frac <= vPkNorm) {
+      iNorm = (frac / vPkNorm) * 0.90;
+    } else if (frac > vPkNorm && frac <= vVyNorm) {
+      // NDR region
+      const drop = (frac - vPkNorm) / (vVyNorm - vPkNorm);
+      iNorm = 0.90 - drop * (0.90 - (0.90 / pvcr));
+    } else {
+      const rise = (frac - vVyNorm) / (1 - vVyNorm);
+      iNorm = (0.90 / pvcr) + Math.pow(rise, 2.2) * 0.75;
+    }
+    const x = plotLeft + frac * plotW;
+    const y = plotBot - iNorm * (plotH * 0.88);
+    if (s === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Active Operating Bias Marker
+  const curFrac = Math.min(1.0, biasV / vMax);
+  let curINorm = 0;
+  if (curFrac <= vPkNorm) curINorm = (curFrac / vPkNorm) * 0.90;
+  else if (curFrac <= vVyNorm) curINorm = 0.90 - ((curFrac - vPkNorm) / (vVyNorm - vPkNorm)) * (0.90 - (0.90 / pvcr));
+  else curINorm = (0.90 / pvcr) + Math.pow((curFrac - vVyNorm) / (1 - vVyNorm), 2.2) * 0.75;
+
+  const actX = plotLeft + curFrac * plotW;
+  const actY = plotBot - curINorm * (plotH * 0.88);
+
+  ctx.fillStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.arc(actX, actY, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Peak and Valley Labels
+  const pkX = plotLeft + vPkNorm * plotW;
+  const pkY = plotBot - 0.90 * (plotH * 0.88);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`PEAK (Vpk = ${Vpeak_V.toFixed(2)}V)`, pkX - 35, pkY - 8);
+
+  // Top Telemetry HUD
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.fillRect(20, 10, w - 40, 34);
+  ctx.strokeStyle = isResonant ? '#10b981' : '#38bdf8';
+  ctx.strokeRect(20, 10, w - 40, 34);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText(`V_a = ${biasV.toFixed(3)} V`, 35, 31);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`PVCR: ${pvcr.toFixed(2)}:1`, 190, 31);
+  ctx.fillStyle = '#a855f7';
+  ctx.fillText(`E1 = ${E1_meV.toFixed(1)} meV`, 340, 31);
+  ctx.fillStyle = isResonant ? '#10b981' : '#f59e0b';
+  ctx.fillText(isResonant ? 'RESONANT TUNNELING ACTIVE (T(E) ≈ 1.0)' : 'OFF-RESONANCE TUNNELING QUENCHED', w - 360, 31);
+}

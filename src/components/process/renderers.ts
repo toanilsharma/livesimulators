@@ -1124,3 +1124,210 @@ export function renderBatchPfr(rc: RenderContext, p: BatchPfrParams) {
   ctx.fillText(`Da: ${Da.toFixed(2)} | k: ${k.toFixed(3)}`, plotLeft + plotW - 10, 30);
 }
 
+
+export interface LiquidExtractionParams {
+  feedRateF: number;
+  soluteFeedConcXF: number;
+  solventRateS: number;
+  partitionCoeffM: number;
+  targetRecoveryRec: number;
+  timeSec: number;
+}
+
+export function renderLiquidExtraction(
+  rc: RenderContext,
+  p: LiquidExtractionParams
+) {
+  const { ctx, w, h } = rc;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  ctx.fillStyle = '#060b14';
+  ctx.fillRect(0, 0, w, h);
+
+  const splitX = Math.floor(w * 0.44);
+
+  // Calculations
+  const m = p.partitionCoeffM;
+  const F = p.feedRateF;
+  const S = p.solventRateS;
+  const Ef = (m * S) / Math.max(1, F);
+  const xF = p.soluteFeedConcXF;
+  const rec = p.targetRecoveryRec / 100;
+  const xR = xF * (1 - rec);
+  const yS = 0.0; // Pure solvent feed
+
+  // Kremser analytical stages equation
+  let stages = 4.8;
+  if (Ef > 1.01) {
+    const num = ((1 - 1 / Ef) * ((xF - yS / m) / Math.max(0.001, xR - yS / m))) + (1 / Ef);
+    stages = Math.max(1, Math.log(num) / Math.log(Ef));
+  }
+
+  // --- LEFT PANE: Countercurrent Extraction Column (Rotating Disc Contactor RDC) ---
+  const leftW = splitX - 20;
+  const colCx = 10 + leftW * 0.5;
+  const colTop = 70;
+  const colBot = h - 55;
+  const colW = 55;
+  const colH = colBot - colTop;
+
+  // Column Outer Shell
+  ctx.fillStyle = '#0f172a';
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(colCx - colW * 0.5, colTop, colW, colH, 8);
+  ctx.fill(); ctx.stroke();
+
+  // Central Rotating Agitator Shaft (Amber)
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(colCx, colTop - 12); ctx.lineTo(colCx, colBot + 12);
+  ctx.stroke();
+
+  // Rotating Discs & Stators
+  const numDiscs = 6;
+  const discSpacing = (colH - 24) / (numDiscs + 1);
+  for (let i = 1; i <= numDiscs; i++) {
+    const dy = colTop + 12 + i * discSpacing;
+    const rotorAngle = p.timeSec * 5 + i * 0.8;
+    const discRadius = Math.cos(rotorAngle) * 20;
+
+    // Stator Wall Rings
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(colCx - colW * 0.5, dy - 5); ctx.lineTo(colCx - colW * 0.5 + 10, dy - 5);
+    ctx.moveTo(colCx + colW * 0.5 - 10, dy - 5); ctx.lineTo(colCx + colW * 0.5, dy - 5);
+    ctx.stroke();
+
+    // Rotating Rotor Disc
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.moveTo(colCx - discRadius, dy); ctx.lineTo(colCx + discRadius, dy);
+    ctx.stroke();
+  }
+
+  // Ascending Dispersed Droplets (Light Solvent Extract Phase, Cyan #06b6d4)
+  for (let d = 0; d < 14; d++) {
+    const dropFrac = ((p.timeSec * 25 + d * 28) % 200) / 200;
+    const dy = (colBot - 8) - dropFrac * (colH - 16);
+    const dx = colCx - 14 + Math.sin(dropFrac * Math.PI * 6 + d) * 12;
+    ctx.fillStyle = '#06b6d4';
+    ctx.beginPath();
+    ctx.arc(dx, dy, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Nozzle Piping & Flow Labels
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2.2;
+  // Solvent In (Bottom)
+  ctx.beginPath();
+  ctx.moveTo(colCx - colW * 0.5 - 20, colBot - 15); ctx.lineTo(colCx - colW * 0.5, colBot - 15);
+  ctx.stroke();
+  // Extract Out (Top)
+  ctx.beginPath();
+  ctx.moveTo(colCx + colW * 0.5, colTop + 15); ctx.lineTo(colCx + colW * 0.5 + 20, colTop + 15);
+  ctx.stroke();
+
+  // Feed In (Top) & Raffinate Out (Bottom) (Rose #f43f5e)
+  ctx.strokeStyle = '#f43f5e';
+  ctx.beginPath();
+  ctx.moveTo(colCx - colW * 0.5 - 20, colTop + 25); ctx.lineTo(colCx - colW * 0.5, colTop + 25);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(colCx + colW * 0.5, colBot - 25); ctx.lineTo(colCx + colW * 0.5 + 20, colBot - 25);
+  ctx.stroke();
+
+  ctx.font = 'bold 9px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f43f5e'; ctx.fillText('FEED (F, xF)', colCx - colW * 0.5 - 75, colTop + 28);
+  ctx.fillStyle = '#06b6d4'; ctx.fillText('EXTRACT (E1)', colCx + colW * 0.5 + 24, colTop + 18);
+  ctx.fillStyle = '#06b6d4'; ctx.fillText('SOLVENT (S)', colCx - colW * 0.5 - 75, colBot - 12);
+  ctx.fillStyle = '#f43f5e'; ctx.fillText('RAFFINATE (RN)', colCx + colW * 0.5 + 24, colBot - 22);
+
+  // --- RIGHT PANE: Hunter-Nash Equilateral Ternary Equilibrium Diagram ---
+  const plotLeft = splitX + 35;
+  const plotRight = w - 25;
+  const plotTop = 75;
+  const plotBot = h - 55;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBot - plotTop;
+
+  // Panel Background
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(plotLeft - 15, plotTop - 25, plotW + 30, plotH + 45);
+  ctx.strokeStyle = '#1e293b';
+  ctx.strokeRect(plotLeft - 15, plotTop - 25, plotW + 30, plotH + 45);
+
+  ctx.font = 'bold 11px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#8b5cf6';
+  ctx.fillText('HUNTER-NASH TERNARY EQUILIBRIUM DIAGRAM & STAGES', plotLeft, plotTop - 10);
+
+  // Equilateral Triangle Coordinates
+  const tAx = plotLeft + 15, tAy = plotBot - 10;
+  const tBx = plotLeft + plotW * 0.5, tBy = plotTop + 10;
+  const tCx = plotRight - 15, tCy = plotBot - 10;
+
+  ctx.strokeStyle = 'rgba(71, 85, 105, 0.7)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(tAx, tAy); ctx.lineTo(tBx, tBy); ctx.lineTo(tCx, tCy); ctx.closePath();
+  ctx.stroke();
+
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#f43f5e'; ctx.fillText('CARRIER A', tAx - 15, tAy + 16);
+  ctx.fillStyle = '#f59e0b'; ctx.fillText('SOLUTE B (ACID)', tBx - 45, tBy - 6);
+  ctx.fillStyle = '#06b6d4'; ctx.fillText('SOLVENT C', tCx - 20, tCy + 16);
+
+  // Binodal Two-Phase Miscibility Curve (Violet #8b5cf6)
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(tAx + 10, tAy);
+  ctx.quadraticCurveTo(tBx, tBy + (tAy - tBy) * 0.35, tCx - 10, tCy);
+  ctx.stroke();
+
+  // Interior Conjugate Tie Lines (Amber #f59e0b)
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.65)';
+  ctx.lineWidth = 1.2;
+  for (let tl = 1; tl <= 4; tl++) {
+    const f = tl * 0.2;
+    const lx = tAx + 10 + f * (tBx - tAx) * 0.75;
+    const ly = tAy - f * (tAy - tBy) * 0.7;
+    const rx = tCx - 10 - f * (tCx - tBx) * 0.65;
+    const ry = tCy - f * (tCy - tBy) * 0.58;
+    ctx.beginPath();
+    ctx.moveTo(lx, ly); ctx.lineTo(rx, ry);
+    ctx.stroke();
+  }
+
+  // Stepped Extraction Stages (Emerald #10b981)
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(tAx + (tCx - tAx) * 0.7, tAy);
+  ctx.lineTo(tAx + (tCx - tAx) * 0.52, tAy - (tAy - tBy) * 0.45);
+  ctx.lineTo(tAx + (tCx - tAx) * 0.38, tAy - (tAy - tBy) * 0.58);
+  ctx.lineTo(tAx + (tCx - tAx) * 0.22, tAy);
+  ctx.stroke();
+
+  // Top Telemetry HUD
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.fillRect(20, 10, w - 40, 34);
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.strokeRect(20, 10, w - 40, 34);
+
+  ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#8b5cf6';
+  ctx.fillText(`STAGES N = ${stages.toFixed(1)} (${Math.ceil(stages)} REQUIRED)`, 35, 31);
+  ctx.fillStyle = '#10b981';
+  ctx.fillText(`RECOVERY: ${(rec * 100).toFixed(1)}%`, 235, 31);
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText(`EXTRACTION FACTOR Ef: ${Ef.toFixed(2)}`, 375, 31);
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText(`RAFFINATE xR: ${(xR * 100).toFixed(2)} wt%`, w - 240, 31);
+}

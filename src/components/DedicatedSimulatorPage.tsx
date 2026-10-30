@@ -48,10 +48,10 @@ import { physicsAudio } from '../utils/physicsAudio';
 import { SIMULATOR_EXPERIMENTS, getDynamicPhysicsExplanation, GuidedExperiment } from '../data/simulatorExperiments';
 import { renderFourBar, renderHarmonicOscillator, renderSpurGear, renderRankineCycle, renderOttoCycle, renderProjectile, renderCentrifugalPump, renderRefrigerationCycle } from './mechanical/renderers';
 import { renderRlcCircuit, renderThreePhase, renderBuckBoost, renderSallenKey, renderTransmissionLine, renderOpAmp, renderRcTransient, renderTransformerTest, renderDcMotor, renderInductionMotor, renderSolarPv } from './electrical/renderers';
-import { renderBeamBending, renderTrussAnalysis, renderSeismicIsolation, renderMohrCircle, renderRcBeam } from './civil/renderers';
+import { renderBeamBending, renderTrussAnalysis, renderSeismicIsolation, renderMohrCircle, renderRcBeam, renderColumnBuckling } from './civil/renderers';
 import { renderCurrentLoop, renderControlValve, renderOrificeFlow, renderPidLoop, renderRtd, renderBodePlot, renderRootLocus } from './instrumentation/renderers';
-import { renderDistillationColumn, renderHeatExchanger, renderGasAbsorption, renderBatchPfr } from './process/renderers';
-import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel, renderPhotoelectric } from './semiconductor/renderers';
+import { renderDistillationColumn, renderHeatExchanger, renderGasAbsorption, renderBatchPfr, renderLiquidExtraction } from './process/renderers';
+import { renderSicSwitching, renderIgbtThermal, renderMosfetChannel, renderPhotoelectric, renderQuantumTunneling } from './semiconductor/renderers';
 import { trackSimulatorOpen, trackSimulatorRun, trackParameterChange, trackShare, trackEmbedCopy, trackWorksheetDownload } from '../utils/analytics';
 import { WhyItHappenedCard } from './WhyItHappenedCard';
 import { EngineeringTheoryFormulas } from './EngineeringTheoryFormulas';
@@ -1294,6 +1294,67 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     metrics.push({ label: 'Moment Demand Mu', value: Mu.toFixed(1), unit: 'kNm', description: `Section Utilization = ${utilization.toFixed(1)}%`, status: isSafe ? 'normal' : 'alert' });
     metrics.push({ label: 'Neutral Axis Depth c', value: `${c.toFixed(1)} mm`, unit: '', description: `Whitney block a = ${a.toFixed(1)} mm (d = ${d.toFixed(0)} mm)` });
     metrics.push({ label: 'Steel Strain ε_t', value: eps_t.toFixed(4), unit: '', description: isTensionControlled ? 'Tension-Controlled Ductile Failure' : 'Transition / Compression Failure', status: isTensionControlled ? 'normal' : 'warning' });
+  } else if (simulator.type === 'column_buckling') {
+    const L = params['length'] || 6.0;
+    const P = params['axialLoad'] || 3500.0;
+    const K = params['kFactor'] || 1.0;
+    const E_GPa = params['elasticModulus'] || 200.0;
+    const Iy_cm4 = params['momentOfInertia'] || 151.0;
+    const delta0 = params['imperfection'] || 12.0;
+
+    const KL = K * L;
+    const Pcr_kN = (Math.PI * Math.PI * (E_GPa * 1e9) * (Iy_cm4 * 1e-6)) / (KL * KL) / 1000.0;
+    const loadRatio = P / Math.max(1, Pcr_kN);
+    const pDeltaAmp = loadRatio < 0.98 ? 1.0 / (1.0 - loadRatio) : 50.0;
+    const ry_cm = Math.sqrt(Iy_cm4 / 17.1) * 10.0;
+    const slenderness = (KL * 100.0) / Math.max(1, ry_cm);
+    const isSafe = P < Pcr_kN;
+
+    metrics.push({ label: 'Euler Critical P_cr', value: Pcr_kN.toFixed(0), unit: 'kN', description: `Effective length KL = ${KL.toFixed(2)}m (K=${K.toFixed(2)})` });
+    metrics.push({ label: 'Slenderness Ratio λ', value: slenderness.toFixed(1), unit: '', description: slenderness > 113 ? 'Elastic Euler Buckling Governs' : 'Inelastic Johnson Yield Buckling' });
+    metrics.push({ label: 'P-Δ Amplification', value: `${pDeltaAmp.toFixed(2)}×`, unit: '', description: `Total lateral sway = ${(delta0 * pDeltaAmp).toFixed(1)} mm`, status: isSafe ? 'normal' : 'alert' });
+    metrics.push({ label: 'Axial Load Ratio', value: `${(loadRatio * 100).toFixed(1)}%`, unit: '', description: isSafe ? 'Column Structurally Stable (P < Pcr)' : 'CRITICAL BUCKLING INSTABILITY (P ≥ Pcr)', status: isSafe ? 'normal' : 'alert' });
+  } else if (simulator.type === 'liquid_extraction') {
+    const F = params['feedRate'] || 1000.0;
+    const xF = (params['soluteFeedConc'] || 30.0) / 100.0;
+    const S = params['solventRate'] || 1200.0;
+    const m = params['partitionCoeff'] || 1.15;
+    const rec = (params['targetRecovery'] || 95.0) / 100.0;
+
+    const Ef = (m * S) / Math.max(1, F);
+    const xR = xF * (1.0 - rec);
+    let N = 4.8;
+    if (Ef > 1.01) {
+      const num = ((1.0 - 1.0 / Ef) * (xF / Math.max(0.001, xR))) + (1.0 / Ef);
+      N = Math.max(1.0, Math.log(num) / Math.log(Ef));
+    }
+    const E1 = (F * xF * rec) + S;
+
+    metrics.push({ label: 'Theoretical Stages N', value: N.toFixed(1), unit: 'stages', description: `${Math.ceil(N)} actual equilibrium stages required` });
+    metrics.push({ label: 'Solute Recovery', value: `${(rec * 100).toFixed(1)}%`, unit: '', description: `Raffinate effluent x_R = ${(xR * 100).toFixed(2)} wt%` });
+    metrics.push({ label: 'Extraction Factor Ef', value: Ef.toFixed(2), unit: '', description: Ef > 1.3 ? 'Optimal Capacity (Ef > 1.3)' : 'Suboptimal Stripping Capacity', status: Ef > 1.0 ? 'normal' : 'warning' });
+    metrics.push({ label: 'Extract Flow E1', value: E1.toFixed(0), unit: 'kg/h', description: `Solute enriched extract product phase` });
+  } else if (simulator.type === 'quantum_tunneling') {
+    const V0 = params['barrierHeight'] || 0.25;
+    const d = params['barrierWidth'] || 2.8;
+    const w = params['wellWidth'] || 4.8;
+    const Va = params['biasVoltage'] || 0.14;
+    const T = params['tempK'] || 300.0;
+
+    const m_star = 0.067 * 9.109e-31;
+    const hbar = 1.0545718e-34;
+    const q = 1.6021766e-19;
+    const w_m = w * 1e-9;
+    const E1_J = (Math.PI * Math.PI * hbar * hbar) / (2.0 * m_star * w_m * w_m);
+    const E1_meV = (E1_J / q) * 1000.0;
+    const Vpeak = (2.0 * E1_J) / q;
+    const isResonant = Math.abs(Va - Vpeak) < 0.035;
+    const pvcr = Math.max(2.0, (6.8 * (300.0 / Math.max(50.0, T))));
+
+    metrics.push({ label: 'Peak-to-Valley PVCR', value: `${pvcr.toFixed(2)}:1`, unit: '', description: T <= 100 ? 'Cryogenic High PVCR Sharp NDR' : 'Room Temperature Phonon Damping' });
+    metrics.push({ label: 'Peak Voltage V_peak', value: Vpeak.toFixed(3), unit: 'V', description: `Resonant alignment at Va = 2E1/e` });
+    metrics.push({ label: 'Bound State Energy E1', value: E1_meV.toFixed(1), unit: 'meV', description: `Quantized ground state in ${w.toFixed(1)}nm GaAs well` });
+    metrics.push({ label: 'Tunneling State', value: isResonant ? 'RESONANT' : 'OFF-PEAK', unit: '', description: isResonant ? 'Peak Transmission T(E) ≈ 1.0 (NDR Onset)' : 'Evanescent Attenuation Active', status: isResonant ? 'normal' : 'warning' });
   } else {
     simulator.parameters.slice(0, 4).forEach((p) => {
       metrics.push({ label: p.name, value: (params[p.id] || p.default).toString(), unit: p.unit, description: p.description });
@@ -1406,6 +1467,12 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
           physicsAudio.updateTone('batch_pfr', 150, 0.18);
         } else if (simulator.type === 'rc_beam') {
           physicsAudio.updateTone('rc_beam', 70, 0.15);
+        } else if (simulator.type === 'column_buckling') {
+          physicsAudio.updateTone('column_buckling', 85, 0.18);
+        } else if (simulator.type === 'liquid_extraction') {
+          physicsAudio.updateTone('liquid_extraction', 130, 0.20);
+        } else if (simulator.type === 'quantum_tunneling') {
+          physicsAudio.updateTone('quantum_tunneling', 440, 0.22);
         } else {
           physicsAudio.updateTone('ambient', 120, 0.15);
         }
@@ -2139,6 +2206,34 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
           rebarCount: params['rebarCount'] || 4,
           barDiameter: params['barDiameter'] || 20,
           appliedMoment: params['appliedMoment'] || 180,
+        });
+      } else if (simulator.type === 'column_buckling') {
+        renderColumnBuckling(rc, {
+          lengthL: params['length'] || 6.0,
+          axialLoadP: params['axialLoad'] || 3500,
+          kFactor: params['kFactor'] || 1.0,
+          elasticModulusE: params['elasticModulus'] || 200,
+          momentOfInertiaIy: params['momentOfInertia'] || 151,
+          imperfectionDelta0: params['imperfection'] || 12,
+          timeSec: localTime,
+        });
+      } else if (simulator.type === 'liquid_extraction') {
+        renderLiquidExtraction(rc, {
+          feedRateF: params['feedRate'] || 1000,
+          soluteFeedConcXF: (params['soluteFeedConc'] || 30) / 100,
+          solventRateS: params['solventRate'] || 1200,
+          partitionCoeffM: params['partitionCoeff'] || 1.15,
+          targetRecoveryRec: params['targetRecovery'] || 95.0,
+          timeSec: localTime,
+        });
+      } else if (simulator.type === 'quantum_tunneling') {
+        renderQuantumTunneling(rc, {
+          barrierHeightV0: params['barrierHeight'] || 0.25,
+          barrierWidthD: params['barrierWidth'] || 2.8,
+          wellWidthW: params['wellWidth'] || 4.8,
+          biasVoltageVa: params['biasVoltage'] || 0.14,
+          tempK: params['tempK'] || 300,
+          timeSec: localTime,
         });
       } else {
         const midY = h * 0.5;
