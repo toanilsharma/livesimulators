@@ -32,7 +32,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
       <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none" />
 
       {/* Main Content */}
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-10 sm:py-14 relative z-10">
+      <div className="w-full max-w-[1720px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 py-10 sm:py-14 relative z-10">
         
         {/* Navigation Breadcrumb */}
         <div className="flex items-center gap-3 mb-8">
@@ -49,8 +49,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({
         </div>
 
         {/* Hero Section */}
-        <div className="max-w-3xl mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-4">
+        <div className="max-w-3xl mx-auto text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-4 mx-auto">
             <Activity className="w-3.5 h-3.5" />
             THE NUMERICAL PEDAGOGY REVOLUTION
           </div>
@@ -60,7 +60,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
               It's meant to be seen.
             </span>
           </h1>
-          <p className="mt-6 text-slate-300 text-base sm:text-lg leading-relaxed font-sans">
+          <p className="mt-6 text-slate-300 text-base sm:text-lg leading-relaxed font-sans max-w-2xl mx-auto">
             LiveSimulators was created with a single uncompromising mission: bridge the massive canyon 
             between abstract differential equations on a lecture chalkboard and the vivid physical 
             realities of modern engineering systems.
@@ -95,10 +95,10 @@ export const AboutPage: React.FC<AboutPageProps> = ({
             <div className="w-12 h-12 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-5">
               <Award className="w-6 h-6" />
             </div>
-            <h3 className="font-display text-lg font-bold text-white mb-2">Standard Engineering Rigor</h3>
+            <h3 className="font-display text-lg font-bold text-white mb-2">Canonical Academic Rigor</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Mapped directly to international standards (IEEE, ASME, AISC, IEC, SI-CODATA) and verified against 
-              analytical closed-form boundary solutions and university benchmark proofs.
+              Formulated from core physics conservation laws, university engineering syllabi, and published textbook literature, 
+              verified against analytical closed-form boundary solutions.
             </p>
           </div>
         </div>

@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   GraduationCap, 
   Presentation, 
   Briefcase, 
   CheckCircle2, 
   ArrowRight,
-  BookOpen,
-  Laptop,
   Layers,
-  Wrench
+  Sparkles
 } from 'lucide-react';
 import { AudiencePersona } from '../types';
 
@@ -17,174 +15,256 @@ interface AudiencePillarsProps {
 }
 
 export const AudiencePillars: React.FC<AudiencePillarsProps> = ({ onExploreForAudience }) => {
-  const [activePersona, setActivePersona] = useState<AudiencePersona>('students');
-
   const audiences = [
     {
       id: 'students' as AudiencePersona,
       title: 'Engineering Students',
       subtitle: 'Undergraduate & Graduate Coursework',
       icon: <GraduationCap className="w-5 h-5 text-cyan-400" />,
-      badge: 'Academic Intuition',
+      accentColor: '#06b6d4',
+      badge: 'Academic Intuition & Pre-Labs',
       headline: 'Replace formula memorization with real-time physical understanding.',
-      description: 'Struggling with abstract differential equations in circuit theory, signals & systems, or fluid dynamics? LiveSimulators lets you adjust parameters and watch the waveforms react, making homework and exam preparation tangible.',
+      description:
+        'Struggling with abstract second-order differential equations in circuits, feedback stability, or fluid dynamics? LiveSimulators lets you sweep parameters and inspect continuous waveform transients live, transforming textbook theory into permanent engineering intuition.',
       keyCapabilities: [
-        { title: 'Interactive Homework Pre-Labs', desc: 'Verify your calculated pole frequencies, resonance peaks, and component values before physical lab sessions.' },
-        { title: 'Visual Laplace & Fourier Mastery', desc: 'Directly see how pole-zero coordinates on the complex s-plane dictate time-domain transient ringing.' },
-        { title: 'Safe Extreme Parameter Sweeping', desc: 'Explore what happens at 0Ω short circuits, high frequency limits, and resonance without risk of component failure.' },
-        { title: 'Instant Mobile & Laptop Access', desc: 'No MATLAB, PSPICE, or CAD license required. Runs instantly in any standard web browser.' }
+        {
+          title: 'Pre-Lab Hardware Verification',
+          desc: 'Calculate resonant poles, filter cut-off frequencies, and damping factors analytically, then verify them on virtual instruments before entering physical university labs.',
+        },
+        {
+          title: 'Complex s-Plane & Fourier Mastery',
+          desc: 'Observe directly how moving poles and zeros on the complex Laplace s-plane dictates time-domain transient ringing and frequency-domain harmonic peaking.',
+        },
+        {
+          title: 'Hazard-Free Boundary Sweeping',
+          desc: 'Safely explore 0Ω dead shorts, high-frequency cutoff limits, and resonance catastrophes without risking burnt components or lab hazards.',
+        },
+        {
+          title: 'Instant Mobile & Laptop Access',
+          desc: '100% browser native. No MATLAB, PSPICE, or CAD license required. Runs smoothly on any standard laptop, tablet, or smartphone.',
+        },
       ],
-      recommendedSimulators: ['RLC Resonant Circuit', 'Fourier Series Harmonics', 'Sallen-Key Active Filter']
+      recommendedSimulators: [
+        { name: 'RLC Resonant Circuit', path: '/simulator/rlc-resonance' },
+        { name: 'Fourier Harmonics', path: '/simulator/fourier-series' },
+        { name: 'Sallen-Key Filter', path: '/simulator/sallen-key-filter' },
+      ],
+      ctaLabel: 'Explore Coursework Labs',
+      targetSectionId: 'departments-hub',
     },
     {
       id: 'educators' as AudiencePersona,
       title: 'Professors & Faculty',
       subtitle: 'Universities, Colleges & STEM Labs',
       icon: <Presentation className="w-5 h-5 text-emerald-400" />,
-      badge: 'Lecture & Lab Instruction',
+      accentColor: '#10b981',
+      badge: 'Lecture Projection & LMS Embeds',
       headline: 'Elevate lectures with live interactive demonstrations on the projector screen.',
-      description: 'Static textbook slides fail to explain dynamic concepts. With LiveSimulators, professors can project live simulations during lectures, ask students to predict parameter outcomes, and create interactive lab assignments.',
+      description:
+        'Static textbook slides fail to explain dynamic transient physics. Professors project LiveSimulators during lectures, manipulate parameters live in response to student "what if" questions, and assign discovery-based pre-lab homework.',
       keyCapabilities: [
-        { title: 'Live Lecture Projections', desc: 'Manipulate circuit and control parameters live in front of the lecture hall to answer "what if" student questions in seconds.' },
-        { title: 'Zero IT Installation Overhead', desc: 'No software installation tickets, no complex virtual desktops, and no student platform compatibility headaches.' },
-        { title: 'Curriculum-Aligned Topologies', desc: 'Simulations follow canonical textbook engineering syllabi (Hayt & Kemmerly, Sedra & Smith, Ogata, Oppenheim).' },
-        { title: 'Flipped Classroom & Lab Homework', desc: 'Assign discovery-based pre-lab modules where students determine critical damping resistance by sweeping simulation dials.' }
+        {
+          title: 'Live Lecture Hall Demonstrations',
+          desc: 'Manipulate circuit component values and PID gains live in front of the lecture hall to provide immediate, visual answers to student inquiries.',
+        },
+        {
+          title: 'Seamless Canvas & Moodle Embeds',
+          desc: 'Embed full interactive simulation workbenches directly into university LMS portals (Canvas, Blackboard, Moodle) via responsive embed iframes.',
+        },
+        {
+          title: 'Standard Textbook Alignment',
+          desc: 'Simulations map directly to canonical engineering syllabi and textbooks: Alexander & Sadiku, Hayt & Kemmerly, Ogata, and Beer & Johnston.',
+        },
+        {
+          title: 'Flipped Classroom Pre-Labs',
+          desc: 'Assign discovery modules where students deduce critical damping resistance or phase margins by sweeping simulation dials before physical lab sessions.',
+        },
       ],
-      recommendedSimulators: ['3-Phase Synchronous Motor', 'RF Transmission Line', 'Buck-Boost Regulator']
+      recommendedSimulators: [
+        { name: '3-Phase Synchronous Motor', path: '/simulator/three-phase-motor' },
+        { name: 'RF Transmission Line', path: '/simulator/transmission-line' },
+        { name: 'Buck-Boost Regulator', path: '/simulator/buck-boost-converter' },
+      ],
+      ctaLabel: 'Explore Teaching Tools',
+      targetSectionId: 'departments-hub',
     },
     {
       id: 'engineers' as AudiencePersona,
       title: 'Practicing Engineers',
-      subtitle: 'Industrial Design, R&D & Training',
+      subtitle: 'Industrial Design, Utilities & EPCs',
       icon: <Briefcase className="w-5 h-5 text-amber-400" />,
-      badge: 'Industrial Sanity Checking',
-      headline: 'Rapid first-principles sanity checks before deep SPICE or CAD simulations.',
-      description: 'Industrial engineers, hardware designers, and systems architects use LiveSimulators for fast topology comparisons, transient surge intuition, and training cross-functional engineering teams on core physics.',
+      accentColor: '#f59e0b',
+      badge: 'First-Principles Sanity Checking',
+      headline: 'Rapid qualitative checks before committing to deep SPICE or FEA netlists.',
+      description:
+        'Industrial engineers, hardware designers, and systems architects use LiveSimulators for rapid topology evaluation, switching surge intuition, and cross-functional technical training across engineering teams.',
       keyCapabilities: [
-        { title: 'Rapid Topology Prototyping', desc: 'Evaluate inductor ripple current (CCM vs DCM) or filter roll-off in seconds before building full schematic netlists.' },
-        { title: 'Transient Surge Intuition', desc: 'Gain rapid qualitative insight into inductive kickback, switching transients, and impedance mismatch reflection coefficients.' },
-        { title: 'Internal Technical Training', desc: 'Train junior engineers, technicians, and application specialists on power electronic and RF principles.' },
-        { title: 'Time-Series Data Export', desc: 'Export node voltage and current matrices directly to CSV for Python NumPy / SciPy post-processing.' }
+        {
+          title: 'Rapid Topology Prototyping',
+          desc: 'Quickly evaluate continuous vs. discontinuous inductor conduction (CCM vs DCM) and switching ripple before configuring complex SPICE schematics.',
+        },
+        {
+          title: 'Transient Surge Intuition',
+          desc: 'Gain qualitative physical insight into inductive flyback, transmission line reflection coefficients, and arc flash energy distribution.',
+        },
+        {
+          title: 'Cross-Discipline Team Training',
+          desc: 'A visual, intuitive training tool for junior engineers, field technicians, and application specialists to understand core power systems and controls.',
+        },
+        {
+          title: 'Time-Series Matrix CSV Export',
+          desc: 'Export high-density node voltage, current, and pressure time-series matrices directly to CSV for Python NumPy / SciPy and MATLAB processing.',
+        },
       ],
-      recommendedSimulators: ['Buck-Boost Regulator', 'Transmission Line VSWR', '3-Phase AC Grid Dynamics']
-    }
+      recommendedSimulators: [
+        { name: 'Power Systems Lab', path: '/industrial-labs/power-systems-lab' },
+        { name: 'SafeOps UPS Suite', path: '/industrial-labs/safeops-ups' },
+        { name: 'ElectroLive Safety', path: '/industrial-labs/electrolive-electrical-safety' },
+      ],
+      ctaLabel: 'Explore Industrial Pro',
+      targetSectionId: 'industrial-labs',
+    },
   ];
 
-  const current = audiences.find((a) => a.id === activePersona) || audiences[0];
-
   return (
-    <section id="audiences" className="py-16 lg:py-24 border-b border-slate-800 bg-[#060a12] relative">
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
+    <section 
+      id="audiences" 
+      className="py-16 sm:py-20 lg:py-24 border-b border-slate-800/80 bg-[#060a12] relative scroll-mt-20 overflow-hidden"
+      aria-label="Target Engineering Audiences and Workflows"
+    >
+      {/* Subtle Background Glow */}
+      <div className="absolute top-1/3 left-1/4 w-[600px] h-[400px] bg-cyan-950/10 rounded-full blur-[150px] pointer-events-none" />
+
+      <div className="w-full max-w-[1720px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 relative z-10 space-y-12 sm:space-y-16">
         
-        {/* Header */}
-        <div className="max-w-3xl space-y-3 mb-12">
-          <div className="inline-flex items-center gap-2 text-cyan-400 font-mono text-xs tracking-wider uppercase">
-            <Layers className="w-3.5 h-3.5" />
-            <span>Multi-Audience Engineering Value</span>
+        {/* =================================================================== */}
+        {/* SECTION HEADER (CENTERED WITH BALANCED MARGINS) */}
+        {/* =================================================================== */}
+        <div className="max-w-4xl mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs uppercase tracking-wider mx-auto">
+            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+            <span>MULTI-AUDIENCE ENGINEERING VALUE • ECOSYSTEM GUIDE</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-white tracking-tight">
+
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-[1.15]">
             Built for the Entire Engineering Ecosystem
           </h2>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-            From sophomore university students establishing first-principles intuition to professors 
-            conducting live lecture demonstrations and industrial engineers sanity-checking design topologies.
+
+          <p className="text-slate-300 text-sm sm:text-base lg:text-lg leading-relaxed font-sans max-w-3xl mx-auto">
+            From undergraduate university students establishing first-principles intuition to professors 
+            delivering dynamic lecture demonstrations and industrial consultants conducting rapid topology sanity checks.
           </p>
         </div>
 
-        {/* 3 Audience Selector Tabs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-          {audiences.map((aud) => {
-            const isSelected = aud.id === activePersona;
-            return (
-              <button
-                key={aud.id}
-                onClick={() => setActivePersona(aud.id)}
-                className={`p-5 rounded-xl border text-left transition-all ${
-                  isSelected
-                    ? 'bg-slate-900 border-cyan-500/70 shadow-lg shadow-cyan-950/30'
-                    : 'bg-slate-950/60 border-slate-800 hover:bg-slate-900/40 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 rounded-lg bg-slate-800/80 border border-slate-700">
-                    {aud.icon}
+        {/* =================================================================== */}
+        {/* SIMULTANEOUS 3-COLUMN TYPOGRAPHIC ECOSYSTEM GUIDE (REPLACES NESTED CARDS) */}
+        {/* =================================================================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12 pt-4 border-t border-slate-800/80">
+          {audiences.map((aud) => (
+            <article 
+              key={aud.id}
+              className="flex flex-col justify-between space-y-6"
+            >
+              {/* Persona Header & Badge */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div 
+                      className="w-9 h-9 rounded-xl bg-slate-900 border flex items-center justify-center shrink-0 shadow-sm"
+                      style={{ borderColor: `${aud.accentColor}60` }}
+                    >
+                      {aud.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-display text-lg sm:text-xl font-bold text-white tracking-tight">
+                        {aud.title}
+                      </h3>
+                      <div className="text-[11px] font-mono text-slate-400">
+                        {aud.subtitle}
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+
+                  <span 
+                    className="text-[9.5px] font-mono uppercase tracking-wider font-semibold px-2 py-0.5 rounded border shrink-0 hidden sm:inline-block"
+                    style={{ 
+                      backgroundColor: `${aud.accentColor}15`, 
+                      borderColor: `${aud.accentColor}40`,
+                      color: aud.accentColor 
+                    }}
+                  >
                     {aud.badge}
                   </span>
                 </div>
-                <div className="font-display text-base font-bold text-white">
-                  {aud.title}
-                </div>
-                <div className="text-xs font-mono text-slate-400 mt-1">
-                  {aud.subtitle}
-                </div>
-              </button>
-            );
-          })}
-        </div>
 
-        {/* Selected Persona Deep Showcase Card */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 sm:p-8 backdrop-blur-sm">
-          <div className="space-y-6">
-            <div className="space-y-2 border-b border-slate-800 pb-5">
-              <div className="flex items-center gap-2 text-xs font-mono text-cyan-400">
-                <span>TAILORED ENGINEERING WORKFLOW</span>
-                <span>•</span>
-                <span>{current.subtitle}</span>
+                <div className="text-sm font-display font-bold text-cyan-200">
+                  {aud.headline}
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed">
+                  {aud.description}
+                </p>
               </div>
-              <h3 className="font-display text-2xl font-bold text-white">
-                {current.headline}
-              </h3>
-              <p className="text-slate-300 text-sm leading-relaxed max-w-4xl">
-                {current.description}
-              </p>
-            </div>
 
-            {/* 4 Feature Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              {current.keyCapabilities.map((cap, i) => (
-                <div
-                  key={i}
-                  className="p-4 rounded-xl bg-slate-950 border border-slate-800/90 space-y-1.5"
-                >
-                  <div className="flex items-center gap-2 font-display text-sm font-bold text-white">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{cap.title}</span>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed pl-6">
-                    {cap.desc}
-                  </p>
+              {/* Plain-Text Capability Checklist (No nested cards, clean list items) */}
+              <div className="space-y-3 pt-2 flex-1">
+                <div className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+                  Key Capabilities &amp; Workflows:
                 </div>
-              ))}
-            </div>
 
-            {/* Recommended Simulators for this persona */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-                <span>RECOMMENDED STARTING SIMULATORS:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {current.recommendedSimulators.map((rec, i) => (
-                    <span
-                      key={i}
-                      className="px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700 text-[11px]"
-                    >
-                      {rec}
-                    </span>
+                <ul className="space-y-2.5 text-xs text-slate-300 font-sans">
+                  {aud.keyCapabilities.map((cap, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <CheckCircle2 
+                        className="w-3.5 h-3.5 shrink-0 mt-0.5" 
+                        style={{ color: aud.accentColor }} 
+                      />
+                      <div>
+                        <span className="font-semibold text-white block sm:inline mr-1">
+                          {cap.title}:
+                        </span>
+                        <span className="text-slate-400 leading-relaxed">
+                          {cap.desc}
+                        </span>
+                      </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
 
-              <button
-                onClick={() => onExploreForAudience(current.id)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs font-mono transition-colors shrink-0"
-              >
-                <span>Launch {current.title} Workbench</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+              {/* Bottom Recommendations & Direct Action CTA */}
+              <div className="pt-4 border-t border-slate-800/80 space-y-3">
+                <div className="text-[10.5px] font-mono text-slate-400">
+                  <span className="text-slate-500 uppercase block mb-1">Recommended Starting Labs:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {aud.recommendedSimulators.map((rec, i) => (
+                      <a
+                        key={i}
+                        href={rec.path}
+                        className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800 hover:border-cyan-500/50 text-[10.5px] transition-colors"
+                      >
+                        {rec.name}
+                      </a>
+                    ))}
+                  </div>
+                </div>
 
-          </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onExploreForAudience(aud.id);
+                    const el = document.getElementById(aud.targetSectionId);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all bg-slate-900 hover:bg-slate-850 text-white border border-slate-700 hover:border-cyan-500/60 shadow-sm"
+                >
+                  <span>{aud.ctaLabel}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-cyan-400" />
+                </button>
+              </div>
+
+            </article>
+          ))}
         </div>
 
       </div>

@@ -9,8 +9,10 @@ import { WhyInteractive } from './components/WhyInteractive';
 import { HowItWorks } from './components/HowItWorks';
 import { AudiencePillars } from './components/AudiencePillars';
 import { TrustPrinciples } from './components/TrustPrinciples';
+import { HomeFaq } from './components/HomeFaq';
 import { IndustrialLabsSection } from './components/IndustrialLabsSection';
 import { PersonaStageSelector } from './components/PersonaStageSelector';
+import { TelemetryTicker } from './components/TelemetryTicker';
 import { Footer } from './components/Footer';
 import { SearchModal } from './components/SearchModal';
 import { CookieBanner } from './components/CookieBanner';
@@ -193,6 +195,9 @@ export default function App() {
       {/* 2. Routing Views */}
       {route.view === 'home' && (
         <main className="flex-1 w-full max-w-full overflow-x-hidden">
+          {/* Real-time Defense-Grade Telemetry Bar */}
+          <TelemetryTicker />
+
           {/* Hero with Dedicated Department Buttons & Quick Stage CTAs */}
           <Hero
             onSelectDepartment={handleSelectDepartment}
@@ -218,6 +223,7 @@ export default function App() {
           <HowItWorks />
           <AudiencePillars onExploreForAudience={handleExploreForAudience} />
           <TrustPrinciples />
+          <HomeFaq />
         </main>
       )}
 

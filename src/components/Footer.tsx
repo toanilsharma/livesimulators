@@ -204,7 +204,7 @@ export const Footer: React.FC<FooterProps> = ({
       <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-cyan-950/15 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Main Footer Directory */}
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12 lg:py-16 relative z-10">
+      <div className="w-full max-w-[1720px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 py-12 lg:py-16 relative z-10">
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">

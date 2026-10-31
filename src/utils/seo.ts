@@ -3,6 +3,7 @@ import { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
 import { LABS } from '../config/labs';
 import { routeToPath, SITE_URL } from './routes';
 import { cleanLatexToPlainText } from './engineeringTheory';
+import { HOME_FAQ_DATA } from '../components/HomeFaq';
 
 export interface RouteSeoMetadata {
   title: string;
@@ -220,6 +221,18 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
                 item: SITE_URL,
               },
             ],
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: HOME_FAQ_DATA.map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.answer,
+              },
+            })),
           },
         ],
       };

@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Zap,
   Cpu,
   Building2,
   Sliders,
   ChevronRight,
+  ChevronDown,
   ArrowRight,
   ShieldCheck,
   FlaskConical,
   Atom,
   CheckCircle2,
+  BookOpen,
+  Layers,
+  Sparkles,
+  Search,
+  X,
+  ExternalLink,
 } from 'lucide-react';
 import { DisciplineId, SimulatorItem } from '../types';
 import {
@@ -21,6 +28,7 @@ import {
   FEATURED_SEMICONDUCTOR_SIMULATORS,
 } from '../data/simulators';
 import { SimulatorCardPreview } from './SimulatorCardPreview';
+import { MathView } from './MathView';
 
 interface HomeDepartmentsHubProps {
   onSelectDepartment: (deptId: DisciplineId) => void;
@@ -33,17 +41,14 @@ interface DepartmentSectionConfig {
   code: string;
   icon: React.ReactNode;
   tagline: string;
+  academicOverview: string;
+  governingTheory: string;
+  textbookBenchmark: string;
   accentColor: string;
-  rowBg: string;
-  rowBorder: string;
-  iconContainer: string;
-  codeBadge: string;
+  accentBg: string;
+  accentBorder: string;
+  badgeClass: string;
   buttonClass: string;
-  simCardBorder: string;
-  simCardHoverShadow: string;
-  subCategoryText: string;
-  subCategoryBadge: string;
-  launchBtnClass: string;
   simulators: SimulatorItem[];
 }
 
@@ -51,7 +56,25 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
   onSelectDepartment,
   onLaunchSimulator,
 }) => {
-  const [selectedFilter, setSelectedFilter] = useState<'all' | DisciplineId>('all');
+  const [activeDepartment, setActiveDepartment] = useState<DisciplineId>('electrical');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showDerivation, setShowDerivation] = useState<boolean>(false);
+
+  // Sync active tab with URL hash or external stage buttons (e.g., #dept-mechanical)
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#dept-')) {
+        const deptId = hash.replace('#dept-', '') as DisciplineId;
+        if (['electrical', 'mechanical', 'control', 'civil', 'chemical', 'physics'].includes(deptId)) {
+          setActiveDepartment(deptId);
+        }
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   const departments: DepartmentSectionConfig[] = [
     {
@@ -59,18 +82,16 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       name: 'Electrical & Electronic Systems',
       code: 'EE-200',
       icon: <Zap className="w-5 h-5 text-cyan-400" />,
-      tagline: 'Analog circuits, switching power electronics, RF transmission lines & 3-phase AC power grids.',
+      tagline: 'Analog circuit resonance, high-frequency RF transmission, and switching power electronics.',
+      academicOverview:
+        'Continuous ODE models solving Kirchhoff voltage and current laws, Maxwell wave propagation, and 3-phase grid dynamics. Designed for coursework in circuit theory, power electronics, and electromagnetic fields referencing core concepts covered in university electrical engineering curricula.',
+      governingTheory: 'v(t) = L\\frac{di}{dt} + Ri(t) + \\frac{1}{C}\\int i(t)dt',
+      textbookBenchmark: 'Alexander & Sadiku (Ch. 8–9) • Hayt & Kemmerly (Ch. 14)',
       accentColor: '#06b6d4',
-      rowBg: 'bg-gradient-to-r from-cyan-950/40 via-slate-900/90 to-slate-950',
-      rowBorder: 'border-cyan-500/30 hover:border-cyan-400/70 shadow-[0_0_25px_rgba(6,182,212,0.12)]',
-      iconContainer: 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400',
-      codeBadge: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300',
+      accentBg: 'bg-cyan-500/10',
+      accentBorder: 'border-cyan-500/30',
+      badgeClass: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300',
       buttonClass: 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.25)]',
-      simCardBorder: 'border-cyan-500/25 hover:border-cyan-400/70',
-      simCardHoverShadow: 'hover:shadow-[0_12px_32px_rgba(6,182,212,0.18)]',
-      subCategoryText: 'text-cyan-400',
-      subCategoryBadge: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-300',
-      launchBtnClass: 'bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/40',
       simulators: FEATURED_ELECTRICAL_SIMULATORS,
     },
     {
@@ -78,18 +99,16 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       name: 'Mechanical & Thermal Dynamics',
       code: 'ME-400',
       icon: <Cpu className="w-5 h-5 text-amber-400" />,
-      tagline: 'Planar kinematic mechanisms, thermodynamic Rankine cycles, damped vibrations & conjugate gears.',
+      tagline: 'Planar kinematic mechanisms, thermodynamic power cycles, and damped structural vibrations.',
+      academicOverview:
+        'First-principles rigid-body kinematics (Grashof four-bar linkages), conjugate gear tooth meshing, and second-law thermodynamic cycles (Rankine & Otto). Formulated for dynamics, vibrations, and applied thermodynamics with ASME and ISO reference data.',
+      governingTheory: 'm\\ddot{x} + c\\dot{x} + kx = F_0 \\cos(\\omega t)',
+      textbookBenchmark: 'Shigley Mechanical Engineering Design • Moran & Shapiro Thermodynamics',
       accentColor: '#f59e0b',
-      rowBg: 'bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-slate-950',
-      rowBorder: 'border-amber-500/30 hover:border-amber-400/70 shadow-[0_0_25px_rgba(245,158,11,0.12)]',
-      iconContainer: 'bg-amber-500/15 border-amber-500/40 text-amber-400',
-      codeBadge: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+      accentBg: 'bg-amber-500/10',
+      accentBorder: 'border-amber-500/30',
+      badgeClass: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
       buttonClass: 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.25)]',
-      simCardBorder: 'border-amber-500/25 hover:border-amber-400/70',
-      simCardHoverShadow: 'hover:shadow-[0_12px_32px_rgba(245,158,11,0.18)]',
-      subCategoryText: 'text-amber-400',
-      subCategoryBadge: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
-      launchBtnClass: 'bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40',
       simulators: FEATURED_MECHANICAL_SIMULATORS,
     },
     {
@@ -97,18 +116,16 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       name: 'Instrumentation & Process Control',
       code: 'IC-300',
       icon: <Sliders className="w-5 h-5 text-emerald-400" />,
-      tagline: 'Closed-loop PID tuning, pneumatic control valves, 4-20mA telemetry loops & DP orifice flow meters.',
+      tagline: 'Closed-loop PID regulation, telemetry transmitter loops, and pneumatic valve actuation.',
+      academicOverview:
+        'Discrete-time numerical integration of negative feedback systems, root locus trajectories, and frequency-domain stability margins (Bode & Nyquist). Built for instrumentation, automation, and chemical process control aligned with ISA-5.1 standards.',
+      governingTheory: 'u(t) = K_p e(t) + K_i \\int_0^t e(\\tau)d\\tau + K_d \\frac{de(t)}{dt}',
+      textbookBenchmark: 'Modern Control Engineering (K. Ogata) • Seborg Process Dynamics & Control',
       accentColor: '#10b981',
-      rowBg: 'bg-gradient-to-r from-emerald-950/40 via-slate-900/90 to-slate-950',
-      rowBorder: 'border-emerald-500/30 hover:border-emerald-400/70 shadow-[0_0_25px_rgba(16,185,129,0.12)]',
-      iconContainer: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400',
-      codeBadge: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+      accentBg: 'bg-emerald-500/10',
+      accentBorder: 'border-emerald-500/30',
+      badgeClass: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
       buttonClass: 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.25)]',
-      simCardBorder: 'border-emerald-500/25 hover:border-emerald-400/70',
-      simCardHoverShadow: 'hover:shadow-[0_12px_32px_rgba(16,185,129,0.18)]',
-      subCategoryText: 'text-emerald-400',
-      subCategoryBadge: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
-      launchBtnClass: 'bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/40',
       simulators: FEATURED_INSTRUMENTATION_SIMULATORS,
     },
     {
@@ -116,18 +133,16 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       name: 'Civil & Structural Mechanics',
       code: 'CE-320',
       icon: <Building2 className="w-5 h-5 text-rose-400" />,
-      tagline: 'Euler-Bernoulli beam flexure, truss bridge nodal equilibrium, seismic base isolation & Mohr stress.',
+      tagline: 'Euler-Bernoulli flexure, truss nodal equilibrium, and seismic base isolation.',
+      academicOverview:
+        'Static equilibrium and dynamic response under moving vehicular loads, shear force and bending moment diagrams, and earthquake ground acceleration spectrums. Calibrated against AISC 360, ACI 318, and ASCE 7-22 structural standards.',
+      governingTheory: 'EI \\frac{d^4 w}{dx^4} = q(x)',
+      textbookBenchmark: 'Hibbeler Structural Analysis • Beer & Johnston Mechanics of Materials',
       accentColor: '#f43f5e',
-      rowBg: 'bg-gradient-to-r from-rose-950/40 via-slate-900/90 to-slate-950',
-      rowBorder: 'border-rose-500/30 hover:border-rose-400/70 shadow-[0_0_25px_rgba(244,63,94,0.12)]',
-      iconContainer: 'bg-rose-500/15 border-rose-500/40 text-rose-400',
-      codeBadge: 'bg-rose-500/15 border-rose-500/30 text-rose-300',
+      accentBg: 'bg-rose-500/10',
+      accentBorder: 'border-rose-500/30',
+      badgeClass: 'bg-rose-500/15 border-rose-500/30 text-rose-300',
       buttonClass: 'bg-rose-500 hover:bg-rose-400 text-slate-950 shadow-[0_0_15px_rgba(244,63,94,0.25)]',
-      simCardBorder: 'border-rose-500/25 hover:border-rose-400/70',
-      simCardHoverShadow: 'hover:shadow-[0_12px_32px_rgba(244,63,94,0.18)]',
-      subCategoryText: 'text-rose-400',
-      subCategoryBadge: 'bg-rose-500/10 border-rose-500/30 text-rose-300',
-      launchBtnClass: 'bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-slate-950 border border-rose-500/40',
       simulators: FEATURED_CIVIL_SIMULATORS,
     },
     {
@@ -135,18 +150,16 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       name: 'Chemical & Process Engineering',
       code: 'CH-250',
       icon: <FlaskConical className="w-5 h-5 text-violet-400" />,
-      tagline: 'Continuous Stirred Tank Reactors (CSTR), multi-component distillation columns & mass transfer.',
+      tagline: 'CSTR reaction kinetics, multi-stage distillation, and TEMA shell & tube heat transfer.',
+      academicOverview:
+        'Non-linear differential mass and thermal energy balances with Arrhenius reaction kinetics, vapor-liquid equilibrium (VLE) tray hydraulics, and logarithmic mean temperature difference (LMTD) heat exchanger solvers.',
+      governingTheory: '\\frac{dC_A}{dt} = \\frac{F}{V}(C_{A0} - C_A) - k_0 e^{-E_a/RT} C_A^2',
+      textbookBenchmark: 'Levenspiel Chemical Reaction Engineering • McCabe, Smith & Harriott Unit Operations',
       accentColor: '#8b5cf6',
-      rowBg: 'bg-gradient-to-r from-violet-950/40 via-slate-900/90 to-slate-950',
-      rowBorder: 'border-violet-500/30 hover:border-violet-400/70 shadow-[0_0_25px_rgba(139,92,246,0.12)]',
-      iconContainer: 'bg-violet-500/15 border-violet-500/40 text-violet-400',
-      codeBadge: 'bg-violet-500/15 border-violet-500/30 text-violet-300',
+      accentBg: 'bg-violet-500/10',
+      accentBorder: 'border-violet-500/30',
+      badgeClass: 'bg-violet-500/15 border-violet-500/30 text-violet-300',
       buttonClass: 'bg-violet-500 hover:bg-violet-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.25)]',
-      simCardBorder: 'border-violet-500/25 hover:border-violet-400/70',
-      simCardHoverShadow: 'hover:shadow-[0_12px_32px_rgba(139,92,246,0.18)]',
-      subCategoryText: 'text-violet-400',
-      subCategoryBadge: 'bg-violet-500/10 border-violet-500/30 text-violet-300',
-      launchBtnClass: 'bg-violet-500/15 hover:bg-violet-500 text-violet-300 hover:text-white border border-violet-500/40',
       simulators: FEATURED_CHEMICAL_SIMULATORS,
     },
     {
@@ -154,122 +167,66 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       name: 'Semiconductor & Quantum Physics',
       code: 'PH-500',
       icon: <Atom className="w-5 h-5 text-sky-400" />,
-      tagline: 'P-N junction energy band bending, carrier drift-diffusion, and quantum well potential tunneling.',
+      tagline: 'P-N junction band bending, Poisson space-charge carrier drift, and quantum tunneling.',
+      academicOverview:
+        'Carrier statistics and energy band structures under variable electrostatic bias. Simulates Poisson-Boltzmann equations, Fermi-Dirac distributions, and quantum barrier tunneling for solid-state devices and modern wide-bandgap SiC power transistors.',
+      governingTheory: '-\\frac{\\hbar^2}{2m^*}\\frac{d^2\\psi}{dx^2} + V(x)\\psi = E\\psi',
+      textbookBenchmark: 'Streetman & Banerjee Solid State Electronic Devices • Sze Physics of Semiconductor Devices',
       accentColor: '#38bdf8',
-      rowBg: 'bg-gradient-to-r from-sky-950/40 via-slate-900/90 to-slate-950',
-      rowBorder: 'border-sky-500/30 hover:border-sky-400/70 shadow-[0_0_25px_rgba(56,189,248,0.12)]',
-      iconContainer: 'bg-sky-500/15 border-sky-500/40 text-sky-400',
-      codeBadge: 'bg-sky-500/15 border-sky-500/30 text-sky-300',
+      accentBg: 'bg-sky-500/10',
+      accentBorder: 'border-sky-500/30',
+      badgeClass: 'bg-sky-500/15 border-sky-500/30 text-sky-300',
       buttonClass: 'bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.25)]',
-      simCardBorder: 'border-sky-500/25 hover:border-sky-400/70',
-      simCardHoverShadow: 'hover:shadow-[0_12px_32px_rgba(56,189,248,0.18)]',
-      subCategoryText: 'text-sky-400',
-      subCategoryBadge: 'bg-sky-500/10 border-sky-500/30 text-sky-300',
-      launchBtnClass: 'bg-sky-500/15 hover:bg-sky-500 text-sky-300 hover:text-slate-950 border border-sky-500/40',
       simulators: FEATURED_SEMICONDUCTOR_SIMULATORS,
     },
   ];
 
-  const filteredDepartments =
-    selectedFilter === 'all'
-      ? departments
-      : departments.filter((d) => d.id === selectedFilter);
+  // Active spotlight per department
+  const [activeSpotlights, setActiveSpotlights] = useState<Record<DisciplineId, string>>({
+    electrical: FEATURED_ELECTRICAL_SIMULATORS[0].id,
+    mechanical: FEATURED_MECHANICAL_SIMULATORS[0].id,
+    control: FEATURED_INSTRUMENTATION_SIMULATORS[0].id,
+    civil: FEATURED_CIVIL_SIMULATORS[0].id,
+    chemical: FEATURED_CHEMICAL_SIMULATORS[0].id,
+    physics: FEATURED_SEMICONDUCTOR_SIMULATORS[0].id,
+  });
 
-  // Friendly sub-category label per simulator
-  const getSubCategoryLabel = (sim: SimulatorItem): string => {
-    switch (sim.type) {
-      case 'rlc':
-        return 'Analog Circuits & Resonance';
-      case 'three_phase':
-        return '3-Phase AC Power Grid';
-      case 'buck_boost':
-        return 'DC-DC Switching Regulators';
-      case 'sallen_key':
-        return 'Active Sallen-Key Filters';
-      case 'transmission_line':
-        return 'RF Transmission & Smith Chart';
-      case 'fourier':
-        return 'Harmonic Spectrum & THD';
-      case 'op_amp':
-        return 'Op-Amp Instrumentation';
-      case 'rc_transient':
-        return 'RC & RL Transients';
-      case 'transformer_test':
-        return 'Transformer Tests (OC/SC)';
-      case 'dc_motor':
-        return 'DC Motor Speed Control';
-      case 'induction_motor':
-        return 'Induction Torque-Slip';
-      case 'solar_pv':
-        return 'Solar PV & MPPT Tracking';
-      case 'four_bar':
-        return 'Planar Kinematics';
-      case 'rankine':
-        return 'Rankine Thermodynamic Cycle';
-      case 'harmonic':
-        return 'Damped Oscillations & Resonance';
-      case 'spur_gear':
-        return 'Involute Gears & Backlash';
-      case 'otto_cycle':
-        return '4-Stroke Engine P-V Cycle';
-      case 'projectile':
-        return 'Ballistics & Non-Linear Drag';
-      case 'centrifugal_pump':
-        return 'Pump H-Q Head Curve';
-      case 'refrigeration_cycle':
-        return 'Vapor Compression P-h';
-      case 'pid':
-        return 'Closed-Loop PID Control';
-      case 'control_valve':
-        return 'Pneumatic Control Valves';
-      case 'current_loop':
-        return '4-20mA Telemetry Loop';
-      case 'orifice_meter':
-        return 'DP Orifice & Venturi Flow';
-      case 'bode_plot':
-        return 'Bode Margin & Stability';
-      case 'root_locus':
-        return 'Evans Root Locus';
-      case 'beam_deflection':
-        return 'Elastic Beam Flexure';
-      case 'truss':
-        return 'Warren & Pratt Truss FEA';
-      case 'seismic':
-        return 'Earthquake Base Isolation';
-      case 'mohr_circle':
-        return '2D Stress Tensor & Mohr';
-      case 'rc_beam':
-        return 'ACI 318 Concrete Limit State';
-      case 'cstr':
-        return 'CSTR Chemical Reactor';
-      case 'distillation_column':
-        return 'McCabe-Thiele Distillation';
-      case 'heat_exchanger':
-        return 'TEMA Shell & Tube LMTD';
-      case 'gas_absorption':
-        return 'Packed Gas Scrubber Bed';
-      case 'batch_pfr':
-        return 'Batch vs PFR Reaction Kinetics';
-      case 'pn_junction':
-        return 'P-N Diode Band Bending';
-      case 'sic_switching':
-        return 'SiC Power MOSFET Switching';
-      case 'igbt_thermal':
-        return 'IGBT Thermal Foster Stack';
-      case 'mosfet_channel':
-        return 'BSIM4 MOSFET Channel';
-      case 'photoelectric':
-        return 'Photoelectric Work Function';
-      case 'column_buckling':
-        return 'Euler Column Buckling & P-Delta';
-      case 'liquid_extraction':
-        return 'Liquid-Liquid Extraction (LLE)';
-      case 'quantum_tunneling':
-        return 'Quantum Resonant Tunneling NDR';
-      default:
-        return sim.badge || 'Live Simulation';
+  // Filter departments: when searching, search across all departments; otherwise display single active department tab
+  const filteredDepartments = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    // When global search query is active, search across all 44 workbenches
+    if (query) {
+      return departments
+        .map((dept) => {
+          const matchingSims = dept.simulators.filter((sim) => {
+            return (
+              sim.title.toLowerCase().includes(query) ||
+              sim.tagline.toLowerCase().includes(query) ||
+              (sim.physicalLaw && sim.physicalLaw.toLowerCase().includes(query)) ||
+              (sim.badge && sim.badge.toLowerCase().includes(query)) ||
+              (sim.courseMapping && sim.courseMapping.toLowerCase().includes(query)) ||
+              (sim.standardReference && sim.standardReference.toLowerCase().includes(query))
+            );
+          });
+
+          return {
+            ...dept,
+            simulators: matchingSims,
+          };
+        })
+        .filter((dept) => dept.simulators.length > 0);
     }
-  };
+
+    // Default: render ONLY the active single department tab (cuts height by ~5,000 px!)
+    return departments.filter((dept) => dept.id === activeDepartment);
+  }, [departments, activeDepartment, searchQuery]);
+
+  const totalMatchingSimulators = useMemo(() => {
+    return filteredDepartments.reduce((acc, d) => acc + d.simulators.length, 0);
+  }, [filteredDepartments]);
+
+  const totalSimulatorsCount = departments.reduce((acc, d) => acc + d.simulators.length, 0);
 
   const getDifficultyBadge = (difficulty: string) => {
     switch (difficulty) {
@@ -285,234 +242,444 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
   };
 
   return (
-    <section id="departments-hub" className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 w-full max-w-[1920px] mx-auto scroll-mt-20">
-      {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
+    <section
+      id="departments-hub"
+      className="py-14 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-10 xl:px-14 w-full max-w-[1720px] 2xl:max-w-[1800px] mx-auto scroll-mt-20 border-b border-slate-800/80"
+    >
+      {/* Editorial Section Header */}
+      <div className="max-w-4xl mx-auto text-center mb-10 sm:mb-14">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-xs font-mono font-semibold uppercase tracking-wider text-blue-300 mb-4 shadow-sm">
           <ShieldCheck className="w-4 h-4 text-blue-400" />
-          <span>STAGE 1 • ACADEMIC FUNDAMENTALS &amp; UNIVERSITY LABS</span>
+          <span>STAGE 1 • ACADEMIC CURRICULUM DIRECTORY &amp; VIRTUAL LABS</span>
         </div>
-        
-        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-display font-extrabold text-white tracking-tight leading-tight">
-          Explore Simulators by Department
+
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-extrabold text-white tracking-tight leading-[1.15]">
+          Explore Engineering Disciplines &amp; Coursework Labs
         </h2>
-        
-        <p className="mt-3 text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
-          Curriculum-aligned textbook simulators for students and educators. Explore real-time interactive differential equations, circuit transients, mechanism kinematics, and control loops with live animated solvers.
+
+        <p className="mt-4 text-sm sm:text-base text-slate-300 leading-relaxed font-sans max-w-3xl mx-auto">
+          Every simulator runs real-time numerical solutions to continuous governing differential equations.
+          Browse curriculum topics below, inspect mathematical formulations, and launch interactive browser workbenches calibrated to standard engineering university syllabi.
         </p>
 
-        {/* Systematic Department Filter Pills */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
-          <button
-            onClick={() => setSelectedFilter('all')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              selectedFilter === 'all'
-                ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/25'
-                : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
-            }`}
-          >
-            All Departments ({departments.reduce((acc, d) => acc + d.simulators.length, 0)})
-          </button>
-          {departments.map((dept) => {
-            const isSelected = selectedFilter === dept.id;
-            return (
-              <button
-                key={dept.id}
-                onClick={() => setSelectedFilter(dept.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                  isSelected
-                    ? 'bg-slate-100 text-slate-950 font-bold shadow-md'
-                    : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
-                }`}
-              >
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dept.accentColor }} />
-                <span>{dept.name.split('&')[0].trim()}</span>
-                <span className="text-[10px] opacity-75 font-mono">({dept.simulators.length})</span>
-              </button>
-            );
-          })}
+        {/* =============================================================== */}
+        {/* WOW ENHANCEMENT: INTERACTIVE IN-HUB INSTANT SEARCH BAR */}
+        {/* =============================================================== */}
+        <div className="relative max-w-lg mx-auto w-full mt-6">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search 35+ topics: e.g. 'PID', 'Buck', 'Truss', 'Fourier', 'RLC'..."
+            className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-cyan-400/80 focus:ring-1 focus:ring-cyan-400/50 font-mono transition-all shadow-inner"
+            aria-label="Filter simulators by topic name, physical law or course code"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-md transition-colors"
+              title="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
+
+        {/* Live Search Result Feedback */}
+        {searchQuery && (
+          <div className="mt-2 text-xs font-mono text-cyan-300 flex items-center justify-center gap-2">
+            <span>
+              Showing {totalMatchingSimulators} matching workbenches for &ldquo;{searchQuery}&rdquo;
+            </span>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-slate-400 hover:text-white underline text-[11px]"
+            >
+              Reset filter
+            </button>
+          </div>
+        )}
+
+        {/* Department Switcher Tabs (Instant 1-Click Single Stage Switch) */}
+        {!searchQuery ? (
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+            {departments.map((dept) => {
+              const isActive = activeDepartment === dept.id;
+              return (
+                <button
+                  key={dept.id}
+                  onClick={() => {
+                    setActiveDepartment(dept.id);
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                    isActive
+                      ? 'bg-slate-100 text-slate-950 font-bold shadow-lg shadow-cyan-500/10 scale-[1.02]'
+                      : 'bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
+                  }`}
+                  aria-pressed={isActive}
+                >
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dept.accentColor }} />
+                  <span>{dept.name.split('&')[0].trim()}</span>
+                  <span
+                    className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                      isActive ? 'bg-slate-300 text-slate-900' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {dept.simulators.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2 mt-4 text-xs font-mono text-cyan-300 bg-cyan-950/40 border border-cyan-800/50 py-1.5 px-3 rounded-xl max-w-md mx-auto">
+            <span>Global search active: {totalMatchingSimulators} workbenches match &ldquo;{searchQuery}&rdquo;</span>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-slate-300 hover:text-white underline text-[11px] ml-1 font-semibold"
+            >
+              Clear
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Systematic Row-by-Row Department Pipeline */}
-      <div className="space-y-12 sm:space-y-16">
-        {filteredDepartments.map((dept) => {
-          const simCount = dept.simulators.length;
+      {/* Structured Department Matrix */}
+      <div className="space-y-16 sm:space-y-20">
+        {filteredDepartments.length === 0 ? (
+          <div className="p-12 text-center rounded-2xl border border-slate-800 bg-slate-950/60 font-mono text-xs text-slate-400 space-y-2">
+            <div>No matching topics found for &ldquo;{searchQuery}&rdquo;.</div>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-cyan-400 hover:underline font-bold"
+            >
+              Clear search query to show all 35+ workbenches
+            </button>
+          </div>
+        ) : (
+          filteredDepartments.map((dept) => {
+            const activeSimId = activeSpotlights[dept.id] || dept.simulators[0]?.id;
+            const activeSim = dept.simulators.find((s) => s.id === activeSimId) || dept.simulators[0];
 
-          return (
-            <div key={dept.id} id={`dept-group-${dept.id}`} className="space-y-5">
-              
-              {/* 1. DEPARTMENT IDENTITY BANNER */}
-              <div
-                className={`p-4 sm:p-5 rounded-2xl border ${dept.rowBorder} ${dept.rowBg} flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 transition-all duration-200`}
+            return (
+              <article
+                key={dept.id}
+                id={`dept-${dept.id}`}
+                className="rounded-3xl border border-slate-800/90 bg-[#060a14]/90 p-5 sm:p-7 lg:p-9 shadow-xl relative overflow-hidden"
               >
-                {/* Department Identity */}
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${dept.iconContainer}`}
-                  >
-                    {dept.icon}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${dept.codeBadge}`}>
-                        {dept.code}
-                      </span>
-                      <span className="text-[11px] font-mono text-slate-300 font-semibold">
-                        {simCount} Interactive Workbenches
-                      </span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    </div>
-
-                    <h3 className="text-lg sm:text-xl font-display font-extrabold text-white tracking-tight truncate">
-                      {dept.name}
-                    </h3>
+                {/* Top Department Brand & Overview Row */}
+                <div className="border-b border-slate-800/90 pb-6 mb-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     
-                    <p className="text-xs sm:text-sm text-slate-300 line-clamp-1 mt-0.5">
-                      {dept.tagline}
-                    </p>
-
-                    {dept.id === 'mechanical' && (
-                      <div className="mt-1.5">
-                        <a
-                          href="https://mech.livesimulators.com"
-                          target="_blank"
-                          rel="noopener"
-                          className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-amber-400 hover:text-amber-300 hover:underline transition-colors"
-                        >
-                          <span>Advanced Turbomachinery &amp; Rotor Dynamics →</span>
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right: Department Explore Action Button */}
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                  <a
-                    href={`/department/${dept.id}`}
-                    onClick={(e) => {
-                      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-                        e.preventDefault();
-                        onSelectDepartment(dept.id);
-                      }
-                    }}
-                    id={`btn-explore-${dept.id}`}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm active:scale-95 ${dept.buttonClass}`}
-                    title={`Open full ${dept.name} department workbench`}
-                  >
-                    <span>Full Department Hub</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-              </div>
-
-              {/* 2. COMPACT, HALF-SIZE DYNAMIC SIMULATOR CARDS GRID */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 sm:gap-3">
-                {dept.simulators.map((sim) => (
-                  <div
-                    key={sim.id}
-                    id={`card-sim-${sim.id}`}
-                    onClick={() => {
-                      if (typeof (window as any).gtag === 'function') {
-                        (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
-                      }
-                      onLaunchSimulator(sim);
-                    }}
-                    className={`group relative flex flex-col justify-between rounded-xl border ${dept.simCardBorder} bg-gradient-to-b from-slate-900/95 via-[#080e1d]/90 to-[#050913] p-3 cursor-pointer transition-all duration-200 hover:-translate-y-1 ${dept.simCardHoverShadow} shadow-md overflow-hidden`}
-                  >
-                    {/* Top Edge Ambient Light Bar */}
-                    <div
-                      className="absolute top-0 left-0 right-0 h-[2px] opacity-60 group-hover:opacity-100 transition-opacity"
-                      style={{
-                        background: `linear-gradient(90deg, transparent, ${sim.accentColor || dept.accentColor}, transparent)`,
-                      }}
-                    />
-
-                    <div className="space-y-2">
-                      {/* Sub-category Header & Verification Badges */}
-                      <div className="flex items-center justify-between gap-1.5">
-                        <span
-                          className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border truncate ${dept.subCategoryBadge}`}
-                        >
-                          {getSubCategoryLabel(sim)}
-                        </span>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <span
-                            className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${getDifficultyBadge(sim.difficulty)}`}
-                          >
-                            {sim.difficulty}
-                          </span>
-                          <span
-                            className="text-emerald-400 text-[9px] font-mono flex items-center"
-                            title="100% Analytically Verified Simulation"
-                          >
-                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                          </span>
-                        </div>
+                    {/* Left: Discipline Identity */}
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${dept.accentBg} ${dept.accentBorder} mt-0.5`}
+                      >
+                        {dept.icon}
                       </div>
 
-                      {/* Compact Animated Canvas Visualizer */}
-                      <div className="relative group-hover:scale-[1.01] transition-transform duration-200">
-                        <SimulatorCardPreview
-                          type={sim.type}
-                          accentColor={sim.accentColor || dept.accentColor}
-                          height={54}
-                          showFps={false}
-                        />
-                      </div>
-
-                      {/* Simulator Title */}
                       <div>
-                        <h4 className="text-xs sm:text-sm font-display font-bold text-white group-hover:text-cyan-300 transition-colors line-clamp-2 leading-snug tracking-tight">
-                          {sim.title}
-                        </h4>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${dept.badgeClass}`}>
+                            {dept.code}
+                          </span>
+                          <span className="text-[11px] font-mono text-slate-400 font-semibold">
+                            {dept.simulators.length} Verified Simulators
+                          </span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        </div>
 
-                        {/* Concise Physical Insight Tagline */}
-                        <p className="text-[11px] text-slate-400 line-clamp-2 mt-1 leading-relaxed font-sans">
-                          {sim.tagline}
+                        <h3 className="text-xl sm:text-2xl font-display font-black text-white tracking-tight">
+                          {dept.name}
+                        </h3>
+
+                        <p className="text-xs sm:text-sm text-slate-300 font-sans mt-1">
+                          {dept.tagline}
                         </p>
                       </div>
                     </div>
 
-                    {/* Card Footer: Standard Badge & Direct Launch Button */}
-                    <div className="pt-2 mt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5">
-                      <span
-                        className="text-[10px] font-mono text-slate-400 truncate max-w-[110px] flex items-center gap-1"
-                        title={sim.standardReference || sim.badge}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sim.accentColor || dept.accentColor }} />
-                        <span className="truncate">{sim.badge}</span>
-                      </span>
+                    {/* Right: Academic Benchmark Pill & Department Hub Link */}
+                    <div className="flex flex-wrap items-center gap-3 lg:self-center">
+                      <div className="hidden sm:block text-right font-mono text-[11px] text-slate-400 border-l border-slate-800 pl-3">
+                        <div className="text-[10px] text-slate-500 uppercase">Textbook Benchmark</div>
+                        <div className="text-slate-300 text-[11px] font-sans truncate max-w-[280px]">
+                          {dept.textbookBenchmark}
+                        </div>
+                      </div>
 
                       <a
-                        href={`/simulator/${sim.id}`}
-                        className={`launch-button px-2.5 py-0.5 rounded-lg text-[11px] font-bold font-mono flex items-center gap-1 shrink-0 transition-all active:scale-95 ${dept.launchBtnClass}`}
-                        rel="noopener"
+                        href={`/department/${dept.id}`}
                         onClick={(e) => {
-                          if (typeof (window as any).gtag === 'function') {
-                            (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
-                          }
                           if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
                             e.preventDefault();
-                            e.stopPropagation();
-                            onLaunchSimulator(sim);
+                            onSelectDepartment(dept.id);
                           }
                         }}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${dept.buttonClass}`}
+                        title={`Open full ${dept.name} department workbench`}
                       >
-                        <span>Simulate</span>
-                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        <span>Full Department Hub</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   </div>
-                ))}
-              </div>
 
-            </div>
-          );
-        })}
+                  {/* Plain-Text Editorial Curriculum Summary (High SEO & Educational Value) */}
+                  <div className="mt-4 pt-4 border-t border-slate-800/60 grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs font-sans text-slate-300 leading-relaxed">
+                    <div className="lg:col-span-8 space-y-1">
+                      <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400 block">
+                        Curriculum Scope &amp; Pedagogical Objective:
+                      </span>
+                      <p>{dept.academicOverview}</p>
+                    </div>
+
+                    <div className="lg:col-span-4 rounded-xl bg-slate-950/70 border border-slate-800/80 p-3 font-mono text-[11px] flex flex-col justify-between">
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+                        Governing Formulation:
+                      </span>
+                      <div className="py-1 text-cyan-300 overflow-x-auto custom-scrollbar">
+                        <MathView math={dept.governingTheory} block />
+                      </div>
+                      <span className="text-[9.5px] text-slate-400">
+                        Discretized via 4th-order numerical solvers
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* DUAL-PANE LAYOUT: Left Plain-Text Topic Directory (65%) | Right Live Spotlight Console (35%) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                     {/* LEFT: Plain-Text Editorial Simulator Directory (Compact, Non-Scrolling, High-Density) */}
+                  <div className="lg:col-span-7 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-800/80">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-300">Coursework Directory ({dept.simulators.length} Topics)</span>
+                        <span className="hidden sm:inline-block text-[9.5px] px-2 py-0.5 rounded bg-slate-800/80 text-cyan-400 font-sans normal-case">
+                          Instant 1-Click Interactive Preview
+                        </span>
+                      </div>
+                      <span className="text-cyan-400 text-[10px]">Hover or Click to Preview</span>
+                    </div>
+
+                    {/* Compact non-scrolling directory list */}
+                    <div className="space-y-1">
+                      {dept.simulators.map((sim, index) => {
+                        const isActive = activeSim && sim.id === activeSim.id;
+
+                        return (
+                          <div
+                            key={sim.id}
+                            onMouseEnter={() =>
+                              setActiveSpotlights((prev) => ({ ...prev, [dept.id]: sim.id }))
+                            }
+                            onClick={() => {
+                              setActiveSpotlights((prev) => ({ ...prev, [dept.id]: sim.id }));
+                            }}
+                            className={`group px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-between gap-3 border ${
+                              isActive
+                                ? 'bg-slate-900 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.12)]'
+                                : 'border-transparent hover:bg-slate-900/60 hover:border-slate-800/80'
+                            }`}
+                          >
+                            {/* Left: Index + Title + 1-Line Tagline */}
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <span
+                                className={`text-[11px] font-mono font-bold shrink-0 w-6 text-center rounded py-0.5 transition-colors ${
+                                  isActive
+                                    ? 'bg-cyan-500/20 text-cyan-300'
+                                    : 'text-slate-500 group-hover:text-slate-300 bg-slate-900/60'
+                                }`}
+                              >
+                                {String(index + 1).padStart(2, '0')}
+                              </span>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={`/simulator/${sim.id}`}
+                                    onClick={(e) => {
+                                      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                                        e.preventDefault();
+                                        onLaunchSimulator(sim);
+                                      }
+                                    }}
+                                    className={`text-xs sm:text-[13px] font-display font-bold transition-colors tracking-tight truncate ${
+                                      isActive ? 'text-cyan-300' : 'text-white group-hover:text-cyan-200'
+                                    }`}
+                                  >
+                                    {sim.title}
+                                  </a>
+
+                                  <span
+                                    className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold shrink-0 hidden md:inline-block ${getDifficultyBadge(
+                                      sim.difficulty
+                                    )}`}
+                                  >
+                                    {sim.difficulty}
+                                  </span>
+                                </div>
+
+                                {/* 1-Line Clean Tagline (Truncated, No Bulky 3rd Line) */}
+                                <p className="text-[11px] text-slate-400 font-sans truncate leading-none mt-1 group-hover:text-slate-300">
+                                  {sim.tagline}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Right: Sleek Action Button */}
+                            <div className="shrink-0 flex items-center gap-2">
+                              <a
+                                href={`/simulator/${sim.id}`}
+                                onClick={(e) => {
+                                  if (typeof (window as any).gtag === 'function') {
+                                    (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
+                                  }
+                                  if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onLaunchSimulator(sim);
+                                  }
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold flex items-center gap-1 transition-all ${
+                                  isActive
+                                    ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                                    : 'bg-slate-800/80 text-slate-400 group-hover:text-white group-hover:bg-slate-700'
+                                }`}
+                              >
+                                <span>Simulate</span>
+                                <ChevronRight className="w-3 h-3" />
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* RIGHT: High-Resolution Interactive Spotlight Console */}
+                  {activeSim && (
+                    <div className="lg:col-span-5 rounded-2xl border border-slate-700/80 bg-slate-950 p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xl sticky top-24">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-cyan-400" />
+                          <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+                            Interactive Spotlight
+                          </span>
+                        </div>
+
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                          60 FPS ODE SOLVER
+                        </span>
+                      </div>
+
+                      {/* Active Simulator Title & Quick Tag */}
+                      <div>
+                        <h4 className="text-base sm:text-lg font-display font-extrabold text-white">
+                          {activeSim.title}
+                        </h4>
+                        <p className="text-xs text-slate-300 font-sans mt-1 leading-relaxed">
+                          {activeSim.description || activeSim.tagline}
+                        </p>
+                      </div>
+
+                      {/* High-Resolution Live Canvas Viewport (170px height) */}
+                      <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-[#050914] shadow-inner">
+                        <SimulatorCardPreview
+                          type={activeSim.type}
+                          accentColor={activeSim.accentColor || dept.accentColor}
+                          height={165}
+                          showFps={false}
+                        />
+
+                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-slate-950/80 border border-slate-800 text-[9px] font-mono text-slate-400 pointer-events-none">
+                          Active Telemetry
+                        </div>
+                      </div>
+
+                      {/* Real-time Math Formulation Callout */}
+                      {activeSim.governingEquation && (
+                        <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-mono space-y-1">
+                          <div className="text-[10px] text-slate-400 uppercase tracking-wider">
+                            Governing Model:
+                          </div>
+                          <div className="text-cyan-300 py-0.5 overflow-x-auto custom-scrollbar">
+                            <MathView math={activeSim.governingEquation} block />
+                          </div>
+                          {activeSim.equationDescription && (
+                            <div className="text-[10px] text-slate-400 font-sans">
+                              {activeSim.equationDescription}
+                            </div>
+                          )}
+
+                          {/* =============================================================== */}
+                          {/* WOW ENHANCEMENT: INTERACTIVE STEP-BY-STEP ANALYTICAL PROOF EXPANDER */}
+                          {/* =============================================================== */}
+                          {activeSim.analyticalProof && (
+                            <div className="pt-2 mt-2 border-t border-slate-800">
+                              <button
+                                type="button"
+                                onClick={() => setShowDerivation(!showDerivation)}
+                                className="text-[10.5px] font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                <span>{showDerivation ? 'Hide Analytical Proof' : 'View Step-by-Step Derivation & Proof'}</span>
+                                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDerivation ? 'rotate-180' : ''}`} />
+                              </button>
+
+                              {showDerivation && (
+                                <div className="mt-2.5 p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-sans text-slate-300 leading-relaxed space-y-2 animate-fadeIn">
+                                  <div className="text-[10px] font-mono text-cyan-300 uppercase tracking-wider font-semibold">
+                                    First-Principles Mathematical Proof:
+                                  </div>
+                                  <p>{activeSim.analyticalProof}</p>
+                                  {activeSim.validationTest && (
+                                    <div className="pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-400">
+                                      <span className="text-emerald-400 font-bold">Analytical Verification Benchmark: </span>
+                                      <span>{activeSim.validationTest}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Engineering Domain Topic Focus */}
+                      <div className="text-[11px] font-mono text-cyan-400/90 flex items-center gap-1.5 pt-0.5">
+                        <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        <span className="truncate">{activeSim.disciplineName || 'Interactive Engineering Workbench'}</span>
+                      </div>
+
+                      {/* Launch Spotlight Simulator Button */}
+                      <a
+                        href={`/simulator/${activeSim.id}`}
+                        onClick={(e) => {
+                          if (typeof (window as any).gtag === 'function') {
+                            (window as any).gtag('event', 'simulator_launch', { simulator: activeSim.title });
+                          }
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                            e.preventDefault();
+                            onLaunchSimulator(activeSim);
+                          }
+                        }}
+                        className={`w-full py-2.5 px-4 rounded-xl font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg active:scale-98 ${dept.buttonClass}`}
+                      >
+                        <span>Launch Full {activeSim.title.split(' ')[0]} Lab</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </a>
+                    </div>
+                  )}
+
+                </div>
+
+              </article>
+            );
+          })
+        )}
       </div>
     </section>
   );

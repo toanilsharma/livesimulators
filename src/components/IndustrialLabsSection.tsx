@@ -79,14 +79,14 @@ export const IndustrialLabsSection: React.FC = () => {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[850px] h-[350px] bg-cyan-500/10 rounded-full blur-[160px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[550px] h-[300px] bg-blue-500/10 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Fluid full-width container fitting all desktop/laptop monitors */}
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 relative z-10">
+      {/* Fit-to-screen fluid container with balanced padding */}
+      <div className="w-full max-w-[1720px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 relative z-10">
         
         {/* Top Enterprise Section Banner */}
         <div className="text-center max-w-4xl mx-auto mb-10 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-amber-500/15 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold uppercase tracking-wider mb-4 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>STAGE 2 • ENTERPRISE PRO SUITES • MISSION-CRITICAL SIMULATORS</span>
+            <span>STAGE 2 • ADVANCED MULTI-DOMAIN SUITES • HIGH-FIDELITY SIMULATORS</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
           </div>
 
@@ -95,19 +95,28 @@ export const IndustrialLabsSection: React.FC = () => {
           </h2>
 
           <p className="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed font-sans max-w-3xl mx-auto">
-            High-accuracy, multi-module computational platforms built for practicing engineers, utilities, and EPC consultants. 
-            Calibrated to published engineering standards (IEEE, IEC, NFPA, NERC, API, ASME) for zero-risk hardware testing, 
-            fault mitigation, and operator training.
+            High-accuracy, multi-module computational platforms built for practicing engineers, educators, and students. 
+            Formulated from classical physics conservation laws and university engineering curricula (covering topics discussed in 
+            IEEE, IEC, NFPA, NERC, API, and ASME academic literature) for zero-risk modeling, fault analysis, and intuitive operator learning.
           </p>
         </div>
 
-        {/* 5 Pro Cards Grid: Enriched & enlarged SLD area, 15% lower card height, single-line bottom learning CTA */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {LABS.map((lab) => (
+        {/* 5 Pro Cards Grid: Symmetrically centered with equal spacing on left & right */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-6">
+          {LABS.map((lab, index) => {
+            const isFourth = index === 3;
+            const isFifth = index === 4;
+            return (
             <div
               key={lab.id}
               id={`pro-lab-${lab.id}`}
-              className="group relative bg-[#090e1a]/95 hover:bg-[#0c1424] border border-slate-800 hover:border-cyan-500/60 rounded-2xl overflow-hidden transition-all duration-300 flex flex-col shadow-xl hover:shadow-[0_0_35px_rgba(6,182,212,0.18)]"
+              className={`group relative bg-[#090e1a]/95 hover:bg-[#0c1424] border border-slate-800 hover:border-cyan-500/60 rounded-2xl overflow-hidden transition-all duration-300 flex flex-col shadow-xl hover:shadow-[0_0_35px_rgba(6,182,212,0.18)] ${
+                isFourth
+                  ? 'xl:col-span-2 xl:col-start-2'
+                  : isFifth
+                  ? 'xl:col-span-2 md:col-span-2 md:max-w-md md:mx-auto xl:max-w-none xl:mx-0'
+                  : 'xl:col-span-2'
+              }`}
             >
               {/* Significantly Enlarged & Clear Working Animation Simulator Canvas */}
               <div className="relative h-60 sm:h-64 lg:h-68 w-full overflow-hidden bg-[#050914] border-b border-slate-800/80 shrink-0">
@@ -233,10 +242,10 @@ export const IndustrialLabsSection: React.FC = () => {
                 <span className="text-[10px] sm:text-[11px] xl:text-[11.5px] font-display font-black uppercase tracking-tight text-white group-hover/cta:text-cyan-200 whitespace-nowrap text-center leading-none">
                   Click Here To Learn via Live Animations and Real Physics
                 </span>
-                <ArrowRight className="w-3.5 h-3.5 text-cyan-400 group-hover/cta:translate-x-1 transition-transform shrink-0" />
               </a>
             </div>
-          ))}
+          );
+        })}
         </div>
 
       </div>

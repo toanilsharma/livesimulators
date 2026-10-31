@@ -290,8 +290,8 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
   });
 
   return (
-    <div className="min-h-screen bg-[#080d16] text-slate-100 py-5 sm:py-8 px-3 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 relative overflow-x-hidden w-full max-w-full">
-      <div className="w-full max-w-[1920px] mx-auto space-y-6 sm:space-y-8">
+    <div className="min-h-screen bg-[#080d16] text-slate-100 py-5 sm:py-8 px-4 sm:px-6 lg:px-10 xl:px-14 relative overflow-x-hidden w-full max-w-full">
+      <div className="w-full max-w-[1720px] 2xl:max-w-[1800px] mx-auto space-y-6 sm:space-y-8">
         
         {/* Navigation Breadcrumb Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">

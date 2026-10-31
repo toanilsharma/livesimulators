@@ -274,7 +274,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Main Minimal World-Class Navigation Bar */}
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 h-16 flex items-center justify-between">
+      <div className="w-full max-w-[1720px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 h-16 flex items-center justify-between">
         
         {/* LIVE SIMULATORS Wordmark */}
         <a 

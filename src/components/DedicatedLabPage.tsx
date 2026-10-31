@@ -230,7 +230,7 @@ export const DedicatedLabPage: React.FC<DedicatedLabPageProps> = ({ labId, onBac
               </div>
               <div>
                 <h3 className="text-base font-bold text-white tracking-tight">Initializing {lab.name}</h3>
-                <p className="text-xs font-mono text-slate-400 mt-1">Loading numerical solvers & IEEE/IEC standard models...</p>
+                <p className="text-xs font-mono text-slate-400 mt-1">Loading numerical solvers &amp; multi-domain physical models...</p>
               </div>
             </div>
           )}

@@ -2136,7 +2136,7 @@ export const Hero: React.FC<HeroProps> = ({
                       <span>Working Engineers</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     </div>
-                    <div className="text-xs font-bold text-white group-hover:text-amber-200">Industrial Suites Pro (IEEE)</div>
+                    <div className="text-xs font-bold text-white group-hover:text-amber-200">Industrial Multi-Domain Suites</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
