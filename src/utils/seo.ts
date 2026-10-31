@@ -4,6 +4,7 @@ import { LABS } from '../config/labs';
 import { routeToPath, SITE_URL } from './routes';
 import { cleanLatexToPlainText } from './engineeringTheory';
 import { HOME_FAQ_DATA } from '../components/HomeFaq';
+import { DEPARTMENT_FAQ_DATA } from '../components/department/DepartmentFaq';
 
 export interface RouteSeoMetadata {
   title: string;
@@ -447,6 +448,74 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         })),
       };
 
+      const courseSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Course',
+        '@id': `${canonicalUrl}#course`,
+        name: `${dept.name} (${dept.code}) Virtual Engineering Laboratory`,
+        description: dept.description,
+        courseCode: dept.code,
+        educationalCredentialAwarded: 'ABET Practical Simulation Proficiency',
+        provider: {
+          '@id': `${SITE_URL}/#organization`,
+        },
+        hasCourseInstance: {
+          '@type': 'CourseInstance',
+          courseMode: 'online',
+          courseWorkload: 'Self-paced Interactive Engineering Simulations',
+          instructor: {
+            '@id': `${SITE_URL}/#founder`,
+          },
+        },
+        syllabusSections: dept.subfields.map((sub, idx) => ({
+          '@type': 'Syllabus',
+          name: sub,
+          position: idx + 1,
+        })),
+      };
+
+      const deptFaqs = DEPARTMENT_FAQ_DATA[dept.id] || [];
+      const faqSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        '@id': `${canonicalUrl}#faq`,
+        mainEntity: deptFaqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
+          },
+        })),
+      };
+
+      const definedTermSetSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'DefinedTermSet',
+        '@id': `${canonicalUrl}#ontology`,
+        name: `${dept.name} Mathematical & Computational Taxonomy`,
+        hasDefinedTerm: dept.subfields.map((sub) => ({
+          '@type': 'DefinedTerm',
+          name: sub,
+          description: `Core engineering curriculum subfield within ${dept.name} (${dept.code}).`,
+          inDefinedTermSet: `${canonicalUrl}#ontology`,
+        })),
+      };
+
+      const learningResourceSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'LearningResource',
+        '@id': `${canonicalUrl}#learningresource`,
+        name: `${dept.name} Interactive Physics Solvers`,
+        learningResourceType: 'InteractiveSimulation',
+        educationalLevel: 'Undergraduate & Professional Engineering',
+        interactivityType: 'active',
+        teaches: `${dept.name} first-principles physics and differential equations.`,
+        author: {
+          '@id': `${SITE_URL}/#founder`,
+        },
+      };
+
       return {
         title,
         description,
@@ -464,6 +533,10 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           WEBSITE_SCHEMA,
           breadcrumbSchema,
           itemListSchema,
+          courseSchema,
+          faqSchema,
+          definedTermSetSchema,
+          learningResourceSchema,
         ],
       };
     }

@@ -233,6 +233,7 @@ export default function App() {
             departmentId={route.departmentId}
             onBackToHome={handleBackToHome}
             onLaunchSimulator={handleLaunchSimulator}
+            onSelectDepartment={handleSelectDepartment}
           />
         </main>
       )}

@@ -19,7 +19,12 @@ import {
   Layers,
   FlaskConical,
   Atom,
-  Gauge
+  Gauge,
+  LayoutGrid,
+  Table,
+  Eye,
+  FileCheck,
+  FileText
 } from 'lucide-react';
 import { DisciplineId, SimulatorItem } from '../types';
 import {
@@ -33,11 +38,26 @@ import {
 } from '../data/simulators';
 import { MathView } from './MathView';
 import { SimulatorCardPreview } from './SimulatorCardPreview';
+import { DepartmentHeroSandbox } from './department/DepartmentHeroSandbox';
+import { DepartmentRoadmap } from './department/DepartmentRoadmap';
+import { DepartmentSpecTable } from './department/DepartmentSpecTable';
+import { DepartmentStickyBar, DepartmentViewMode } from './department/DepartmentStickyBar';
+import { DepartmentInspectorDrawer } from './department/DepartmentInspectorDrawer';
+import { DepartmentFormulaCheatSheet } from './department/DepartmentFormulaCheatSheet';
+import { DepartmentIndustryApplications } from './department/DepartmentIndustryApplications';
+import { DepartmentStandardsMatrix } from './department/DepartmentStandardsMatrix';
+import { DepartmentKnowledgeBlock } from './department/DepartmentKnowledgeBlock';
+import { DepartmentFaq } from './department/DepartmentFaq';
+import { DepartmentLabWorksheetModal } from './department/DepartmentLabWorksheetModal';
+import { DepartmentNextNavigator } from './department/DepartmentNextNavigator';
+import { DepartmentCategoryShowcase } from './department/DepartmentCategoryShowcase';
+import { soundEngine } from '../utils/audio';
 
 interface DepartmentPageProps {
   departmentId: DisciplineId;
   onBackToHome: () => void;
   onLaunchSimulator: (sim: SimulatorItem) => void;
+  onSelectDepartment?: (deptId: DisciplineId) => void;
 }
 
 // Subcategory classifier for each simulator
@@ -140,10 +160,11 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
   departmentId,
   onBackToHome,
   onLaunchSimulator,
+  onSelectDepartment,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | 'Fundamentals' | 'Intermediate' | 'Advanced'>('all');
-  const [selectedSubfield, setSelectedSubfield] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<DepartmentViewMode>('grouped');
+  const [inspectingSim, setInspectingSim] = useState<SimulatorItem | null>(null);
+  const [isWorksheetOpen, setIsWorksheetOpen] = useState(false);
 
   const departmentConfig = {
     electrical: {
@@ -266,31 +287,24 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
     labCapacity: '4 Dedicated Physics Engines',
   };
 
-  // Derive distinct subfields for filtering
-  const availableSubfields = Array.from(
-    new Set(departmentConfig.simulators.map((s) => getSimulatorSubCategory(s.type).subfield))
-  );
-
-  // Filter simulators by search, difficulty, and subfield
-  const filteredSimulators = departmentConfig.simulators.filter((sim) => {
-    const subCat = getSimulatorSubCategory(sim.type);
-    const matchesSearch =
-      sim.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sim.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      subCat.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sim.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesDifficulty =
-      selectedDifficulty === 'all' || sim.difficulty === selectedDifficulty;
-
-    const matchesSubfield =
-      selectedSubfield === 'all' || subCat.subfield === selectedSubfield;
-
-    return matchesSearch && matchesDifficulty && matchesSubfield;
-  });
-
   return (
     <div className="min-h-screen bg-[#080d16] text-slate-100 py-5 sm:py-8 px-4 sm:px-6 lg:px-10 xl:px-14 relative overflow-x-hidden w-full max-w-full">
+      {/* Sticky Anchor & View Navigation Bar */}
+      <DepartmentStickyBar
+        departmentId={departmentId}
+        departmentCode={departmentConfig.code}
+        departmentName={departmentConfig.name}
+        accentColor={departmentConfig.color}
+        totalCount={departmentConfig.simulators.length}
+        filteredCount={departmentConfig.simulators.length}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onOpenWorksheet={() => {
+          soundEngine.playRelayClick();
+          setIsWorksheetOpen(true);
+        }}
+      />
+
       <div className="w-full max-w-[1720px] 2xl:max-w-[1800px] mx-auto space-y-6 sm:space-y-8">
         
         {/* Navigation Breadcrumb Bar */}
@@ -308,10 +322,22 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                soundEngine.playRelayClick();
+                setIsWorksheetOpen(true);
+              }}
+              className="text-xs font-mono font-semibold px-2.5 py-1 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25 transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Open ABET Laboratory Worksheet Generator"
+            >
+              <FileCheck className="w-3.5 h-3.5" />
+              <span>Lab Worksheet</span>
+            </button>
+
             <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-xl border ${departmentConfig.accentBg}`}>
               {departmentConfig.code}
             </span>
-            <span className="text-xs font-mono text-emerald-400 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-1 font-bold">
+            <span className="text-xs font-mono text-emerald-400 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-1 font-bold hidden sm:flex">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>100% Physics Verified</span>
             </span>
@@ -382,451 +408,20 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
           </div>
         </div>
 
-        {/* Curriculum Track: Circuit Theory I Lab Sequence (Related Concepts) */}
-        {departmentId === 'electrical' && (
-          <section
-            aria-label="Curriculum Track: Circuit Theory I Lab Sequence"
-            className="rounded-2xl border border-cyan-900/60 bg-gradient-to-br from-slate-950 via-slate-900/90 to-slate-950 p-5 sm:p-6 shadow-xl space-y-4"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shrink-0">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                      Curriculum Track
-                    </span>
-                    <span className="text-xs text-slate-400 font-mono">Related Concepts Progression</span>
-                  </div>
-                  <h2 className="text-base sm:text-lg font-bold text-white mt-0.5">
-                    <a
-                      href="/simulator/rlc-resonance"
-                      onClick={(e) => {
-                        const target = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === 'rlc-resonance');
-                        if (!e.ctrlKey && !e.metaKey && !e.shiftKey && target) {
-                          e.preventDefault();
-                          onLaunchSimulator(target);
-                        }
-                      }}
-                      className="text-cyan-300 hover:text-cyan-200 underline decoration-cyan-500/40 underline-offset-4 transition-colors"
-                    >
-                      Circuit Theory I Lab Sequence
-                    </a>
-                  </h2>
-                </div>
-              </div>
-              <p className="text-xs text-slate-400 max-w-lg leading-relaxed">
-                A progressive experimental sequence spanning second-order differential equation resonance, active biquad filtering, spectral harmonic synthesis, and high-frequency transmission line wave dynamics.
-              </p>
-            </div>
-
-            {/* Sequence Flow Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                {
-                  id: 'rlc-resonance',
-                  step: '01',
-                  name: 'RLC Circuit Resonance',
-                  badge: '2nd-Order ODE',
-                  desc: 'Canonical series/parallel RLC frequency response, quality factor, and transient damping.',
-                  accent: 'border-cyan-800/60 hover:border-cyan-500 text-cyan-400',
-                },
-                {
-                  id: 'sallen-key-filter',
-                  step: '02',
-                  name: 'Sallen-Key Active Filter',
-                  badge: 'Active Biquad',
-                  desc: 'Op-amp frequency selectivity, Butterworth vs Chebyshev peaking, and phase roll-off.',
-                  accent: 'border-indigo-800/60 hover:border-indigo-500 text-indigo-400',
-                },
-                {
-                  id: 'fourier-synthesis',
-                  step: '03',
-                  name: 'Fourier Series Synthesis',
-                  badge: 'Harmonic Theory',
-                  desc: 'Harmonic decomposition of square and triangle waves, Gibbs phenomenon, and IEEE 519 THD.',
-                  accent: 'border-pink-800/60 hover:border-pink-500 text-pink-400',
-                },
-                {
-                  id: 'transmission-line',
-                  step: '04',
-                  name: 'RF Transmission Line',
-                  badge: 'Wave Propagation',
-                  desc: 'Distributed parameter telegrapher equations, impedance mismatch, reflections, and VSWR.',
-                  accent: 'border-amber-800/60 hover:border-amber-500 text-amber-400',
-                },
-              ].map((item, idx) => {
-                const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === item.id);
-                return (
-                  <div
-                    key={item.id}
-                    className={`relative rounded-xl bg-slate-900/80 border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-lg ${item.accent}`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-2">
-                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
-                          Step {item.step}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-400">{item.badge}</span>
-                      </div>
-                      <h3 className="text-xs sm:text-sm font-bold text-white mb-1">
-                        <a
-                          href={`/simulator/${item.id}`}
-                          onClick={(e) => {
-                            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && sim) {
-                              e.preventDefault();
-                              onLaunchSimulator(sim);
-                            }
-                          }}
-                          className="hover:text-cyan-300 transition-colors flex items-center justify-between"
-                        >
-                          <span>{item.name}</span>
-                          <ArrowRight className="w-3.5 h-3.5 shrink-0 opacity-70 group-hover:opacity-100" />
-                        </a>
-                      </h3>
-                      <p className="text-[11px] text-slate-400 leading-relaxed font-sans">{item.desc}</p>
-                    </div>
-                    <div className="pt-2.5 mt-2 border-t border-slate-800/80 flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-slate-500">
-                        {idx < 3 ? 'Advances to next →' : 'Sequence capstone'}
-                      </span>
-                      <a
-                        href={`/simulator/${item.id}`}
-                        onClick={(e) => {
-                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey && sim) {
-                            e.preventDefault();
-                            onLaunchSimulator(sim);
-                          }
-                        }}
-                        className="text-[11px] font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-                      >
-                        <span>Launch</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Curriculum Track: Mechanical Dynamics Sequence (Related Concepts) */}
-        {departmentId === 'mechanical' && (
-          <section
-            aria-label="Curriculum Track: Mechanical Dynamics Sequence"
-            className="rounded-2xl border border-amber-900/60 bg-gradient-to-br from-slate-950 via-slate-900/90 to-slate-950 p-5 sm:p-6 shadow-xl space-y-4"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shrink-0">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                      Curriculum Track
-                    </span>
-                    <span className="text-xs text-slate-400 font-mono">Related Concepts Progression</span>
-                  </div>
-                  <h2 className="text-base sm:text-lg font-bold text-white mt-0.5">
-                    <a
-                      href="/simulator/harmonic-oscillator"
-                      onClick={(e) => {
-                        const target = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === 'harmonic-oscillator');
-                        if (!e.ctrlKey && !e.metaKey && !e.shiftKey && target) {
-                          e.preventDefault();
-                          onLaunchSimulator(target);
-                        }
-                      }}
-                      className="text-amber-300 hover:text-amber-200 underline decoration-amber-500/40 underline-offset-4 transition-colors"
-                    >
-                      Mechanical Dynamics Sequence
-                    </a>
-                  </h2>
-                </div>
-              </div>
-              <p className="text-xs text-slate-400 max-w-lg leading-relaxed">
-                A progressive mechanical engineering sequence connecting single-degree-of-freedom vibrations to multi-bar linkage kinematics, machine gearing, and thermodynamic steam cycles.
-              </p>
-            </div>
-
-            {/* Sequence Flow Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                {
-                  id: 'harmonic-oscillator',
-                  step: '01',
-                  name: 'Harmonic Oscillator',
-                  badge: 'Vibrations & SDOF',
-                  desc: 'Mass-spring-damper resonance, dynamic magnification factor M(ω), and 90° phase shift.',
-                  accent: 'border-amber-800/60 hover:border-amber-500 text-amber-400',
-                },
-                {
-                  id: 'four-bar-mechanism',
-                  step: '02',
-                  name: '4-Bar Mechanism',
-                  badge: 'Planar Kinematics',
-                  desc: 'Grashof mobility criterion, Freudenstein loop closure, and transmission angle tracking.',
-                  accent: 'border-orange-800/60 hover:border-orange-500 text-orange-400',
-                },
-                {
-                  id: 'spur-gear-mesh',
-                  step: '03',
-                  name: 'Spur Gear Mesh',
-                  badge: 'Machine Elements',
-                  desc: 'Conjugate involute tooth action, pitch line velocity, and AGMA 2001 contact ratio.',
-                  accent: 'border-emerald-800/60 hover:border-emerald-500 text-emerald-400',
-                },
-                {
-                  id: 'rankine-cycle',
-                  step: '04',
-                  name: 'Rankine Cycle',
-                  badge: 'Thermodynamics',
-                  desc: 'Steam boiler heat addition, non-isentropic turbine expansion, and thermal efficiency on T-s diagrams.',
-                  accent: 'border-cyan-800/60 hover:border-cyan-500 text-cyan-400',
-                },
-              ].map((item, idx) => {
-                const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === item.id);
-                return (
-                  <div
-                    key={item.id}
-                    className={`relative rounded-xl bg-slate-900/80 border p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-lg ${item.accent}`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-2">
-                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
-                          Step {item.step}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-400">{item.badge}</span>
-                      </div>
-                      <h3 className="text-xs sm:text-sm font-bold text-white mb-1">
-                        <a
-                          href={`/simulator/${item.id}`}
-                          onClick={(e) => {
-                            if (!e.ctrlKey && !e.metaKey && !e.shiftKey && sim) {
-                              e.preventDefault();
-                              onLaunchSimulator(sim);
-                            }
-                          }}
-                          className="hover:text-amber-300 transition-colors flex items-center justify-between"
-                        >
-                          <span>{item.name}</span>
-                          <ArrowRight className="w-3.5 h-3.5 shrink-0 opacity-70 group-hover:opacity-100" />
-                        </a>
-                      </h3>
-                      <p className="text-[11px] text-slate-400 leading-relaxed font-sans">{item.desc}</p>
-                    </div>
-                    <div className="pt-2.5 mt-2 border-t border-slate-800/80 flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-slate-500">
-                        {idx < 3 ? 'Advances to next →' : 'Sequence capstone'}
-                      </span>
-                      <a
-                        href={`/simulator/${item.id}`}
-                        onClick={(e) => {
-                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey && sim) {
-                            e.preventDefault();
-                            onLaunchSimulator(sim);
-                          }
-                        }}
-                        className="text-[11px] font-mono font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1"
-                      >
-                        <span>Launch</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Catalog Control Bar: Subfields, Search & Difficulty Filter */}
-        <div className="space-y-3 bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-md">
-          {/* Subfield Domain Filter Pills (Fast & Intuitive Navigation) */}
-          <div className="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-800/60">
-            <span className="text-xs font-mono text-slate-400 mr-1 flex items-center gap-1 font-semibold">
-              <Filter className="w-3.5 h-3.5 text-cyan-400" />
-              Subfield:
-            </span>
-            <button
-              onClick={() => setSelectedSubfield('all')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                selectedSubfield === 'all'
-                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                  : 'bg-slate-950/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
-              }`}
-            >
-              All Subfields ({departmentConfig.simulators.length})
-            </button>
-            {availableSubfields.map((sf) => (
-              <button
-                key={sf}
-                onClick={() => setSelectedSubfield(sf)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  selectedSubfield === sf
-                    ? 'bg-slate-100 text-slate-950 font-bold shadow-sm'
-                    : 'bg-slate-950/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
-                }`}
-              >
-                {sf}
-              </button>
-            ))}
-          </div>
-
-          {/* Search & Difficulty Filter Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-white">
-                Showing {filteredSimulators.length} of {departmentConfig.simulators.length} Simulators
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5">
-              {/* Search Input */}
-              <div className="relative min-w-[200px] flex-1 sm:flex-initial">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search simulators..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-
-              {/* Difficulty Filter */}
-              <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-xl border border-slate-700 shrink-0">
-                {(['all', 'Fundamentals', 'Intermediate', 'Advanced'] as const).map((lvl) => (
-                  <button
-                    key={lvl}
-                    onClick={() => setSelectedDifficulty(lvl)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                      selectedDifficulty === lvl
-                        ? 'bg-cyan-500 text-slate-950 font-bold'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {lvl === 'all' ? 'All' : lvl}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Simulators Grid: Sleek, Home-Page Proportion, Distinctive Previews */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-4.5">
-          {filteredSimulators.map((sim) => {
-            const subCat = getSimulatorSubCategory(sim.type);
-
-            return (
-              <div
-                key={sim.id}
-                id={`sim-card-${sim.id}`}
-                onClick={() => {
-                  if (typeof (window as any).gtag === 'function') {
-                    (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
-                  }
-                  onLaunchSimulator(sim);
-                }}
-                className={`group p-4 rounded-2xl border border-slate-800 bg-slate-900/80 hover:bg-slate-850 cursor-pointer transition-all duration-200 flex flex-col justify-between shadow-sm hover:shadow-lg hover:-translate-y-0.5 ${departmentConfig.simCardHover}`}
-              >
-                <div className="space-y-3">
-                  {/* Top Subcategory Badge & Difficulty Pill */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border truncate"
-                      style={{
-                        color: sim.accentColor || departmentConfig.color,
-                        borderColor: `${sim.accentColor || departmentConfig.color}40`,
-                        backgroundColor: `${sim.accentColor || departmentConfig.color}15`,
-                      }}
-                    >
-                      {subCat.label}
-                    </span>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 border border-slate-700/60 text-slate-400">
-                        {sim.difficulty}
-                      </span>
-                      <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-0.5" title="100% Physics Verified">
-                        <CheckCircle2 className="w-3 h-3" />
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 100% Unique 60 FPS Animated Canvas Preview */}
-                  <SimulatorCardPreview
-                    type={sim.type}
-                    accentColor={sim.accentColor || departmentConfig.color}
-                  />
-
-                  {/* Title */}
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-white transition-colors line-clamp-2 leading-snug">
-                      {sim.title}
-                    </h3>
-
-                    {/* Concise Engineering Tagline */}
-                    <p className="text-xs text-slate-400 line-clamp-2 mt-1.5 leading-relaxed font-sans">
-                      {sim.tagline}
-                    </p>
-                  </div>
-
-                  {/* 2 Key Telemetry Metric Readout Chips */}
-                  <div className="grid grid-cols-2 gap-1.5 pt-1">
-                    {sim.keyMetrics.slice(0, 2).map((km, idx) => (
-                      <div
-                        key={idx}
-                        className="px-2 py-1 rounded-md bg-slate-950/80 border border-slate-800 flex items-center justify-between text-[11px] font-mono"
-                      >
-                        <span className="text-slate-400 truncate">{km.label}</span>
-                        <span className="text-cyan-300 font-bold ml-1 shrink-0">{km.unit || 'unitless'}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Card Footer: Standard Badge & Direct Launch */}
-                <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between gap-1">
-                  <span
-                    className="text-[11px] font-mono text-slate-400 truncate max-w-[130px]"
-                    title={sim.standardReference || sim.badge}
-                  >
-                    {sim.badge}
-                  </span>
-
-                  <a
-                    href={`/simulator/${sim.id}`}
-                    className="launch-button text-xs font-bold font-mono text-slate-300 group-hover:text-white flex items-center gap-1 shrink-0 transition-colors"
-                    rel="noopener"
-                    onClick={(e) => {
-                      if (typeof (window as any).gtag === 'function') {
-                        (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
-                      }
-                      if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onLaunchSimulator(sim);
-                      }
-                    }}
-                  >
-                    <span>Launch</span>
-                    <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </a>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* Curated Categorized Simulators Showcase (Immediately Above the Fold!) */}
+        <DepartmentCategoryShowcase
+          departmentId={departmentId}
+          accentColor={departmentConfig.color}
+          simulators={departmentConfig.simulators}
+          onLaunchSimulator={onLaunchSimulator}
+          onInspectSimulator={setInspectingSim}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
 
         {/* Dedicated Subdomain Feature Section for Mechanical Digital Twins */}
         {departmentId === 'mechanical' && (
-          <section className="relative mt-8 sm:mt-12 rounded-2xl bg-gradient-to-br from-amber-950/40 via-slate-900/90 to-[#080d16] border border-amber-500/40 p-6 sm:p-8 shadow-2xl overflow-hidden">
+          <section className="relative mt-4 sm:mt-6 rounded-2xl bg-gradient-to-br from-amber-950/40 via-slate-900/90 to-[#080d16] border border-amber-500/40 p-6 sm:p-8 shadow-2xl overflow-hidden">
             {/* Ambient Background Glow */}
             <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
@@ -872,27 +467,83 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
           </section>
         )}
 
-        {/* Empty State if Search yielded no results */}
-        {filteredSimulators.length === 0 && (
-          <div className="text-center py-12 px-4 rounded-2xl bg-slate-900/60 border border-slate-800">
-            <h3 className="text-base font-bold text-white mb-1.5">No simulators found</h3>
-            <p className="text-xs text-slate-400 mb-3">
-              No simulators in {departmentConfig.name} matched your search or subfield filter.
-            </p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedDifficulty('all');
-                setSelectedSubfield('all');
-              }}
-              className="px-3.5 py-1.5 rounded-xl bg-cyan-500 text-slate-950 text-xs font-bold hover:bg-cyan-400 transition-colors"
-            >
-              Reset Filters
-            </button>
-          </div>
-        )}
+        {/* Interactive 60 FPS Concept Sandbox Hero Widget */}
+        <DepartmentHeroSandbox
+          departmentId={departmentId}
+          accentColor={departmentConfig.color}
+          onLaunchSimulator={onLaunchSimulator}
+        />
+
+        {/* Universal 4-Step Concept Progression Roadmap */}
+        <DepartmentRoadmap
+          departmentId={departmentId}
+          accentColor={departmentConfig.color}
+          onLaunchSimulator={onLaunchSimulator}
+        />
+
+        {/* Core Equations & LaTeX/Python Cheat Sheet */}
+        <DepartmentFormulaCheatSheet
+          departmentId={departmentId}
+          accentColor={departmentConfig.color}
+        />
+
+        {/* Real-World Industry Case Studies */}
+        <DepartmentIndustryApplications
+          departmentId={departmentId}
+          accentColor={departmentConfig.color}
+        />
+
+        {/* Referenced International Standards Matrix */}
+        <DepartmentStandardsMatrix
+          departmentId={departmentId}
+          accentColor={departmentConfig.color}
+        />
+
+        {/* Machine & LLM Citable Knowledge Base (Taxonomy & State-Space) */}
+        <DepartmentKnowledgeBlock
+          departmentId={departmentId}
+          accentColor={departmentConfig.color}
+        />
+
+        {/* Curricular & Numerical Solvers FAQ */}
+        <DepartmentFaq
+          departmentId={departmentId}
+          accentColor={departmentConfig.color}
+        />
+
+        {/* Continuous Flow Navigation to Next Engineering Discipline */}
+        <DepartmentNextNavigator
+          currentDepartmentId={departmentId}
+          onNavigateDepartment={(nextDeptId) => {
+            if (onSelectDepartment) {
+              onSelectDepartment(nextDeptId);
+            } else {
+              onBackToHome();
+            }
+          }}
+        />
 
       </div>
+
+      {/* Quick Model Inspector Drawer */}
+      <DepartmentInspectorDrawer
+        simulator={inspectingSim}
+        accentColor={departmentConfig.color}
+        departmentId={departmentId}
+        onClose={() => setInspectingSim(null)}
+        onLaunchSimulator={onLaunchSimulator}
+      />
+
+      {/* ABET Laboratory Worksheet Generator Modal */}
+      <DepartmentLabWorksheetModal
+        isOpen={isWorksheetOpen}
+        onClose={() => setIsWorksheetOpen(false)}
+        departmentId={departmentId}
+        departmentName={departmentConfig.name}
+        departmentCode={departmentConfig.code}
+        accentColor={departmentConfig.color}
+        simulators={departmentConfig.simulators}
+      />
     </div>
   );
 };

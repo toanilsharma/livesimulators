@@ -135,7 +135,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
       icon: <Building2 className="w-5 h-5 text-rose-400" />,
       tagline: 'Euler-Bernoulli flexure, truss nodal equilibrium, and seismic base isolation.',
       academicOverview:
-        'Static equilibrium and dynamic response under moving vehicular loads, shear force and bending moment diagrams, and earthquake ground acceleration spectrums. Calibrated against AISC 360, ACI 318, and ASCE 7-22 structural standards.',
+        'Static equilibrium and dynamic response under moving vehicular loads, shear force and bending moment diagrams, and earthquake ground acceleration spectrums. Formulations modeled from open literature citing AISC 360, ACI 318, and ASCE 7-22 design guidelines.',
       governingTheory: 'EI \\frac{d^4 w}{dx^4} = q(x)',
       textbookBenchmark: 'Hibbeler Structural Analysis • Beer & Johnston Mechanics of Materials',
       accentColor: '#f43f5e',

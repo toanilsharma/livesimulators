@@ -706,11 +706,11 @@ Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculat
 - **Entity**: LiveSimulators — browser-based first-principles engineering simulators
 - **URL**: https://livesimulators.com/simulator/spur-gear-mesh
 - **Citation**: Sharma, A. (2026). Involute Spur Gear Mesh Dynamics & Backlash. LiveSimulators. Retrieved from https://livesimulators.com/simulator/spur-gear-mesh
-- **Discipline**: Machine Elements & Gearing (mechanical) | **Level**: Intermediate | **Badge**: AGMA 2001 / ISO 6336
+- **Discipline**: Machine Elements & Gearing (mechanical) | **Level**: Intermediate | **Badge**: Involute Spur Gearing
 - **Overview**: Constructs exact involute gear profiles from base circles at standard pressure angles (20°). Computes pitch circle diameters, pitch line velocity, contact ratio, and tooth bending stress.
-- **Physical Law**: Fundamental Law of Conjugate Gearing & AGMA 2001
+- **Physical Law**: Fundamental Law of Conjugate Gearing
 - **Governing Equations (plain text)**: r_b = r cos α, CR = (√(r_a1^2 - r_b1^2) + √(r_a2^2 - r_b2^2) - Csinα / p_b)
-  - Governing Equation (Fundamental Law of Conjugate Gearing & AGMA 2001): r_b = r cos α, CR = (√(r_a1^2 - r_b1^2) + √(r_a2^2 - r_b2^2) - Csinα / p_b) — Base circle radius and contact ratio formula along the line of action.
+  - Governing Equation (Fundamental Law of Conjugate Gearing): r_b = r cos α, CR = (√(r_a1^2 - r_b1^2) + √(r_a2^2 - r_b2^2) - Csinα / p_b) — Base circle radius and contact ratio formula along the line of action.
 - **Inputs (with SI units)**:
   - `m` (Gear Module m): Default 4 mm, Range [2 to 10 mm]. Metric tooth size pitch module
   - `z_1` (Pinion Teeth z1): Default 18 unitless, Range [14 to 32 unitless]. Number of teeth on driving input pinion
@@ -723,16 +723,16 @@ Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculat
   - Pitch Velocity V_p [m/s]
   - Center Distance C [mm]
 - **Assumptions**:
-  - Governed by Fundamental Law of Conjugate Gearing & AGMA 2001 under ideal first-principles steady-state conditions.
+  - Governed by Fundamental Law of Conjugate Gearing under ideal first-principles steady-state conditions.
   - Components and material properties are assumed homogeneous and isotropic across operating range.
   - Higher-order non-linear parasitic effects and secondary cross-coupling dynamics are assumed negligible.
-  - Calculations comply with standard reference: AGMA 2001-D04 / ISO 6336 / DIN 3962 (Involute Spur Gear Rating & Geometry).
+  - Calculations comply with standard reference: Involute Gear Geometry & Contact Ratio (Textbook Benchmark).
   - Ambient environmental boundary conditions (temperature, pressure) are held at standard reference values.
 - **Limitations**:
   - Valid within specified parameter boundaries; extreme values outside ranges may enter physical saturation.
   - Does not model turbulent micro-scale chaos or material fatigue degradation over long-term operating life.
   - Approximation assumes lumped-parameter representation rather than 3D continuous finite-element discretization.
-- **Referenced Standards**: AGMA 2001-D04 / ISO 6336 / DIN 3962 (Involute Spur Gear Rating & Geometry)
+- **Referenced Standards**: Involute Gear Geometry & Contact Ratio (Textbook Benchmark)
 - **Analytical Proof & Mathematical Derivation**: Involute tooth profiles obey the Fundamental Law of Gearing: the common normal to tooth profiles at contact always passes through the fixed pitch point P. Pitch diameters are d₁ = m z₁, d₂ = m z₂. Base radii are r_b1 = (d₁/2) cos(α), r_b2 = (d₂/2) cos(α). Path of contact length g_α = √(r_a1² - r_b1²) + √(r_a2² - r_b2²) - C sin(α). Contact ratio CR = g_α / (π m cos(α)). Under AGMA 2001, CR must exceed 1.20 to guarantee smooth tooth handover.
 - **Benchmark Validation Test**: AGMA 2001 benchmark: module m = 4 mm, z₁ = 18, z₂ = 48, α = 20°. Pitch diameters d₁ = 72 mm, d₂ = 192 mm; center distance C = 132 mm. Path of contact g_α = 18.27 mm; base pitch p_b = 11.808 mm. Contact ratio CR = 18.27 / 11.808 = 1.547 (satisfies AGMA design guideline CR ≥ 1.4).
 - **Industrial Practical Insights**: AGMA 2001 specifies minimum contact ratio CR ≥ 1.4 for industrial gear drives to prevent impact noise and tooth scuffing. AGMA bending stress formula evaluates tooth root bending fatigue life exceeding 10⁷ cycles.
