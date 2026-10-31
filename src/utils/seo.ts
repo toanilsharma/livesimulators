@@ -68,8 +68,8 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
     changefreq: 'daily',
     priority: 1.0,
   },
-  '/about': {
-    path: '/about',
+  '/about/': {
+    path: '/about/',
     title: 'About Us - LiveSimulators Engineering Platform',
     description: 'Learn about LiveSimulators mission, our 4th-Order Runge-Kutta (RK4) computational kernel, standards referencing (IEEE, ASME), and founder Anil Sharma.',
     keywords: ['about livesimulators', 'numerical pedagogy', 'engineering education', 'Anil Sharma founder', 'RK4 simulation engine'],
@@ -77,8 +77,17 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
     changefreq: 'weekly',
     priority: 0.8,
   },
-  '/contact': {
-    path: '/contact',
+  '/about': {
+    path: '/about/',
+    title: 'About Us - LiveSimulators Engineering Platform',
+    description: 'Learn about LiveSimulators mission, our 4th-Order Runge-Kutta (RK4) computational kernel, standards referencing (IEEE, ASME), and founder Anil Sharma.',
+    keywords: ['about livesimulators', 'numerical pedagogy', 'engineering education', 'Anil Sharma founder', 'RK4 simulation engine'],
+    ogType: 'article',
+    changefreq: 'weekly',
+    priority: 0.8,
+  },
+  '/contact/': {
+    path: '/contact/',
     title: 'Contact Engineering Team - LiveSimulators',
     description: 'Direct communication desk for simulator suggestions, analytical equation inquiries, and academic collaborations with founder Anil Sharma (0808miracle@gmail.com).',
     keywords: ['contact livesimulators', 'Anil Sharma email', 'engineering simulator request', 'academic collaboration'],
@@ -86,8 +95,17 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
     changefreq: 'weekly',
     priority: 0.8,
   },
-  '/cookie-policy': {
-    path: '/cookie-policy',
+  '/contact': {
+    path: '/contact/',
+    title: 'Contact Engineering Team - LiveSimulators',
+    description: 'Direct communication desk for simulator suggestions, analytical equation inquiries, and academic collaborations with founder Anil Sharma (0808miracle@gmail.com).',
+    keywords: ['contact livesimulators', 'Anil Sharma email', 'engineering simulator request', 'academic collaboration'],
+    ogType: 'website',
+    changefreq: 'weekly',
+    priority: 0.8,
+  },
+  '/cookie-policy/': {
+    path: '/cookie-policy/',
     title: 'Cookie & Telemetry Policy - LiveSimulators',
     description: 'Review our cookie disclosures, Google Analytics (G-WX8V8HH57V) telemetry details, and customize your privacy preferences using our interactive manager.',
     keywords: ['cookie policy', 'privacy preferences', 'Google tag G-WX8V8HH57V', 'ePrivacy compliance'],
@@ -95,8 +113,17 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
     changefreq: 'monthly',
     priority: 0.5,
   },
-  '/disclaimer': {
-    path: '/disclaimer',
+  '/cookie-policy': {
+    path: '/cookie-policy/',
+    title: 'Cookie & Telemetry Policy - LiveSimulators',
+    description: 'Review our cookie disclosures, Google Analytics (G-WX8V8HH57V) telemetry details, and customize your privacy preferences using our interactive manager.',
+    keywords: ['cookie policy', 'privacy preferences', 'Google tag G-WX8V8HH57V', 'ePrivacy compliance'],
+    ogType: 'website',
+    changefreq: 'monthly',
+    priority: 0.5,
+  },
+  '/disclaimer/': {
+    path: '/disclaimer/',
     title: 'Simulation Disclaimer - LiveSimulators',
     description: 'Important legal and technical notice regarding simulation approximations, boundary conditions, and the requirement for licensed Professional Engineer (PE) validation.',
     keywords: ['engineering disclaimer', 'numerical approximation', 'PE validation', 'limitation of liability'],
@@ -104,8 +131,17 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
     changefreq: 'monthly',
     priority: 0.5,
   },
-  '/privacy-policy': {
-    path: '/privacy-policy',
+  '/disclaimer': {
+    path: '/disclaimer/',
+    title: 'Simulation Disclaimer - LiveSimulators',
+    description: 'Important legal and technical notice regarding simulation approximations, boundary conditions, and the requirement for licensed Professional Engineer (PE) validation.',
+    keywords: ['engineering disclaimer', 'numerical approximation', 'PE validation', 'limitation of liability'],
+    ogType: 'website',
+    changefreq: 'monthly',
+    priority: 0.5,
+  },
+  '/privacy-policy/': {
+    path: '/privacy-policy/',
     title: 'Privacy Policy - LiveSimulators',
     description: 'Transparent privacy policy detailing zero personal data sales, client-side computing architecture, user statutory rights, and data protection officer Anil Sharma.',
     keywords: ['privacy policy', 'GDPR compliance', 'CCPA CPRA', 'Anil Sharma data protection'],
@@ -113,8 +149,26 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
     changefreq: 'monthly',
     priority: 0.5,
   },
+  '/privacy-policy': {
+    path: '/privacy-policy/',
+    title: 'Privacy Policy - LiveSimulators',
+    description: 'Transparent privacy policy detailing zero personal data sales, client-side computing architecture, user statutory rights, and data protection officer Anil Sharma.',
+    keywords: ['privacy policy', 'GDPR compliance', 'CCPA CPRA', 'Anil Sharma data protection'],
+    ogType: 'website',
+    changefreq: 'monthly',
+    priority: 0.5,
+  },
+  '/terms/': {
+    path: '/terms/',
+    title: 'Terms of Service - LiveSimulators',
+    description: 'Terms of service and acceptable use agreement governing free educational access, classroom presentation rights, and intellectual property.',
+    keywords: ['terms of service', 'educational access license', 'acceptable use', 'engineering simulation terms'],
+    ogType: 'website',
+    changefreq: 'monthly',
+    priority: 0.5,
+  },
   '/terms': {
-    path: '/terms',
+    path: '/terms/',
     title: 'Terms of Service - LiveSimulators',
     description: 'Terms of service and acceptable use agreement governing free educational access, classroom presentation rights, and intellectual property.',
     keywords: ['terms of service', 'educational access license', 'acceptable use', 'engineering simulation terms'],
@@ -123,59 +177,28 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
     priority: 0.5,
   },
 };
+import {
+  FOUNDER_PERSON_SCHEMA,
+  ORGANIZATION_SCHEMA,
+  WEBSITE_SCHEMA,
+  getRouteSchema,
+  getRouteSchemaNodes,
+  getSimulatorSchema,
+  getHomepageSchema,
+  getDepartmentSchema,
+  getLabSchema,
+} from './seoSchema';
 
-// Founder Schema (Specialized Person entity for rich snippets and E-E-A-T attribution)
-export const FOUNDER_PERSON_SCHEMA = {
-  '@context': 'https://schema.org',
-  '@type': 'Person',
-  '@id': `${SITE_URL}/#founder`,
-  name: 'Anil Sharma',
-  jobTitle: 'Founder & Lead Computational Modeling Engineer',
-  worksFor: {
-    '@id': `${SITE_URL}/#organization`,
-  },
-  description: 'Founder of LiveSimulators. Specializes in first-principles numerical modeling, 4th-Order Runge-Kutta (RK4) ODE solvers, symplectic physics integration, and interactive engineering pedagogy.',
-  email: '0808miracle@gmail.com',
-  url: 'https://www.linkedin.com/in/toanilsharma/',
-  sameAs: ['https://www.linkedin.com/in/toanilsharma/'],
-  knowsAbout: [
-    'Computational Physics',
-    'Numerical Integration',
-    '4th-Order Runge-Kutta (RK4)',
-    'Electrical & Electronic Systems',
-    'Mechanical & Thermal Engineering',
-    'Structural Analysis & Civil Engineering',
-    'Industrial Control Systems & PID Tuning',
-    'Engineering Pedagogy',
-  ],
-};
-
-// Base Organization Schema (Sitewide)
-export const ORGANIZATION_SCHEMA = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  '@id': `${SITE_URL}/#organization`,
-  name: 'LiveSimulators',
-  url: SITE_URL,
-  logo: `${SITE_URL}/og-default.png`,
-  sameAs: [
-    'https://mech.livesimulators.com',
-    'https://designcalculators.co.in',
-  ],
-};
-
-// Base WebSite Schema (Sitewide SearchAction)
-export const WEBSITE_SCHEMA = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  '@id': `${SITE_URL}/#website`,
-  name: 'LiveSimulators',
-  url: SITE_URL,
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: `${SITE_URL}/?search={search_term_string}`,
-    'query-input': 'required name=search_term_string',
-  },
+export {
+  FOUNDER_PERSON_SCHEMA,
+  ORGANIZATION_SCHEMA,
+  WEBSITE_SCHEMA,
+  getRouteSchema,
+  getRouteSchemaNodes,
+  getSimulatorSchema,
+  getHomepageSchema,
+  getDepartmentSchema,
+  getLabSchema,
 };
 
 // Curricular Course Codes printed on Homepage
@@ -195,8 +218,12 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
   const path = routeToPath(route);
   // Ensure strict clean base URL by stripping any query strings or hashes
   const cleanPath = path.split('?')[0].split('#')[0];
-  const canonicalUrl = `${SITE_URL}${cleanPath === '/' ? '/' : cleanPath}`;
+  const canonicalPath = cleanPath === '/' 
+    ? '/' 
+    : (cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`);
+  const canonicalUrl = `${SITE_URL}${canonicalPath}`;
   const defaultOgImage = `${SITE_URL}/og-default.png`;
+  const routeJsonLd = getRouteSchemaNodes(route);
 
   switch (route.view) {
     case 'home': {
@@ -208,34 +235,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         ogType: cfg.ogType,
         ogImage: defaultOgImage,
         keywords: cfg.keywords,
-        jsonLd: [
-          ORGANIZATION_SCHEMA,
-          WEBSITE_SCHEMA,
-          {
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              {
-                '@type': 'ListItem',
-                position: 1,
-                name: 'Home',
-                item: SITE_URL,
-              },
-            ],
-          },
-          {
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: HOME_FAQ_DATA.map((faq) => ({
-              '@type': 'Question',
-              name: faq.question,
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: faq.answer,
-              },
-            })),
-          },
-        ],
+        jsonLd: routeJsonLd,
       };
     }
 
@@ -256,7 +256,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
               { '@type': 'ListItem', position: 2, name: 'About Us', item: canonicalUrl },
             ],
           },
@@ -312,7 +312,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
               { '@type': 'ListItem', position: 2, name: 'Contact Us', item: canonicalUrl },
             ],
           },
@@ -336,7 +336,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
               { '@type': 'ListItem', position: 2, name: 'Cookie Policy', item: canonicalUrl },
             ],
           },
@@ -360,7 +360,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
               { '@type': 'ListItem', position: 2, name: 'Disclaimer', item: canonicalUrl },
             ],
           },
@@ -384,7 +384,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
               { '@type': 'ListItem', position: 2, name: 'Privacy Policy', item: canonicalUrl },
             ],
           },
@@ -408,7 +408,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
               { '@type': 'ListItem', position: 2, name: 'Terms of Service', item: canonicalUrl },
             ],
           },
@@ -428,7 +428,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
           { '@type': 'ListItem', position: 2, name: dept.name, item: canonicalUrl },
         ],
       };
@@ -444,7 +444,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           '@type': 'ListItem',
           position: idx + 1,
           name: s.title,
-          url: `${SITE_URL}/simulator/${s.id}`,
+          url: `${SITE_URL}/simulator/${s.id}/`,
         })),
       };
 
@@ -553,12 +553,12 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
           { 
             '@type': 'ListItem', 
             position: 2, 
             name: dept ? dept.name : sim.disciplineName, 
-            item: dept ? `${SITE_URL}/department/${dept.id}` : SITE_URL 
+            item: dept ? `${SITE_URL}/department/${dept.id}/` : `${SITE_URL}/` 
           },
           { '@type': 'ListItem', position: 3, name: sim.title, item: canonicalUrl },
         ],
@@ -623,13 +623,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
           'first-principles solver',
           'virtual engineering lab',
         ],
-        jsonLd: [
-          ORGANIZATION_SCHEMA,
-          WEBSITE_SCHEMA,
-          breadcrumbSchema,
-          webApplicationSchema,
-          learningResourceSchema,
-        ],
+        jsonLd: routeJsonLd,
       };
     }
 
@@ -642,27 +636,24 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
       return {
         title,
         description,
-        canonicalUrl: `${SITE_URL}/simulator/${sim.id}`,
+        canonicalUrl: `${SITE_URL}/simulator/${sim.id}/`,
         ogType: 'website',
         ogImage: defaultOgImage,
         keywords: [sim.title, 'interactive embed', 'virtual lab embed', 'engineering simulator'],
-        jsonLd: [
-          ORGANIZATION_SCHEMA,
-          WEBSITE_SCHEMA,
-        ],
+        jsonLd: routeJsonLd,
       };
     }
 
     case 'lab': {
       const lab = LABS.find((l) => l.id === route.labId) || LABS[0];
-      const canonicalUrl = `${SITE_URL}/lab/${lab.id}`;
+      const canonicalUrl = `${SITE_URL}/lab/${lab.id}/`;
       const labOgImage = `${SITE_URL}${lab.shot}`;
 
       const breadcrumbSchema = {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
           { '@type': 'ListItem', position: 2, name: 'Industrial Labs Pro', item: `${SITE_URL}/#industrial-labs` },
           { '@type': 'ListItem', position: 3, name: lab.name, item: canonicalUrl },
         ],
@@ -749,7 +740,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
       return {
         title: '404: Page Not Found - LiveSimulators',
         description: 'The requested engineering simulator or page could not be found. Explore our interactive engineering simulations on LiveSimulators.',
-        canonicalUrl: `${SITE_URL}/404`,
+        canonicalUrl: `${SITE_URL}/404/`,
         ogType: 'website',
         ogImage: defaultOgImage,
         keywords: ['404 not found', 'engineering simulations'],
@@ -760,8 +751,8 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-              { '@type': 'ListItem', position: 2, name: 'Page Not Found', item: `${SITE_URL}/404` },
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+              { '@type': 'ListItem', position: 2, name: 'Page Not Found', item: `${SITE_URL}/404/` },
             ],
           },
         ],
@@ -772,7 +763,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
       return {
         title: 'LiveSimulators - Interactive Engineering Simulations',
         description: 'Interactive real-time physics and engineering simulations.',
-        canonicalUrl: SITE_URL,
+        canonicalUrl: `${SITE_URL}/`,
         ogType: 'website',
         ogImage: defaultOgImage,
         keywords: ['engineering simulation'],
@@ -780,6 +771,7 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
       };
   }
 }
+
 
 /**
  * Updates DOM head tags dynamically during client-side navigation.
@@ -850,14 +842,7 @@ export function applySeoMetadata(route: AppRoute): RouteSeoMetadata {
     document.head.appendChild(jsonLdEl);
   }
 
-  const graphData = {
-    '@context': 'https://schema.org',
-    '@graph': meta.jsonLd.map((node) => {
-      const { '@context': _, ...cleanNode } = node;
-      return cleanNode;
-    }),
-  };
-
+  const graphData = getRouteSchema(route);
   jsonLdEl.textContent = JSON.stringify(graphData, null, 2);
 
   return meta;

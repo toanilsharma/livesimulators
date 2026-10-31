@@ -60,6 +60,7 @@ import { MathWorkerBridge, SimulationMetric } from '../utils/mathWorkerBridge';
 import { RelatedPhysicsConcepts } from './RelatedPhysicsConcepts';
 import { getCrossDisciplineEquivalents } from '../data/crossDisciplineEquivalents';
 import { TOP_FLAGSHIP_EMBED_SLUGS } from '../utils/routes';
+import { SimulatorEngineeringSections } from './SimulatorEngineeringSections';
 
 interface DedicatedSimulatorPageProps {
   simulator: SimulatorItem;
@@ -76,8 +77,42 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   onSelectSimulator,
   isEmbed = false,
 }) => {
-  // Check if embed mode is active via prop OR query param ?embed=1
-  const isEmbedMode = isEmbed || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('embed') === '1');
+  // Check if embed mode is active via prop OR query param ?embed=1 or ?embed=true
+  const embedParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('embed') : null;
+  const isEmbedMode = isEmbed || embedParam === '1' || embedParam === 'true';
+
+  // Helper to generate clean, responsive embed snippet with semantic contextual attribution
+  const getEmbedSnippet = (id: string, title: string, format: 'responsive' | 'fixed' = 'responsive', height = '650') => {
+    if (format === 'fixed') {
+      return `<div style="width:100%;border-radius:12px;border:1px solid #1e293b;overflow:hidden;">
+  <iframe 
+    src="https://livesimulators.com/simulator/${id}/?embed=true" 
+    width="100%" 
+    height="${height}" 
+    title="${title} - Interactive Engineering Simulation"
+    style="border:0;display:block;" 
+    loading="lazy" 
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="font-family:system-ui,sans-serif;font-size:12px;color:#64748b;margin-top:6px;">
+  Interactive lab powered by <a href="https://livesimulators.com/simulator/${id}/" target="_blank" rel="noopener" style="color:#0284c7;text-decoration:underline;">${title} on LiveSimulators.com</a> (60 FPS RK4 Physics Engine).
+</p>`;
+    }
+
+    return `<div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;border:1px solid #1e293b;">
+  <iframe 
+    src="https://livesimulators.com/simulator/${id}/?embed=true" 
+    title="${title} - Interactive Engineering Simulation"
+    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" 
+    loading="lazy" 
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="font-family:system-ui,sans-serif;font-size:12px;color:#64748b;margin-top:6px;">
+  Interactive lab powered by <a href="https://livesimulators.com/simulator/${id}/" target="_blank" rel="noopener" style="color:#0284c7;text-decoration:underline;">${title} on LiveSimulators.com</a> (60 FPS RK4 Physics Engine).
+</p>`;
+  };
 
   // Initialize parameters
   const [params, setParams] = useState<Record<string, number>>(() => {
@@ -101,6 +136,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const [showExperimentsModal, setShowExperimentsModal] = useState<boolean>(false);
   const [showEmbedModal, setShowEmbedModal] = useState<boolean>(false);
   const [embedCopied, setEmbedCopied] = useState<boolean>(false);
+  const [embedFormat, setEmbedFormat] = useState<'responsive' | 'fixed'>('responsive');
   const [embedHeight, setEmbedHeight] = useState<string>('650');
 
   const getStatusBadgeStyle = (statusType?: string) => {
@@ -2453,41 +2489,11 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   );
 
   return (
-    <div className="h-full w-full max-h-full flex flex-col bg-[#080d16] text-slate-100 overflow-hidden select-none">
-      {/* 1. Sleek, Compact Navigation & Action Header (Hidden in embed mode) */}
+    <div className={`w-full min-h-full flex flex-col bg-[#080d16] text-slate-100 ${isEmbedMode ? 'h-full overflow-hidden' : 'overflow-y-auto custom-scrollbar'} select-none`}>
+      {/* 1. Sleek Breadcrumb & Peer Navigation Bar (Hidden in embed mode) */}
       {!isEmbedMode && (
-        <header className="h-12 px-3 sm:px-5 bg-slate-950/95 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0 z-30 shadow-md">
-        {/* Left: Breadcrumbs & Title */}
-        {isEmbed ? (
-          <div className="flex items-center gap-2 min-w-0">
-            <a
-              href="https://livesimulators.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 font-mono font-bold text-xs text-white hover:text-cyan-300 transition-colors shrink-0"
-              title="Visit LiveSimulators.com"
-            >
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-              <span className="bg-gradient-to-r from-cyan-400 to-sky-300 bg-clip-text text-transparent font-extrabold">
-                LiveSimulators
-              </span>
-            </a>
-            <span className="text-slate-700">|</span>
-            <h1 className="truncate text-xs font-bold text-slate-200 m-0 p-0 leading-none">
-              {simulator.title}
-            </h1>
-            <a
-              href={`https://livesimulators.com/simulator/${simulator.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-[10px] font-mono font-bold transition-all shrink-0 ml-1"
-              title="Open full interactive lab on LiveSimulators.com in a new tab"
-            >
-              <span>Full Lab</span>
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-          </div>
-        ) : (
+        <nav aria-label="Breadcrumb & Laboratory Switcher" className="h-10 px-3 sm:px-5 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between gap-2 shrink-0 z-30 shadow-sm">
+          {/* Breadcrumbs & Peer Switcher */}
           <div className="flex items-center gap-2 text-xs font-medium text-slate-400 min-w-0">
             {onBackToHome && (
               <>
@@ -2523,9 +2529,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                 className="flex items-center gap-1.5 text-cyan-300 font-bold hover:text-cyan-200 transition-colors bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800 text-xs truncate"
                 title="Switch to another simulator in this department"
               >
-                <h1 className="truncate text-xs font-bold text-cyan-300 m-0 p-0 inline leading-none">
+                <span className="truncate text-xs font-bold text-cyan-300 leading-none">
                   {simulator.title}
-                </h1>
+                </span>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               </button>
 
@@ -2554,236 +2560,287 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               )}
             </div>
           </div>
-        )}
 
-        {/* Right: Laboratory Controls Toolbar */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button
-            onClick={() => setIsRunning(!isRunning)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
-              isRunning
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-            }`}
-            title={isRunning ? 'Pause physics engine' : 'Run physics engine'}
-          >
-            {isRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-            <span className="hidden md:inline">{isRunning ? 'Pause' : 'Run'}</span>
-          </button>
-
-          {/* Simulation Speed */}
-          <div className="hidden sm:flex items-center gap-0.5 bg-slate-900 border border-slate-800 rounded-lg p-0.5">
-            {[0.5, 1.0, 2.0].map((spd) => (
-              <button
-                key={spd}
-                onClick={() => setSimSpeed(spd)}
-                className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold transition-colors ${
-                  simSpeed === spd
-                    ? 'bg-cyan-500 text-slate-950'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {spd}x
-              </button>
-            ))}
-          </div>
-
-          {/* Guided Lab Experiments Modal Button */}
-          <button
-            onClick={() => setShowExperimentsModal(true)}
-            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
-            title="Open guided physics experiments and laboratory challenges"
-          >
-            <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Guided Labs</span>
-            <span className="text-[10px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 font-mono">
-              {(SIMULATOR_EXPERIMENTS[simulator.type] || []).length}
+          <div className="flex items-center gap-2">
+            <span className="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-950/50 border border-cyan-800/40 text-cyan-400 font-mono text-[10px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>{simulator.difficulty}</span>
             </span>
-          </button>
+          </div>
+        </nav>
+      )}
 
-          {/* Acoustic Audio Toggle */}
-          <button
-            onClick={() => {
-              const newMuted = physicsAudio.toggleMute();
-              setIsMuted(newMuted);
-            }}
-            className={`p-1.5 rounded-lg border text-xs transition-colors ${
-              !isMuted
-                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-                : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'
-            }`}
-            title={!isMuted ? 'Acoustic feedback enabled' : 'Unmute realistic physics acoustics'}
-          >
-            {!isMuted ? <Volume2 className="w-3.5 h-3.5 text-cyan-400" /> : <VolumeX className="w-3.5 h-3.5" />}
-          </button>
-
-          {/* Dual-Cursor Scope Toggle */}
-          <button
-            onClick={() => setShowDualCursors(!showDualCursors)}
-            className={`px-2 py-1 rounded-lg border text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
-              showDualCursors
-                ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-300 shadow-sm'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
-            title="Toggle interactive dual-cursor scope measurement (Δt, f, ΔV)"
-          >
-            <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden md:inline">Scope Cursors</span>
-          </button>
-
-          {/* CRT Phosphor Glow Mode Toggle */}
-          <button
-            onClick={toggleCrtMode}
-            className={`px-2 py-1 rounded-lg border text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
-              isCrtMode
-                ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300 shadow-sm'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
-            title="Toggle authentic CRT green phosphor glow & scanline raster"
-          >
-            <Tv className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden md:inline">CRT Mode</span>
-          </button>
-
-          {/* Grid Toggle */}
-          <button
-            onClick={() => setShowGrid(!showGrid)}
-            className={`p-1.5 rounded-lg border text-xs transition-colors hidden sm:block ${
-              showGrid ? 'bg-slate-800 border-slate-700 text-cyan-400' : 'bg-slate-950 border-slate-800 text-slate-500'
-            }`}
-            title="Toggle background grid"
-          >
-            <Grid className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Reset Parameters */}
-          <button
-            onClick={handleResetDefaults}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
-            title="Reset parameters to default"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-          </button>
-
-          {/* Capture PNG */}
-          <button
-            onClick={handleSnapshot}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors hidden xs:block"
-            title="Capture canvas PNG image"
-          >
-            <Camera className="w-3.5 h-3.5 text-cyan-400" />
-          </button>
-
-          {/* Export CSV */}
-          <button
-            onClick={handleExportCSV}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors hidden sm:block"
-            title="Export telemetry CSV"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-          </button>
-
-          {/* Worksheet PDF Download */}
-          <button
-            onClick={() => {
-              if (typeof (window as any).gtag === 'function') {
-                (window as any).gtag('event', 'worksheet_download', { 'simulator': simulator.title });
-              }
-              trackWorksheetDownload(simulator.title);
-              window.print();
-            }}
-            className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-rose-300 hover:text-white transition-colors flex items-center gap-1 hidden md:flex"
-            title="Download / Print Laboratory Worksheet PDF"
-          >
-            <FileText className="w-3.5 h-3.5 text-rose-400" />
-            <span className="hidden xl:inline">Worksheet PDF</span>
-          </button>
-
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={toggleFullscreen}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
-            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen Workbench'}
-          >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-cyan-400" /> : <Maximize2 className="w-3.5 h-3.5 text-slate-400" />}
-          </button>
-
-          {/* LMS Embed Modal Button */}
-          <button
-            onClick={() => setShowEmbedModal(true)}
-            className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 text-xs text-purple-300 hover:text-white transition-all flex items-center gap-1"
-            title="Embed this interactive simulator in Canvas, Moodle, Blackboard, or LMS"
-          >
-            <Code className="w-3.5 h-3.5 text-purple-400" />
-            <span className="hidden lg:inline">Embed in LMS</span>
-          </button>
-
-          {/* Share with Multi-Network Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShareMenuOpen(!shareMenuOpen)}
-              className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors flex items-center gap-1"
-              aria-expanded={shareMenuOpen}
-              title="Share simulation"
-            >
-              <Share2 className="w-3 h-3 text-sky-400" />
-              <span className="hidden md:inline">{copiedLink ? 'Copied' : 'Share'}</span>
-              <ChevronDown className="w-2.5 h-2.5 text-slate-500 hidden sm:inline" />
-            </button>
-
-            {shareMenuOpen && (
-              <div 
-                className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900/95 border border-slate-700 shadow-2xl p-1 z-50 font-sans text-xs animate-in fade-in zoom-in-95 duration-150"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => {
-                    setShowEmbedModal(true);
-                    setShareMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-purple-950/50 hover:text-purple-300 transition-colors text-left"
-                >
-                  <span>Embed in LMS (iFrame)</span>
-                  <Code className="w-3.5 h-3.5 text-purple-400" />
-                </button>
-                <button
-                  onClick={() => {
-                    handleCopyLink();
-                    setShareMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-cyan-300 transition-colors text-left"
-                >
-                  <span>{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
-                  <CheckCircle2 className={`w-3 h-3 ${copiedLink ? 'text-emerald-400' : 'text-slate-500'}`} />
-                </button>
-                <button
-                  onClick={() => handleSocialShare('linkedin')}
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-blue-300 transition-colors text-left"
-                >
-                  <span>LinkedIn</span>
-                  <span className="text-[10px] font-mono text-blue-400 font-bold">in</span>
-                </button>
-                <button
-                  onClick={() => handleSocialShare('twitter')}
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-sky-300 transition-colors text-left"
-                >
-                  <span>X (Twitter)</span>
-                  <span className="text-[10px] font-mono text-sky-400 font-bold">𝕏</span>
-                </button>
-                {typeof navigator !== 'undefined' && !!(navigator as any).share && (
-                  <button
-                    onClick={() => handleSocialShare('web_share')}
-                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-cyan-300 transition-colors text-left border-t border-slate-800/80 mt-1 pt-1.5"
-                  >
-                    <span>More Options...</span>
-                    <Share2 className="w-3 h-3 text-slate-400" />
-                  </button>
-                )}
-              </div>
+      {/* 2. Semantic Page Header: <h1> Title, Discipline Badge, and Concise 1-Sentence Technical Summary */}
+      {!isEmbedMode && (
+        <header className="px-3 sm:px-6 py-3 bg-slate-950 border-b border-slate-800 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[11px] font-bold uppercase tracking-wider">
+              {simulator.disciplineName}
+            </span>
+            <span className="text-slate-600 text-xs">•</span>
+            <span className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-slate-300 font-mono text-[11px]">
+              {simulator.difficulty} Level
+            </span>
+            <span className="text-slate-600 text-xs">•</span>
+            <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[11px]">
+              {simulator.badge}
+            </span>
+            {simulator.standardReference && (
+              <>
+                <span className="text-slate-600 text-xs">•</span>
+                <span className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono text-[11px] truncate max-w-xs">
+                  {simulator.standardReference.split('/')[0].trim()}
+                </span>
+              </>
             )}
           </div>
-        </div>
-      </header>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-tight m-0 mb-1">
+            {simulator.title}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-4xl m-0 font-sans">
+            {simulator.description}
+          </p>
+        </header>
+      )}
+
+      {/* 3. Interactive Toolbar Controls (Wrapped in <aside aria-label="Simulation Controls">) */}
+      {!isEmbedMode && (
+        <aside
+          aria-label="Simulation Controls"
+          className="px-3 sm:px-5 py-1.5 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0 z-20 flex-wrap"
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-mono uppercase text-slate-500 tracking-wider font-bold hidden sm:inline">
+              Controls:
+            </span>
+            <button
+              onClick={() => setIsRunning(!isRunning)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
+                isRunning
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+              }`}
+              title={isRunning ? 'Pause physics engine' : 'Run physics engine'}
+            >
+              {isRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+              <span>{isRunning ? 'Pause' : 'Run'}</span>
+            </button>
+
+            {/* Simulation Speed */}
+            <div className="flex items-center gap-0.5 bg-slate-950 border border-slate-800 rounded-lg p-0.5">
+              {[0.5, 1.0, 2.0].map((spd) => (
+                <button
+                  key={spd}
+                  onClick={() => setSimSpeed(spd)}
+                  className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold transition-colors ${
+                    simSpeed === spd
+                      ? 'bg-cyan-500 text-slate-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {spd}x
+                </button>
+              ))}
+            </div>
+
+            {/* Guided Lab Experiments Modal Button */}
+            <button
+              onClick={() => setShowExperimentsModal(true)}
+              className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
+              title="Open guided physics experiments and laboratory challenges"
+            >
+              <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Guided Labs</span>
+              <span className="text-[10px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 font-mono">
+                {(SIMULATOR_EXPERIMENTS[simulator.type] || []).length}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Acoustic Audio Toggle */}
+            <button
+              onClick={() => {
+                const newMuted = physicsAudio.toggleMute();
+                setIsMuted(newMuted);
+              }}
+              className={`p-1.5 rounded-lg border text-xs transition-colors ${
+                !isMuted
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                  : 'bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300'
+              }`}
+              title={!isMuted ? 'Acoustic feedback enabled' : 'Unmute realistic physics acoustics'}
+            >
+              {!isMuted ? <Volume2 className="w-3.5 h-3.5 text-cyan-400" /> : <VolumeX className="w-3.5 h-3.5" />}
+            </button>
+
+            {/* Dual-Cursor Scope Toggle */}
+            <button
+              onClick={() => setShowDualCursors(!showDualCursors)}
+              className={`px-2 py-1 rounded-lg border text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
+                showDualCursors
+                  ? 'bg-cyan-500/20 border-cyan-500/60 text-cyan-300 shadow-sm'
+                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+              title="Toggle interactive dual-cursor scope measurement (Δt, f, ΔV)"
+            >
+              <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden md:inline">Scope Cursors</span>
+            </button>
+
+            {/* CRT Phosphor Glow Mode Toggle */}
+            <button
+              onClick={toggleCrtMode}
+              className={`px-2 py-1 rounded-lg border text-xs font-mono font-bold transition-all flex items-center gap-1.5 ${
+                isCrtMode
+                  ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-300 shadow-sm'
+                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+              title="Toggle authentic CRT green phosphor glow & scanline raster"
+            >
+              <Tv className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden md:inline">CRT Mode</span>
+            </button>
+
+            {/* Grid Toggle */}
+            <button
+              onClick={() => setShowGrid(!showGrid)}
+              className={`p-1.5 rounded-lg border text-xs transition-colors hidden sm:block ${
+                showGrid ? 'bg-slate-800 border-slate-700 text-cyan-400' : 'bg-slate-950 border-slate-800 text-slate-500'
+              }`}
+              title="Toggle background grid"
+            >
+              <Grid className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Reset Parameters */}
+            <button
+              onClick={handleResetDefaults}
+              className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+              title="Reset parameters to default"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+            </button>
+
+            {/* Capture PNG */}
+            <button
+              onClick={handleSnapshot}
+              className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors hidden xs:block"
+              title="Capture canvas PNG image"
+            >
+              <Camera className="w-3.5 h-3.5 text-cyan-400" />
+            </button>
+
+            {/* Export CSV */}
+            <button
+              onClick={handleExportCSV}
+              className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors hidden sm:block"
+              title="Export telemetry CSV"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+            </button>
+
+            {/* Worksheet PDF Download */}
+            <button
+              onClick={() => {
+                if (typeof (window as any).gtag === 'function') {
+                  (window as any).gtag('event', 'worksheet_download', { 'simulator': simulator.title });
+                }
+                trackWorksheetDownload(simulator.title);
+                window.print();
+              }}
+              className="px-2 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-rose-300 hover:text-white transition-colors flex items-center gap-1 hidden md:flex"
+              title="Download / Print Laboratory Worksheet PDF"
+            >
+              <FileText className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden xl:inline">Worksheet PDF</span>
+            </button>
+
+            {/* Fullscreen Toggle */}
+            <button
+              onClick={toggleFullscreen}
+              className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+              title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen Workbench'}
+            >
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-cyan-400" /> : <Maximize2 className="w-3.5 h-3.5 text-slate-400" />}
+            </button>
+
+            {/* LMS Embed Modal Button */}
+            <button
+              onClick={() => setShowEmbedModal(true)}
+              className="px-2 py-1 rounded-lg bg-slate-950 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 text-xs text-purple-300 hover:text-white transition-all flex items-center gap-1"
+              title="Embed this interactive simulator in Canvas, Moodle, Blackboard, or LMS"
+            >
+              <Code className="w-3.5 h-3.5 text-purple-400" />
+              <span className="hidden lg:inline">Embed in LMS</span>
+            </button>
+
+            {/* Share with Multi-Network Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShareMenuOpen(!shareMenuOpen)}
+                className="px-2 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-white transition-colors flex items-center gap-1"
+                aria-expanded={shareMenuOpen}
+                title="Share simulation"
+              >
+                <Share2 className="w-3 h-3 text-sky-400" />
+                <span className="hidden md:inline">{copiedLink ? 'Copied' : 'Share'}</span>
+                <ChevronDown className="w-2.5 h-2.5 text-slate-500 hidden sm:inline" />
+              </button>
+
+              {shareMenuOpen && (
+                <div 
+                  className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900/95 border border-slate-700 shadow-2xl p-1 z-50 font-sans text-xs animate-in fade-in zoom-in-95 duration-150"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => {
+                      setShowEmbedModal(true);
+                      setShareMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-purple-950/50 hover:text-purple-300 transition-colors text-left"
+                  >
+                    <span>Embed in LMS (iFrame)</span>
+                    <Code className="w-3.5 h-3.5 text-purple-400" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleCopyLink();
+                      setShareMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-cyan-300 transition-colors text-left"
+                  >
+                    <span>{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
+                    <CheckCircle2 className={`w-3 h-3 ${copiedLink ? 'text-emerald-400' : 'text-slate-500'}`} />
+                  </button>
+                  <button
+                    onClick={() => handleSocialShare('linkedin')}
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-blue-300 transition-colors text-left"
+                  >
+                    <span>LinkedIn</span>
+                    <span className="text-[10px] font-mono text-blue-400 font-bold">in</span>
+                  </button>
+                  <button
+                    onClick={() => handleSocialShare('twitter')}
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-sky-300 transition-colors text-left"
+                  >
+                    <span>X (Twitter)</span>
+                    <span className="text-[10px] font-mono text-sky-400 font-bold">𝕏</span>
+                  </button>
+                  {typeof navigator !== 'undefined' && !!(navigator as any).share && (
+                    <button
+                      onClick={() => handleSocialShare('web_share')}
+                      className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-cyan-300 transition-colors text-left border-t border-slate-800/80 mt-1 pt-1.5"
+                    >
+                      <span>More Options...</span>
+                      <Share2 className="w-3 h-3 text-slate-400" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
       )}
 
       {/* Top Flagship Simulator Embed Panel (Prompt Requirements 1-3) */}
@@ -2800,20 +2857,22 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
             <div className="mt-2 space-y-1.5 pt-1.5 border-t border-slate-800/80">
               <textarea
                 readOnly
-                rows={3}
+                rows={9}
                 onClick={(e) => {
                   const target = e.target as HTMLTextAreaElement;
                   target.select();
-                  document.execCommand('copy');
+                  const snippet = getEmbedSnippet(simulator.id, simulator.title, 'responsive');
+                  navigator.clipboard.writeText(snippet);
                   if (typeof (window as any).gtag === 'function') {
                     (window as any).gtag('event', 'embed_copy', { simulator: simulator.title });
                   }
+                  trackEmbedCopy(simulator.title);
                 }}
-                className="w-full bg-slate-950 text-purple-300 border border-slate-800 rounded-lg p-2 font-mono text-[11px] focus:outline-none focus:border-purple-500 cursor-pointer select-all resize-y"
-                defaultValue={`<iframe src="https://livesimulators.com/simulator/${simulator.id}?embed=1" width="100%" height="600" frameborder="0" title="${simulator.title}"></iframe>`}
+                className="w-full bg-slate-950 text-purple-300 border border-slate-800 rounded-lg p-2 font-mono text-[11px] focus:outline-none focus:border-purple-500 cursor-pointer select-all resize-y leading-relaxed"
+                defaultValue={getEmbedSnippet(simulator.id, simulator.title, 'responsive')}
               />
               <p className="text-[11px] text-slate-400 m-0">
-                Please credit LiveSimulators when embedding in your course materials.
+                Click snippet to copy. Includes responsive 16:9 container and automatic canonical attribution.
               </p>
             </div>
           </details>
@@ -3540,6 +3599,14 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
         </div>
       </main>
 
+      {/* 4. Complete Domain-Specific Engineering Sections Rendered Directly in DOM Below Canvas */}
+      {!isEmbedMode && (
+        <SimulatorEngineeringSections
+          simulator={simulator}
+          onSelectSimulator={onSelectSimulator}
+        />
+      )}
+
       {/* Fullscreen Guided Lab Manual Modal */}
       {showExperimentsModal && (
         <div 
@@ -3713,17 +3780,27 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                 <div className="font-mono text-slate-300">
                   Target Simulator: <span className="text-cyan-400 font-bold">{simulator.title}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">Height:</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-slate-400">Layout Format:</span>
                   <select
-                    value={embedHeight}
-                    onChange={(e) => setEmbedHeight(e.target.value)}
+                    value={embedFormat}
+                    onChange={(e) => setEmbedFormat(e.target.value as 'responsive' | 'fixed')}
                     className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-mono text-xs focus:border-purple-500 focus:outline-none"
                   >
-                    <option value="550">550 px (Compact)</option>
-                    <option value="650">650 px (Standard)</option>
-                    <option value="750">750 px (Expanded)</option>
+                    <option value="responsive">Responsive 16:9 (Recommended)</option>
+                    <option value="fixed">Fixed Height ({embedHeight}px)</option>
                   </select>
+                  {embedFormat === 'fixed' && (
+                    <select
+                      value={embedHeight}
+                      onChange={(e) => setEmbedHeight(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-mono text-xs focus:border-purple-500 focus:outline-none"
+                    >
+                      <option value="550">550 px (Compact)</option>
+                      <option value="650">650 px (Standard)</option>
+                      <option value="750">750 px (Expanded)</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -3731,11 +3808,11 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold uppercase text-slate-400">
-                    HTML Embed Code (Copy &amp; Paste):
+                    HTML Embed Code with Canonical Attribution:
                   </span>
                   <button
                     onClick={() => {
-                      const snippet = `<iframe src="https://livesimulators.com/embed/${simulator.id}" width="100%" height="${embedHeight}" style="border:1px solid #1e293b; border-radius:12px; max-width:100%;" allow="fullscreen" loading="lazy"></iframe>`;
+                      const snippet = getEmbedSnippet(simulator.id, simulator.title, embedFormat, embedHeight);
                       navigator.clipboard.writeText(snippet);
                       setEmbedCopied(true);
                       if (typeof (window as any).gtag === 'function') {
@@ -3755,9 +3832,12 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                   </button>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] text-purple-300 break-all select-all leading-relaxed">
-                  {`<iframe src="https://livesimulators.com/embed/${simulator.id}" width="100%" height="${embedHeight}" style="border:1px solid #1e293b; border-radius:12px; max-width:100%;" allow="fullscreen" loading="lazy"></iframe>`}
-                </div>
+                <pre className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] text-purple-300 break-all select-all leading-relaxed whitespace-pre-wrap">
+                  {getEmbedSnippet(simulator.id, simulator.title, embedFormat, embedHeight)}
+                </pre>
+                <p className="text-[11px] text-slate-400">
+                  Includes semantic attribution back to <code className="text-cyan-400 font-mono">https://livesimulators.com/simulator/{simulator.id}/</code> for academic citation &amp; SEO integrity.
+                </p>
               </div>
 
               {/* LMS Quick Instructions */}

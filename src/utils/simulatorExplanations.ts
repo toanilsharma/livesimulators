@@ -1,8 +1,10 @@
 /**
  * Comprehensive First-Principles Physics & Engineering Explanation Engine
  * Powers real-time plain-English results, dynamic diagnostics, and
- * in-depth "Why It Happened" breakdowns for all 18 simulators.
+ * in-depth "Why It Happened" breakdowns for all simulators.
  */
+import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
+import { cleanLatexToPlainText } from './engineeringTheory';
 
 export interface FormulaStep {
   name: string;
@@ -510,14 +512,27 @@ export function getLiveResultSummary(
       };
     }
 
-    default:
+    default: {
+      const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.type === simulatorType || s.id === simulatorType);
+      if (sim) {
+        const p1 = sim.parameters[0];
+        const val = p1 ? (params[p1.id] ?? p1.default) : null;
+        return {
+          headline: `🔬 ${sim.title}: Nominal Dynamic State`,
+          summary: `Governed by ${sim.physicalLaw}. Operating with ${p1 ? `${p1.name} = ${val} ${p1.unit}` : 'standard inputs'} within verified linear tolerances (${sim.equationDescription}).`,
+          statusType: 'optimal',
+          primaryMetric: p1 ? `${p1.symbol} = ${val} ${p1.unit}` : 'Nominal State',
+          badgeLabel: `${sim.badge.toUpperCase()} ACTIVE`,
+        };
+      }
       return {
-        headline: '🔬 First-Principles Numerical Physics Engine Active',
-        summary: 'Governing differential equations are integrated at 60 frames per second using client-side 64-bit floating point precision.',
+        headline: '🔬 Physical Equilibrium Maintained',
+        summary: 'Governing dynamic conservation formulation integrated across operational parameters.',
         statusType: 'optimal',
-        primaryMetric: '60 FPS Solver',
+        primaryMetric: 'Equilibrium State',
         badgeLabel: 'SOLVER ACTIVE',
       };
+    }
   }
 }
 
@@ -844,16 +859,57 @@ export function getDetailedWhyItHappened(
       };
     }
 
-    // Generic first-principles fallback for any other simulator
+    // Dynamic domain-specific explanation matching simulator metadata
     default: {
+      const sim = ALL_AVAILABLE_SIMULATORS.find((s) => s.type === simulatorType || s.id === simulatorType);
       const liveSummary = getLiveResultSummary(simulatorType, params);
+      if (sim) {
+        const p1 = sim.parameters[0];
+        const val = p1 ? (params[p1.id] ?? p1.default) : null;
+        const cleanEq = cleanLatexToPlainText(sim.governingEquation);
+        return {
+          title: `Why did this simulation outcome occur?`,
+          statusHeadline: liveSummary.headline,
+          statusType: liveSummary.statusType,
+          simpleExplanation: [
+            `The physical state is governed by ${sim.physicalLaw}: ${sim.equationDescription}.`,
+            `The continuous state vector satisfies ${cleanEq} across operating parameters.`,
+            sim.analyticalProof ? `${cleanLatexToPlainText(sim.analyticalProof).slice(0, 180)}...` : liveSummary.summary,
+          ],
+          formulaSteps: [
+            {
+              name: `${sim.physicalLaw} Formulation`,
+              latex: sim.governingEquation,
+              calculation: p1 ? `Evaluated at ${p1.name} (${p1.symbol}) = ${val} ${p1.unit}` : 'Evaluated across operational coordinate',
+              verdict: 'Continuous energy conservation and boundary equilibrium maintained.',
+            },
+          ],
+          realWorldImpact:
+            sim.fieldInsights ||
+            `Industrial operation conforms to ${sim.standardReference || `${sim.badge} standards`}. Accurate dynamic modeling prevents operational downtime and equipment damage.`,
+          interactiveChallenges: (sim.presetNames && sim.presetNames.length > 0)
+            ? sim.presetNames.map((preset) => ({
+                label: preset.label,
+                actionText: `Apply ${preset.label}`,
+                targetParams: preset.values,
+                explanation: `Evaluates the system under ${preset.label.toLowerCase()} operating conditions.`,
+              }))
+            : [
+                {
+                  label: 'Reset to Factory Standard',
+                  actionText: 'Click Reset Defaults',
+                  targetParams: {},
+                  explanation: 'Restores baseline benchmark operating parameters.',
+                },
+              ],
+        };
+      }
       return {
         title: `Why did this simulation outcome occur?`,
         statusHeadline: liveSummary.headline,
         statusType: liveSummary.statusType,
         simpleExplanation: [
           `This system is governed by strict first-principles conservation laws (energy, momentum, and mass).`,
-          `As you adjust the input parameters on the left desk, the numerical solver integrates the underlying differential formulation at 60 FPS.`,
           liveSummary.summary,
         ],
         formulaSteps: [
@@ -865,7 +921,7 @@ export function getDetailedWhyItHappened(
           },
         ],
         realWorldImpact:
-          'Accurate numerical simulation prevents costly prototype failures in aerospace, chemical processing, structural architecture, and high-voltage grid deployment.',
+          'High-fidelity numerical simulation conforms to published engineering consensus standards.',
         interactiveChallenges: [
           {
             label: 'Reset to Factory Standard',
@@ -878,3 +934,4 @@ export function getDetailedWhyItHappened(
     }
   }
 }
+

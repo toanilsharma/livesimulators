@@ -33,7 +33,8 @@ export function parsePathToRoute(pathname: string, hash?: string, search?: strin
     : (pathname.includes('?') 
         ? pathname.slice(pathname.indexOf('?')) 
         : (typeof window !== 'undefined' ? window.location.search : ''));
-  const isEmbedMode = new URLSearchParams(searchStr).get('embed') === '1';
+  const embedParam = new URLSearchParams(searchStr).get('embed');
+  const isEmbedMode = embedParam === '1' || embedParam === 'true';
 
   // Strip query parameters and hashes if present (e.g. ?R=25&L=60)
   const rawPath = pathname.split('?')[0].split('#')[0];
@@ -127,38 +128,54 @@ export function parsePathToRoute(pathname: string, hash?: string, search?: strin
 }
 
 /**
- * Converts an AppRoute object to its canonical URL pathname.
+ * Converts an AppRoute object to its canonical URL pathname with standard trailing slash.
  */
 export function routeToPath(route: AppRoute): string {
   switch (route.view) {
     case 'home':
       return '/';
     case 'about':
-      return '/about';
+      return '/about/';
     case 'contact':
-      return '/contact';
+      return '/contact/';
     case 'cookie-policy':
-      return '/cookie-policy';
+      return '/cookie-policy/';
     case 'disclaimer':
-      return '/disclaimer';
+      return '/disclaimer/';
     case 'privacy-policy':
-      return '/privacy-policy';
+      return '/privacy-policy/';
     case 'terms':
-      return '/terms';
+      return '/terms/';
     case 'department':
-      return `/department/${route.departmentId}`;
+      return `/department/${route.departmentId}/`;
     case 'simulator':
-      return `/simulator/${route.simulatorId}`;
+      return `/simulator/${route.simulatorId}/`;
     case 'embed':
-      return `/embed/${route.simulatorId}`;
+      return `/embed/${route.simulatorId}/`;
     case 'lab':
-      return `/lab/${route.labId}`;
+      return `/lab/${route.labId}/`;
     case 'not-found':
-      return route.attemptedPath || '/404';
+      return route.attemptedPath || '/404/';
     default:
       return '/';
   }
 }
+
+/**
+ * Converts a path or AppRoute to a strict canonical URL with a trailing slash.
+ */
+export function toCanonicalUrl(pathOrRoute: string | AppRoute): string {
+  const path = typeof pathOrRoute === 'string' ? pathOrRoute : routeToPath(pathOrRoute);
+  const cleanPath = path.split('?')[0].split('#')[0];
+  if (cleanPath === '/' || cleanPath === '') {
+    return `${SITE_URL}/`;
+  }
+  if (/\.[a-zA-Z0-9]+$/.test(cleanPath)) {
+    return `${SITE_URL}${cleanPath}`;
+  }
+  return `${SITE_URL}${cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`}`;
+}
+
 
 /**
  * Push or replace route in HTML5 History and notify listeners.

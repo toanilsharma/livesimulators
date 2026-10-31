@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { AppRoute } from '../types';
 import { getSeoMetadata } from '../utils/seo';
+import { getRouteSchema } from '../utils/seoSchema';
 
 export interface JsonLdProps {
   /**
@@ -94,8 +95,8 @@ export function useJsonLd(
 
     if ('view' in schemaOrRoute) {
       // It's an AppRoute
-      const meta = getSeoMetadata(schemaOrRoute as AppRoute);
-      injectJsonLdToHead(meta.jsonLd, scriptId);
+      const schema = getRouteSchema(schemaOrRoute as AppRoute);
+      injectJsonLdToHead(schema, scriptId);
     } else {
       injectJsonLdToHead(schemaOrRoute as Record<string, any> | Record<string, any>[], scriptId);
     }
@@ -111,8 +112,7 @@ export const JsonLd: React.FC<JsonLdProps> = ({ schema, graph, route, scriptId =
   let payload: Record<string, any> | Record<string, any>[] | undefined;
 
   if (route) {
-    const meta = getSeoMetadata(route);
-    payload = meta.jsonLd;
+    payload = getRouteSchema(route);
   } else if (graph) {
     payload = graph;
   } else if (schema) {

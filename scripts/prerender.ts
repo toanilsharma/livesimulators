@@ -9,6 +9,7 @@ import { getSeoMetadata } from '../src/utils/seo';
 import { routeToPath, SITE_URL, TOP_FLAGSHIP_EMBED_SLUGS } from '../src/utils/routes';
 import { getEngineeringTheory, cleanLatexToPlainText } from '../src/utils/engineeringTheory';
 import { getCrossDisciplineEquivalents } from '../src/data/crossDisciplineEquivalents';
+import { generateLlmsContent } from './generate-llms-txt.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,200 +45,12 @@ function renderMath(latex: string, displayMode = false): string {
  
 /**
  * Generates official llms.txt and llms-full.txt files following https://llmstxt.org/
- * Enables AI search engines (Perplexity, ChatGPT/SearchGPT, Claude, Gemini) to index
- * all mathematical models, physical formulations, parameter bounds, and validation tests.
+ * Grouped by department with exact trailing-slash URLs and full technical metadata.
  */
 function generateLlmsTxt(): { summary: string; full: string } {
-  const currentYear = new Date().getFullYear();
-  const entityName = 'LiveSimulators — browser-based first-principles engineering simulators';
-
-  const summaryLines: string[] = [
-    `# ${entityName}`,
-    '',
-    `> LiveSimulators — browser-based first-principles engineering simulators (https://livesimulators.com) is an open-access platform executing dynamic physical and mathematical models directly in the user browser at 60 FPS using Float64 numerical integrators (including 4th-Order Runge-Kutta). Built for university engineering syllabi, laboratory exploration, and industrial plant troubleshooting.`,
-    '',
-    '## Citation & Usage',
-    'To cite LiveSimulators or any individual simulator in academic literature, research papers, course syllabi, or lab manuals, use the following plain-text citation format:',
-    '',
-    `Sharma, A. (${currentYear}). [Simulator Title]. LiveSimulators. Retrieved from https://livesimulators.com/simulator/[simulator-id]`,
-    '',
-    'BibTeX entry format:',
-    '```bibtex',
-    `@misc{livesimulators_[simulator_id]_${currentYear},`,
-    '  author = {Sharma, A.},',
-    '  title = {[Simulator Title]},',
-    `  year = {${currentYear}},`,
-    '  howpublished = {LiveSimulators},',
-    '  url = {https://livesimulators.com/simulator/[simulator-id]}',
-    '}',
-    '```',
-    '',
-    '## Academic & Industrial Disciplines',
-  ];
-
-  for (const d of DISCIPLINES) {
-    const cleanCore = cleanLatexToPlainText(d.coreEquation);
-    summaryLines.push(`- [${d.name} (${d.code})](https://livesimulators.com/department/${d.id}): ${d.description} Core equation: \`${cleanCore}\``);
-  }
-
-  summaryLines.push('');
-  summaryLines.push('## Interactive Engineering Simulators');
-  for (const s of ALL_AVAILABLE_SIMULATORS) {
-    const theory = getEngineeringTheory(s);
-    const cleanEq = cleanLatexToPlainText(s.governingEquation);
-    const inputs = s.parameters.map((p) => `${p.name} (${p.symbol}) [${p.unit || 'unitless'}]: default ${p.default}, range [${p.min} to ${p.max} ${p.unit || ''}]`).join('; ');
-    const outputs = (s.keyMetrics && s.keyMetrics.length > 0)
-      ? s.keyMetrics.map((m) => `${m.label} [${m.unit || 'dimensionless'}]`).join('; ')
-      : `${theory.stepByStepExample.finalAnswer.metric} [${theory.stepByStepExample.finalAnswer.symbol}]`;
-    const assumptions = theory.assumptions.join(' | ');
-    const limitations = theory.limitations.join(' | ');
-
-    summaryLines.push(`- [${s.title}](https://livesimulators.com/simulator/${s.id}): ${s.tagline}`);
-    summaryLines.push(`  - Entity: ${entityName}`);
-    summaryLines.push(`  - Citation: Sharma, A. (${currentYear}). ${s.title}. LiveSimulators. Retrieved from https://livesimulators.com/simulator/${s.id}`);
-    summaryLines.push(`  - Governing equations (plain text): ${cleanEq}`);
-    summaryLines.push(`  - Inputs (with SI units): ${inputs}`);
-    summaryLines.push(`  - Outputs (with SI units): ${outputs}`);
-    summaryLines.push(`  - Assumptions: ${assumptions}`);
-    summaryLines.push(`  - Limitations: ${limitations}`);
-  }
-
-  summaryLines.push('');
-  summaryLines.push('## Industrial Engineering Labs Workbench');
-  for (const lab of LABS) {
-    summaryLines.push(`- [${lab.name}](https://livesimulators.com/lab/${lab.id}): ${lab.tagline}. Discipline: ${lab.dept} | ${lab.modules} Interactive Modules | Reference: ${lab.standardBadge}.`);
-  }
-
-  summaryLines.push('');
-  summaryLines.push('## Mechanical Engineering Digital Twins (Subdomain)');
-  summaryLines.push('Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference standard methodologies published in API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) literature for educational and preliminary design purposes.');
-
-  summaryLines.push('');
-  summaryLines.push('## Cornerstone Engineering Educational Guides');
-  summaryLines.push('- [RLC Resonance Explained](https://livesimulators.com/guides/rlc-resonance-explained.html): Complete engineering guide covering 2nd-order RLC frequency response, damping ratio, quality factor, and transient impedance.');
-  summaryLines.push('- [Rankine Cycle T-s Diagram](https://livesimulators.com/guides/rankine-cycle-ts-diagram.html): Complete thermodynamic guide to steam power cycles, superheat expansion, pump work, and condenser backpressure on T-s diagrams.');
-  summaryLines.push('- [PID Tuning Step-by-Step](https://livesimulators.com/guides/pid-tuning-step-by-step.html): Complete guide to tuning industrial proportional, integral, and derivative loops with anti-windup clamping.');
-  summaryLines.push('- [Beam Deflection Euler-Bernoulli](https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html): Complete structural guide to Euler-Bernoulli 4th-order beam deflection, shear force, bending moments, and AISC L/360 limits.');
-  summaryLines.push('- [Four-Bar Mechanism Kinematics](https://livesimulators.com/guides/four-bar-mechanism-kinematics.html): Complete kinematic guide to planar 4-bar link inversions, Grashof mobility, transmission angle limits, and coupler curves.');
-
-  summaryLines.push('');
-  summaryLines.push('## Verification Methodology & Quality Assurance');
-  summaryLines.push('- [Numerical Methodology & Standards Reference](https://livesimulators.com/about/methodology.html): Complete documentation of 4th-Order Runge-Kutta (RK4) numerical integrator verification, Butcher tableau, and analytical benchmark proofs across 41 engineering simulators.');
-
-  summaryLines.push('');
-  summaryLines.push('## Companion Engineering Portals');
-  summaryLines.push('- [DesignCalculators.co.in](https://designcalculators.co.in): Free multi-disciplinary engineering calculators (Electrical, Mechanical, Instrumentation) referencing published standards (IEEE, IEC, ASME, API, ISA).');
-  summaryLines.push('- [ReliabilityTools.co.in](https://reliabilitytools.co.in): Free plant reliability, asset uptime analytics, 2P/3P Weibull failure modeling, MTBF/MTTR, RCA, and IEC 61508/61511 SIL verification.');
-
-  summaryLines.push('');
-  summaryLines.push('## Standards Reference & Non-Affiliation Notice');
-  summaryLines.push('All standard designations and acronyms (IEEE, IEC, ASME, API, ISO, ISA, NFPA, ASTM, ANSI, AGMA) belong to their respective owners and are referenced solely for technical identification and academic study. LiveSimulators is an independent educational platform and makes no claim of endorsement, certification, copyright ownership, or official affiliation.');
-
-  summaryLines.push('');
-  summaryLines.push('## Full Technical Documentation');
-  summaryLines.push('- [Complete Equations, Mathematical Proofs & Benchmark Tests](https://livesimulators.com/llms-full.txt): Detailed mathematical derivations, analytical validation benchmarks, and complete parameter tables for all simulators.');
-
-  // Full technical document
-  const fullLines: string[] = [
-    `# ${entityName} — Complete Technical & Mathematical Knowledge Base`,
-    '',
-    `> Complete first-principles equations, analytical proofs, NIST/IEEE/ASME validation benchmarks, and parameter definitions for all LiveSimulators computational models.`,
-    '',
-    'Website: https://livesimulators.com',
-    'Methodology: https://livesimulators.com/about/methodology.html',
-    'Founder & Lead Computational Engineer: Anil Sharma (https://www.linkedin.com/in/toanilsharma/)',
-    '',
-    '## Citation & Usage',
-    'To cite LiveSimulators in academic literature, university courseware, or research papers:',
-    `Sharma, A. (${currentYear}). [Simulator Title]. LiveSimulators. Retrieved from https://livesimulators.com/simulator/[simulator-id]`,
-    '',
-    'BibTeX entry format:',
-    '```bibtex',
-    `@misc{livesimulators_[simulator_id]_${currentYear},`,
-    '  author = {Sharma, A.},',
-    '  title = {[Simulator Title]},',
-    `  year = {${currentYear}},`,
-    '  howpublished = {LiveSimulators},',
-    '  url = {https://livesimulators.com/simulator/[simulator-id]}',
-    '}',
-    '```',
-    '',
-    '## Mechanical Engineering Digital Twins (Subdomain)',
-    'Full-fidelity mechanical simulators at https://mech.livesimulators.com. Calculations and models reference the methodologies of API (610/617/618), ISO (1940), ASME (B31.3), and AGMA (2001) publications for educational and preliminary design purposes.',
-    '',
-    '---',
-    '',
-  ];
-
-  for (const s of ALL_AVAILABLE_SIMULATORS) {
-    const theory = getEngineeringTheory(s);
-    const cleanEq = cleanLatexToPlainText(s.governingEquation);
-    fullLines.push(`## ${s.title}`);
-    fullLines.push(`- **Entity**: ${entityName}`);
-    fullLines.push(`- **URL**: https://livesimulators.com/simulator/${s.id}`);
-    fullLines.push(`- **Citation**: Sharma, A. (${currentYear}). ${s.title}. LiveSimulators. Retrieved from https://livesimulators.com/simulator/${s.id}`);
-    fullLines.push(`- **Discipline**: ${s.disciplineName} (${s.discipline}) | **Level**: ${s.difficulty} | **Badge**: ${s.badge}`);
-    fullLines.push(`- **Overview**: ${s.description}`);
-    fullLines.push(`- **Physical Law**: ${s.physicalLaw}`);
-    fullLines.push(`- **Governing Equations (plain text)**: ${cleanEq}`);
-    for (const ge of theory.governingEquations) {
-      fullLines.push(`  - ${ge.title}: ${cleanLatexToPlainText(ge.latex)} — ${ge.description}`);
-    }
-    fullLines.push('- **Inputs (with SI units)**:');
-    for (const p of s.parameters) {
-      fullLines.push(`  - \`${p.symbol}\` (${p.name}): Default ${p.default} ${p.unit || 'unitless'}, Range [${p.min} to ${p.max} ${p.unit || 'unitless'}]. ${p.description}`);
-    }
-    fullLines.push('- **Outputs (with SI units)**:');
-    if (s.keyMetrics && s.keyMetrics.length > 0) {
-      for (const m of s.keyMetrics) {
-        fullLines.push(`  - ${m.label} [${m.unit || 'dimensionless'}]`);
-      }
-    } else {
-      fullLines.push(`  - ${theory.stepByStepExample.finalAnswer.metric} (${theory.stepByStepExample.finalAnswer.symbol}): ${theory.stepByStepExample.finalAnswer.value} — ${theory.stepByStepExample.finalAnswer.physicalMeaning}`);
-    }
-    fullLines.push('- **Assumptions**:');
-    for (const a of theory.assumptions) {
-      fullLines.push(`  - ${a}`);
-    }
-    fullLines.push('- **Limitations**:');
-    for (const l of theory.limitations) {
-      fullLines.push(`  - ${l}`);
-    }
-    if (s.standardReference) {
-      fullLines.push(`- **Referenced Standards**: ${s.standardReference}`);
-    }
-    if (s.analyticalProof) {
-      fullLines.push(`- **Analytical Proof & Mathematical Derivation**: ${cleanLatexToPlainText(s.analyticalProof)}`);
-    }
-    if (s.validationTest) {
-      fullLines.push(`- **Benchmark Validation Test**: ${cleanLatexToPlainText(s.validationTest)}`);
-    }
-    if (s.fieldInsights) {
-      fullLines.push(`- **Industrial Practical Insights**: ${s.fieldInsights}`);
-    }
-    if (s.courseMapping) {
-      fullLines.push(`- **University Course Mapping**: ${s.courseMapping}`);
-    }
-    if (s.textbookReferences) {
-      fullLines.push(`- **Standard Textbook References**: ${s.textbookReferences}`);
-    }
-    if (s.faqs && s.faqs.length > 0) {
-      fullLines.push('- **Frequently Asked Questions & Theoretical Concepts**:');
-      for (const faq of s.faqs) {
-        fullLines.push(`  - Q: ${faq.question}`);
-        fullLines.push(`    A: ${cleanLatexToPlainText(faq.answer)}`);
-      }
-    }
-    fullLines.push('');
-    fullLines.push('---');
-    fullLines.push('');
-  }
-
-  return {
-    summary: summaryLines.join('\n'),
-    full: fullLines.join('\n'),
-  };
+  return generateLlmsContent();
 }
+
 
 /**
  * Builds rich, accessible, crawler-indexable semantic HTML content for each route.
@@ -1124,7 +937,8 @@ async function runPrerender() {
     if (routePath === '/') {
       targetFile = path.join(distDir, 'index.html');
     } else {
-      const pageDir = path.join(distDir, routePath.replace(/^\//, ''));
+      const cleanSubDir = routePath.replace(/^\//, '').replace(/\/$/, '');
+      const pageDir = path.join(distDir, cleanSubDir);
       if (!fs.existsSync(pageDir)) {
         fs.mkdirSync(pageDir, { recursive: true });
       }
@@ -1166,15 +980,16 @@ async function runPrerender() {
     } else if (p.startsWith('/department/') || p.startsWith('/simulator/') || p.startsWith('/lab/')) {
       freq = 'weekly';
       prio = '0.9';
-    } else if (p === '/about' || p === '/contact') {
+    } else if (p === '/about/' || p === '/contact/' || p === '/about' || p === '/contact') {
       freq = 'weekly';
       prio = '0.8';
     } else {
       freq = 'monthly';
       prio = '0.5';
     }
+    const locPath = p === '/' ? '/' : (p.endsWith('/') ? p : `${p}/`);
     return `  <url>
-    <loc>${SITE_URL}${p === '/' ? '/' : p}</loc>
+    <loc>${SITE_URL}${locPath}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>${freq}</changefreq>
     <priority>${prio}</priority>
@@ -1223,7 +1038,7 @@ ${guideSitemapEntries}
   console.log('🤖 Generated llms.txt & llms-full.txt for AI Search & LLM Discovery');
 
   // Copy static assets from public to dist
-  const assetsToCopy = ['_redirects', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt', 'manifest.webmanifest', 'sw.js', 'contact-form.html', 'for-professors.html'];
+  const assetsToCopy = ['_redirects', '_headers', 'robots.txt', 'og-default.png', 'llms.txt', 'llms-full.txt', 'manifest.webmanifest', 'sw.js', 'contact-form.html', 'for-professors.html'];
   for (const asset of assetsToCopy) {
     const srcFile = path.join(publicDir, asset);
     if (fs.existsSync(srcFile)) {

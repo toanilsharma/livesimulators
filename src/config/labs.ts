@@ -40,7 +40,7 @@ export const LABS: LabItem[] = [
     modules: 8, // Corrected: Exactly 08 modules
     shot: '/assets/labs/power-electronics.png',
     external: false,
-    url: '/lab/power-electronics-lab',
+    url: '/lab/power-electronics-lab/',
     embedUrl: 'https://powerelectronics.livesimulators.com',
     standaloneUrl: 'https://powerelectronics.livesimulators.com',
     moduleList: [
@@ -71,7 +71,7 @@ export const LABS: LabItem[] = [
     modules: 25, // Corrected: Exactly 25 modules
     shot: '/assets/labs/power-systems.png',
     external: false,
-    url: '/lab/power-systems-lab',
+    url: '/lab/power-systems-lab/',
     embedUrl: 'https://powersystemlab.netlify.app',
     standaloneUrl: 'https://powersystemlab.netlify.app',
     moduleList: [
@@ -119,7 +119,7 @@ export const LABS: LabItem[] = [
     modules: 2, // Corrected: Exactly 02 modules
     shot: '/assets/labs/safeops-ups.png',
     external: false,
-    url: '/lab/safeops-ups',
+    url: '/lab/safeops-ups/',
     embedUrl: 'https://upslab.netlify.app',
     standaloneUrl: 'https://upslab.netlify.app',
     moduleList: [
@@ -144,7 +144,7 @@ export const LABS: LabItem[] = [
     modules: 9, // Corrected: Exactly 9 modules
     shot: '/assets/labs/electrolive.png',
     external: false,
-    url: '/lab/electrolive-electrical-safety',
+    url: '/lab/electrolive-electrical-safety/',
     embedUrl: 'https://electrolive.livesimulators.com',
     standaloneUrl: 'https://electrolive.livesimulators.com',
     moduleList: [

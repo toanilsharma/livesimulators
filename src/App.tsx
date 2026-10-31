@@ -86,12 +86,12 @@ export default function App() {
     if (typeof (window as any).gtag === 'function') {
       (window as any).gtag('event', 'simulator_launch', { simulator: simulator.title });
     }
-    navigateTo(`/simulator/${simulator.id}`);
+    navigateTo(`/simulator/${simulator.id}/`);
   };
 
   // Navigate to a dedicated department page
   const handleSelectDepartment = (deptId: DisciplineId) => {
-    navigateTo(`/department/${deptId}`);
+    navigateTo(`/department/${deptId}/`);
   };
 
   // Navigate back to home
@@ -99,29 +99,29 @@ export default function App() {
     navigateTo('/');
   };
 
-  // Dedicated Page Navigators (History API real paths)
+  // Dedicated Page Navigators (History API real paths with standardized trailing slashes)
   const handleNavigateToContact = () => {
-    navigateTo('/contact');
+    navigateTo('/contact/');
   };
 
   const handleNavigateToAbout = () => {
-    navigateTo('/about');
+    navigateTo('/about/');
   };
 
   const handleNavigateToCookiePolicy = () => {
-    navigateTo('/cookie-policy');
+    navigateTo('/cookie-policy/');
   };
 
   const handleNavigateToDisclaimer = () => {
-    navigateTo('/disclaimer');
+    navigateTo('/disclaimer/');
   };
 
   const handleNavigateToPrivacyPolicy = () => {
-    navigateTo('/privacy-policy');
+    navigateTo('/privacy-policy/');
   };
 
   const handleNavigateToTerms = () => {
-    navigateTo('/terms');
+    navigateTo('/terms/');
   };
 
   // Open search modal with an optional search term
@@ -239,19 +239,19 @@ export default function App() {
       )}
 
       {route.view === 'simulator' && activeSimulator && (
-        <main className="flex-1 min-h-0 h-full w-full max-w-full overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 h-full w-full max-w-full overflow-hidden flex flex-col">
           <DedicatedSimulatorPage
             simulator={activeSimulator}
             onBackToDepartment={(deptId) => handleSelectDepartment(deptId)}
             onBackToHome={handleBackToHome}
             onSelectSimulator={handleLaunchSimulator}
           />
-        </main>
+        </div>
       )}
 
       {/* Embedded Iframe View for University LMS (Canvas, Moodle, Blackboard) */}
       {route.view === 'embed' && activeSimulator && (
-        <main className="flex-1 min-h-0 h-full w-full max-w-full overflow-hidden flex flex-col bg-[#070b12]">
+        <div className="flex-1 min-h-0 h-full w-full max-w-full overflow-hidden flex flex-col bg-[#070b12]">
           <DedicatedSimulatorPage
             simulator={activeSimulator}
             isEmbed
@@ -259,7 +259,7 @@ export default function App() {
             onBackToHome={handleBackToHome}
             onSelectSimulator={handleLaunchSimulator}
           />
-        </main>
+        </div>
       )}
 
       {/* Dedicated Full-Scale Industrial Lab Workbench */}
