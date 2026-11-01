@@ -121,3 +121,81 @@ details > summary::-webkit-details-marker {
   display: none;
 }
 
+/* ==========================================================================
+   PRINTABLE 1-PAGE LABORATORY & RCA WORKSHEET STYLESHEET (@media print)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  html,
+  body,
+  #root {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all interactive workbench chrome, navigation, toolbars, buttons, drawers, and footers */
+  nav,
+  header:not(.print-header),
+  aside,
+  footer,
+  button,
+  .no-print,
+  [data-nosnippet="true"],
+  .fixed,
+  .sticky,
+  .interactive-controls,
+  .tab-buttons,
+  .slider-panel,
+  .simulator-breadcrumbs,
+  .lms-embed-panel,
+  .interactive-canvas-container,
+  .worked-calculation-drawer-screen {
+    display: none !important;
+  }
+
+  /* Force display of the dedicated print worksheet */
+  .print-worksheet {
+    display: block !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-worksheet table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .print-worksheet th,
+  .print-worksheet td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 3px 6px !important;
+    font-size: 9pt !important;
+  }
+
+  .print-worksheet th {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+  }
+
+  .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+

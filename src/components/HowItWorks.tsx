@@ -10,6 +10,7 @@ import {
   Zap,
   Terminal
 } from 'lucide-react';
+import { MathView } from './MathView';
 
 export const HowItWorks: React.FC = () => {
   const phases = [
@@ -33,9 +34,14 @@ export const HowItWorks: React.FC = () => {
       accentColor: '#10b981',
       badge: 'RK4 INTEGRATION',
       description:
-        'Continuous differential equations are integrated at microsecond sub-timesteps. 4th-order Runge-Kutta slope averaging with adaptive error control prevents numerical drift and enforces physical energy conservation (dE/dt ≤ 0).',
+        'Continuous differential equations are integrated at microsecond sub-timesteps. 4th-order Runge-Kutta slope averaging with adaptive error control prevents numerical drift and enforces strict physical energy conservation.',
       formula: 'y_{n+1} = y_n + \\frac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4)',
-      metric: 'Global Error: O(h⁴)',
+      metric: (
+        <span className="inline-flex items-center gap-1">
+          <span>Global Error:</span>
+          <MathView math="\mathcal{O}(h^4)" />
+        </span>
+      ),
     },
     {
       phaseNumber: '03',
@@ -153,9 +159,9 @@ export const HowItWorks: React.FC = () => {
                   <div className="text-[9.5px] text-slate-500 uppercase tracking-wider mb-1">
                     Formulation Step:
                   </div>
-                  <code className="text-cyan-300 text-xs block font-semibold truncate">
-                    {phase.formula}
-                  </code>
+                  <div className="py-1">
+                    <MathView math={phase.formula} block />
+                  </div>
                 </div>
 
                 {/* Desktop Direction Indicator */}

@@ -645,7 +645,10 @@ export const FeaturedElectrical: React.FC<FeaturedElectricalProps> = ({ onLaunch
                         className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800/80 text-slate-300 border border-slate-700/60 group-hover:border-slate-600 transition-colors"
                         title={param.description}
                       >
-                        {param.symbol} ({param.unit || 'ratio'})
+                        <span className="inline-flex items-center gap-1">
+                          <MathView math={param.symbol} />
+                          <span>({param.unit || 'ratio'})</span>
+                        </span>
                       </span>
                     ))}
                   </div>
@@ -659,7 +662,7 @@ export const FeaturedElectrical: React.FC<FeaturedElectricalProps> = ({ onLaunch
                   </div>
 
                   <a
-                    href={`/simulator/${sim.id}`}
+                    href={`/simulator/${sim.id}/`}
                     className="launch-button flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-slate-800 group-hover:bg-cyan-500 text-slate-200 group-hover:text-slate-950 font-bold text-xs transition-all shadow-sm"
                     rel="noopener"
                     onClick={(e) => {

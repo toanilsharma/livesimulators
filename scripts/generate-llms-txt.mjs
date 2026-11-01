@@ -8,6 +8,7 @@ register();
 const { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } = await import('../src/data/simulators.ts');
 const { LABS } = await import('../src/config/labs.ts');
 const { getEngineeringTheory, cleanLatexToPlainText } = await import('../src/utils/engineeringTheory.ts');
+const { getSimulatorEngineeringContent } = await import('../src/data/simulatorEngineeringContent.ts');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +29,6 @@ function getUseCasesForSimulator(s) {
   if (s.courseMapping) {
     useCases.push(`Curricular & Academic Context: Aligned with ${s.courseMapping}.`);
   }
-  // Department-specific practical industrial plant context
   switch (s.discipline) {
     case 'electrical':
       useCases.push(`Industrial Applications: Substation design, switchgear sizing, VFD motor drives, power factor correction, and harmonic filter commissioning conforming to ${s.standardReference || 'IEEE/IEC standards'}.`);
@@ -94,7 +94,17 @@ export function generateLlmsContent() {
   const summaryLines = [
     `# ${entityName}`,
     '',
-    `> LiveSimulators (https://livesimulators.com/) is an open-access platform executing real-time first-principles physical and mathematical models in modern web browsers at 60 FPS using Float64 numerical integrators (including 4th-Order Runge-Kutta). Built for university engineering syllabi, laboratory exploration, and industrial plant troubleshooting.`,
+    `> LiveSimulators (https://livesimulators.com/) is an open-access engineering simulation platform executing real-time first-principles physical and mathematical models in modern web browsers at 60 FPS using Float64 numerical integrators (including 4th-Order Runge-Kutta). Built for university engineering syllabi, laboratory exploration, and industrial plant troubleshooting conforming to international consensus standards (IEC, IEEE, API, ASME, ISA, ISO).`,
+    '',
+    '## Key Platform Distinctions',
+    '- **60 FPS First-Principles Solvers**: Double-precision Float64 RK4 dynamic trajectory integration directly inside the browser canvas.',
+    '- **International Consensus Standards**: Sized and bounded per IEC, IEEE, API, ASME, ISA, ISO, AISC, and ACI engineering standards.',
+    '- **Real-Time Fault Injection**: Interactive exploration of real-world equipment failure modes (cavitation vs flashing, subsynchronous resonance, CT saturation, compliance voltage starvation, IGBT thermal runaway).',
+    '- **Dual-Domain Telemetry**: Time-domain dynamic waveforms accompanied by frequency-domain spectra, Bode plots, or thermodynamic P-V / T-s state planes.',
+    '- **Zero-Install & Free Access**: 100% free, zero login, zero plugins, fully functional across desktop and mobile devices.',
+    '',
+    '## Platform Comparison Guide',
+    '- [LiveSimulators vs. PhET vs. Falstad vs. MATLAB Simulink](https://livesimulators.com/comparison/): Comprehensive feature, fidelity, and standards compliance matrix for engineering students and university faculty.',
     '',
     '## Citation & Academic Attribution',
     'To cite LiveSimulators or any individual simulator in academic literature, research papers, course syllabi, or lab manuals, use the following plain-text citation format:',
@@ -118,7 +128,7 @@ export function generateLlmsContent() {
 
   for (const d of DISCIPLINES) {
     const cleanCore = cleanLatexToPlainText(d.coreEquation);
-    summaryLines.push(`- [${d.name} (${d.code})](https://livesimulators.com/department/${d.id}/): ${d.description} Core equation: \`${cleanCore}\``);
+    summaryLines.push(`- [${d.name} (${d.code})](https://livesimulators.com/departments/${d.id}/): ${d.description} Core equation: \`${cleanCore}\``);
   }
 
   summaryLines.push('');
@@ -130,20 +140,24 @@ export function generateLlmsContent() {
     
     summaryLines.push('');
     summaryLines.push(`### ${dept.name} (${dept.code})`);
-    summaryLines.push(`- **Department Hub**: https://livesimulators.com/department/${dept.id}/`);
+    summaryLines.push(`- **Department Hub**: https://livesimulators.com/departments/${dept.id}/`);
     summaryLines.push(`- **Governing Discipline Equation**: \`${cleanCore}\``);
     summaryLines.push(`- **Core Subfields**: ${dept.subfields.join(', ')}`);
     summaryLines.push('');
     summaryLines.push('Simulators:');
 
     for (const s of deptSims) {
+      const engContent = getSimulatorEngineeringContent(s.id);
       const cleanEq = cleanLatexToPlainText(s.governingEquation);
-      const engineeringSummary = s.tagline || s.description.split('.')[0] + '.';
-      summaryLines.push(`- [${s.title}](https://livesimulators.com/simulator/${s.id}/): ${engineeringSummary}`);
+      const directAnswer = s.directAnswerSummary || engContent.directAnswerSummary;
+      const stdRef = s.standardReference || `${s.badge} International Consensus Standards`;
+
+      summaryLines.push(`- [${s.title}](https://livesimulators.com/simulator/${s.id}/): ${s.tagline || s.description}`);
       summaryLines.push(`  - Direct URL: https://livesimulators.com/simulator/${s.id}/`);
-      summaryLines.push(`  - Governing Equation: \`${cleanEq}\``);
-      summaryLines.push(`  - Engineering Summary: ${engineeringSummary}`);
-      summaryLines.push(`  - Physical Law: ${s.physicalLaw} | Difficulty: ${s.difficulty}`);
+      summaryLines.push(`  - Governing Formulation: \`${cleanEq}\``);
+      summaryLines.push(`  - International Standards: ${stdRef}`);
+      summaryLines.push(`  - Direct Answer Summary: ${directAnswer}`);
+      summaryLines.push(`  - Physical Law: ${s.physicalLaw} | Difficulty: ${s.difficulty} Level`);
     }
   }
 
@@ -167,7 +181,7 @@ export function generateLlmsContent() {
 
   summaryLines.push('');
   summaryLines.push('## Verification Methodology & Quality Assurance');
-  summaryLines.push('- [Numerical Methodology & Standards Reference](https://livesimulators.com/about/methodology.html): Complete documentation of 4th-Order Runge-Kutta (RK4) numerical integrator verification, Butcher tableau, and analytical benchmark proofs across 41 engineering simulators.');
+  summaryLines.push('- [Numerical Methodology & Standards Reference](https://livesimulators.com/about/methodology.html): Complete documentation of 4th-Order Runge-Kutta (RK4) numerical integrator verification, Butcher tableau, and analytical benchmark proofs across 44 engineering simulators.');
 
   summaryLines.push('');
   summaryLines.push('## Companion Engineering Portals');
@@ -188,9 +202,10 @@ export function generateLlmsContent() {
   const fullLines = [
     `# ${entityName} — Complete Technical & Mathematical Knowledge Base`,
     '',
-    `> Comprehensive technical knowledge base detailing first-principles equations, analytical proofs, NIST/IEEE/IEC/ASME/ISA validation benchmarks, input parameter boundaries, and industrial use cases for all LiveSimulators computational models. Optimized for Retrieval-Augmented Generation (RAG) and AI search indexing.`,
+    `> Comprehensive technical knowledge base detailing first-principles equations, analytical proofs, NIST/IEEE/IEC/ASME/ISA validation benchmarks, input parameter boundaries, direct-answer citation summaries, and industrial failure mode RCA for all LiveSimulators computational models. Optimized for Retrieval-Augmented Generation (RAG) and AI search indexing.`,
     '',
     'Website: https://livesimulators.com/',
+    'Comparison Guide: https://livesimulators.com/comparison/',
     'Methodology: https://livesimulators.com/about/methodology.html',
     'Founder & Lead Computational Modeling Engineer: Anil Sharma (https://www.linkedin.com/in/toanilsharma/)',
     '',
@@ -218,7 +233,7 @@ export function generateLlmsContent() {
     const cleanCore = cleanLatexToPlainText(dept.coreEquation);
 
     fullLines.push(`## Engineering Discipline: ${dept.name} (${dept.code})`);
-    fullLines.push(`- **Department URL**: https://livesimulators.com/department/${dept.id}/`);
+    fullLines.push(`- **Department Canonical URL**: https://livesimulators.com/departments/${dept.id}/`);
     fullLines.push(`- **Discipline Description**: ${dept.description}`);
     fullLines.push(`- **Curricular Core Equation**: \`${cleanCore}\``);
     fullLines.push(`- **Active Simulators Count**: ${deptSims.length}`);
@@ -229,9 +244,13 @@ export function generateLlmsContent() {
 
     for (const s of deptSims) {
       const theory = getEngineeringTheory(s);
+      const engContent = getSimulatorEngineeringContent(s.id);
       const cleanEq = cleanLatexToPlainText(s.governingEquation);
       const useCases = getUseCasesForSimulator(s);
       const standardsRef = getStandardsReference(s, theory);
+      const directAnswer = s.directAnswerSummary || engContent.directAnswerSummary;
+      const failureCase = s.industrialFailureCase || engContent.industrialFailureCase;
+      const faqs = (s.faqs && s.faqs.length > 0) ? s.faqs : engContent.faqs;
 
       fullLines.push(`### ${s.title}`);
       fullLines.push(`- **Entity**: ${entityName}`);
@@ -244,6 +263,14 @@ export function generateLlmsContent() {
       fullLines.push(`- **Industrial Standards Compliance**: ${standardsRef}`);
       fullLines.push('');
       
+      fullLines.push('#### Direct-Answer Citation Summary (RAG Context)');
+      fullLines.push(directAnswer);
+      fullLines.push('');
+
+      fullLines.push('#### Real-World Industrial Failure Mode, RCA & Protection Limits');
+      fullLines.push(failureCase);
+      fullLines.push('');
+
       fullLines.push('#### Governing Mathematical Equations & Physics Formulas');
       fullLines.push(`- **Primary Equation (Plain Text)**: \`${cleanEq}\``);
       fullLines.push(`- **Primary Equation (LaTeX)**: \`$$${s.governingEquation}$$\``);
@@ -289,6 +316,13 @@ export function generateLlmsContent() {
       }
       fullLines.push('');
 
+      fullLines.push('#### High-Intent Technical Engineering FAQs');
+      for (const f of faqs) {
+        fullLines.push(`- **Q: ${f.question}**`);
+        fullLines.push(`  **A**: ${f.answer}`);
+      }
+      fullLines.push('');
+
       fullLines.push('#### Industrial Use Cases & Practical Applications (RAG Context)');
       for (const uc of useCases) {
         fullLines.push(`- ${uc}`);
@@ -320,23 +354,7 @@ export function generateLlmsContent() {
           }
         }
         if (ex.finalAnswer) {
-          fullLines.push(`- **Final Validated Output**: ${ex.finalAnswer.metric} (\`${ex.finalAnswer.symbol}\`) = **${ex.finalAnswer.value}** (${ex.finalAnswer.physicalMeaning})`);
-        }
-        fullLines.push('');
-      }
-
-      if (s.courseMapping || s.textbookReferences) {
-        fullLines.push('#### Academic Pedagogy & Textbook Mapping');
-        if (s.courseMapping) fullLines.push(`- **Course Mapping**: ${s.courseMapping}`);
-        if (s.textbookReferences) fullLines.push(`- **Textbook References**: ${s.textbookReferences}`);
-        fullLines.push('');
-      }
-
-      if (s.faqs && s.faqs.length > 0) {
-        fullLines.push('#### Frequently Asked Engineering Questions');
-        for (const faq of s.faqs) {
-          fullLines.push(`- **Q: ${faq.question}**`);
-          fullLines.push(`  **A**: ${cleanLatexToPlainText(faq.answer)}`);
+          fullLines.push(`- **Final Calculated Output**: ${ex.finalAnswer.metric} = **${ex.finalAnswer.value}** (${ex.finalAnswer.physicalMeaning})`);
         }
         fullLines.push('');
       }
@@ -346,37 +364,12 @@ export function generateLlmsContent() {
     }
   }
 
-  // Industrial Labs Workbench section in llms-full
-  fullLines.push('## Industrial Engineering Labs Workbench Suites');
-  for (const lab of LABS) {
-    fullLines.push(`### ${lab.name}`);
-    fullLines.push(`- **Direct URL**: https://livesimulators.com/lab/${lab.id}/`);
-    fullLines.push(`- **Tagline**: ${lab.tagline}`);
-    fullLines.push(`- **Department**: ${lab.dept} | **Modules**: ${lab.modules} interactive sub-modules`);
-    fullLines.push(`- **Standard Badge**: ${lab.standardBadge}`);
-    fullLines.push(`- **Deployment Type**: ${lab.deploymentType}`);
-    fullLines.push(`- **Target Sectors**: ${lab.sectors.join(', ')}`);
-    fullLines.push('- **Core Capabilities**:');
-    for (const cap of lab.capabilities) {
-      fullLines.push(`  - ${cap}`);
-    }
-    if (lab.moduleList && lab.moduleList.length > 0) {
-      fullLines.push('- **Included Laboratory Modules**:');
-      for (const m of lab.moduleList) {
-        fullLines.push(`  - **${m.name}** [${m.tag}]`);
-      }
-    }
-    fullLines.push('');
-    fullLines.push('---');
-    fullLines.push('');
-  }
-
   // Cornerstone Educational Guides
-  fullLines.push('## Cornerstone Engineering Educational Guides');
-  fullLines.push('- [RLC Resonance Explained](https://livesimulators.com/guides/rlc-resonance-explained.html): Complete engineering guide covering 2nd-order RLC frequency response, damping ratio, quality factor, and transient impedance.');
-  fullLines.push('- [Rankine Cycle T-s Diagram](https://livesimulators.com/guides/rankine-cycle-ts-diagram.html): Complete thermodynamic guide to steam power cycles, superheat expansion, pump work, and condenser backpressure on T-s diagrams.');
-  fullLines.push('- [PID Tuning Step-by-Step](https://livesimulators.com/guides/pid-tuning-step-by-step.html): Complete guide to tuning industrial proportional, integral, and derivative loops with anti-windup clamping.');
-  fullLines.push('- [Beam Deflection Euler-Bernoulli](https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html): Complete structural guide to Euler-Bernoulli 4th-order beam deflection, shear force, bending moments, and AISC L/360 limits.');
+  fullLines.push('## Cornerstone Engineering Interactive Textbooks');
+  fullLines.push('- [RLC Resonance Explained](https://livesimulators.com/guides/rlc-resonance-explained.html): Complete mathematical guide to series and parallel RLC networks, natural frequency ω₀, bandwidth, quality factor, and transient impedance.');
+  fullLines.push('- [Rankine Cycle T-s Diagram](https://livesimulators.com/guides/rankine-cycle-ts-diagram.html): Complete thermodynamic guide to steam turbine reheat expansion, condenser heat rejection, and boiler efficiency on T-s and P-h state planes.');
+  fullLines.push('- [PID Tuning Step-by-Step](https://livesimulators.com/guides/pid-tuning-step-by-step.html): Practical engineering guide to Ziegler-Nichols, Cohen-Coon, and AMIGO loop tuning with integral windup clamping.');
+  fullLines.push('- [Beam Deflection Euler-Bernoulli](https://livesimulators.com/guides/beam-deflection-euler-bernoulli.html): Complete structural mechanics guide to beam shear, bending moments, and AISC L/360 deflection limits.');
   fullLines.push('- [Four-Bar Mechanism Kinematics](https://livesimulators.com/guides/four-bar-mechanism-kinematics.html): Complete kinematic guide to planar 4-bar link inversions, Grashof mobility, transmission angle limits, and coupler curves.');
   fullLines.push('');
   fullLines.push('---');
@@ -417,11 +410,20 @@ export function runGenerate() {
   console.log(`✅ Written ${summary.length.toLocaleString()} bytes to public/llms.txt`);
   console.log(`✅ Written ${full.length.toLocaleString()} bytes to public/llms-full.txt`);
 
+  // Mirror robots.txt, llms.txt, llms-full.txt to dist/ if present
   if (fs.existsSync(distDir)) {
     const distSummaryPath = path.join(distDir, 'llms.txt');
     const distFullPath = path.join(distDir, 'llms-full.txt');
     fs.writeFileSync(distSummaryPath, summary, 'utf8');
     fs.writeFileSync(distFullPath, full, 'utf8');
+
+    const publicRobots = path.join(publicDir, 'robots.txt');
+    const distRobots = path.join(distDir, 'robots.txt');
+    if (fs.existsSync(publicRobots)) {
+      fs.copyFileSync(publicRobots, distRobots);
+      console.log(`✅ Mirrored robots.txt to dist/robots.txt`);
+    }
+
     console.log(`✅ Mirrored llms.txt & llms-full.txt to dist/`);
   }
 }

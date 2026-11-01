@@ -2,6 +2,17 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": true,
+  "redirects": [
+    { "source": "/simulator/:slug", "destination": "/simulator/:slug/", "permanent": true },
+    { "source": "/department/:dept", "destination": "/department/:dept/", "permanent": true },
+    { "source": "/lab/:lab", "destination": "/lab/:lab/", "permanent": true },
+    { "source": "/about", "destination": "/about/", "permanent": true },
+    { "source": "/contact", "destination": "/contact/", "permanent": true },
+    { "source": "/cookie-policy", "destination": "/cookie-policy/", "permanent": true },
+    { "source": "/disclaimer", "destination": "/disclaimer/", "permanent": true },
+    { "source": "/privacy-policy", "destination": "/privacy-policy/", "permanent": true },
+    { "source": "/terms", "destination": "/terms/", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(llms\\.txt|llms-full\\.txt|robots\\.txt)",

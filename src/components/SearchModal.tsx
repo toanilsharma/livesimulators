@@ -128,7 +128,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
       icon: <Code2 className="w-4 h-4 text-purple-400" />,
       action: () => {
         onClose();
-        navigateTo('/simulator/rlc-resonance');
+        navigateTo('/simulator/rlc-resonance/');
         setActionFeedback('Opening simulator workbench for embed code...');
       }
     }

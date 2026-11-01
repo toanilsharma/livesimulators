@@ -460,7 +460,7 @@ export const ConceptDiscovery: React.FC<ConceptDiscoveryProps> = ({
                   {isLive ? (
                     <div className="w-full flex items-center justify-between font-mono">
                       <a
-                        href={concept.simulatorId ? `/simulator/${concept.simulatorId}` : '#'}
+                        href={concept.simulatorId ? `/simulator/${concept.simulatorId}/` : '#'}
                         className="launch-button text-cyan-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-1"
                         rel="noopener"
                         onClick={(e) => {

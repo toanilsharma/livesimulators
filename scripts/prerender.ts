@@ -25,19 +25,31 @@ function escapeHtml(str: string): string {
 }
 
 /**
- * Renders LaTeX equation into MathML & clean HTML via KaTeX,
- * and sets a plain-text fallback data attribute for screen readers & LLMs.
+ * Renders LaTeX equation into MathML & clean HTML via KaTeX.
+ * Visual .katex-html is strictly aria-hidden="true".
+ * .katex-mathml outputs a single clean <annotation encoding="application/x-tex"> & aria-label
+ * so search crawlers and LLMs do not index triplicate math strings.
  */
 function renderMath(latex: string, displayMode = false): string {
   if (!latex) return '';
   const plain = cleanLatexToPlainText(latex);
   try {
-    const rendered = katex.renderToString(latex.trim(), {
+    let rendered = katex.renderToString(latex.trim(), {
       displayMode,
       throwOnError: false,
       output: 'htmlAndMathml',
     });
-    return `<span class="math-container" data-math-plain="${escapeHtml(plain)}">${rendered}</span>`;
+
+    // Ensure visual .katex-html has aria-hidden="true"
+    if (!rendered.includes('class="katex-html" aria-hidden="true"')) {
+      rendered = rendered.replace(/<span class="katex-html"/g, '<span class="katex-html" aria-hidden="true"');
+    }
+
+    // Clean .katex-mathml so it outputs a single clean annotation and aria-label
+    const cleanMathMl = `<span class="katex-mathml" aria-label="${escapeHtml(plain)}"><math xmlns="http://www.w3.org/1998/Math/MathML" aria-label="${escapeHtml(plain)}"><semantics><annotation encoding="application/x-tex">${escapeHtml(latex.trim())}</annotation></semantics></math></span>`;
+    rendered = rendered.replace(/<span class="katex-mathml"><math[\s\S]*?<\/math><\/span>/, cleanMathMl);
+
+    return `<span class="math-container" data-math-plain="${escapeHtml(plain)}" aria-label="${escapeHtml(plain)}">${rendered}</span>`;
   } catch {
     return `<span class="math-plain" data-math-plain="${escapeHtml(plain)}">${escapeHtml(plain)}</span>`;
   }
@@ -63,7 +75,7 @@ function renderContentForRoute(route: AppRoute): string {
         (d) => `
         <article class="dept-card" style="border:1px solid #1e293b; padding:1.5rem; border-radius:1rem; margin-bottom:1rem; background:#0b1324;">
           <h3 style="font-size:1.25rem; font-weight:bold; color:#f8fafc; margin-bottom:0.5rem;">
-            <a href="/department/${d.id}" style="color:#38bdf8; text-decoration:none;">${escapeHtml(d.name)} (${d.code})</a>
+            <a href="/department/${d.id}/" style="color:#38bdf8; text-decoration:none;">${escapeHtml(d.name)} (${d.code})</a>
           </h3>
           <p style="color:#94a3b8; font-size:0.875rem; line-height:1.5; margin-bottom:0.75rem;">${escapeHtml(d.description)}</p>
           ${d.id === 'mechanical' ? '<div style="margin-bottom:0.75rem;"><a href="https://mech.livesimulators.com" target="_blank" rel="noopener" style="color:#f59e0b; font-size:0.8rem; font-family:monospace; text-decoration:underline;">Advanced Turbomachinery &amp; Rotor Dynamics &rarr;</a></div>' : ''}
@@ -76,7 +88,7 @@ function renderContentForRoute(route: AppRoute): string {
       const simListHtml = ALL_AVAILABLE_SIMULATORS.map(
         (s) => `
         <li style="margin-bottom:0.5rem;">
-          <a href="/simulator/${s.id}" style="color:#38bdf8; text-decoration:none; font-weight:600;">${escapeHtml(s.title)}</a>
+          <a href="/simulator/${s.id}/" style="color:#38bdf8; text-decoration:none; font-weight:600;">${escapeHtml(s.title)}</a>
           <span style="color:#94a3b8; font-size:0.8rem;"> — ${escapeHtml(s.tagline)}</span>
         </li>
       `
@@ -131,12 +143,12 @@ function renderContentForRoute(route: AppRoute): string {
             <span style="font-family:monospace; font-size:0.75rem; color:#f59e0b;">${escapeHtml(s.difficulty)}</span>
           </div>
           <h3 style="font-size:1.35rem; font-weight:bold; color:#ffffff; margin-bottom:0.5rem;">
-            <a href="/simulator/${s.id}" style="color:#ffffff; text-decoration:none;">${escapeHtml(s.title)}</a>
+            <a href="/simulator/${s.id}/" style="color:#ffffff; text-decoration:none;">${escapeHtml(s.title)}</a>
           </h3>
           <p style="color:#94a3b8; font-size:0.875rem; line-height:1.5; margin-bottom:0.75rem;">${escapeHtml(s.description)}</p>
           <div style="font-family:monospace; color:#38bdf8; font-size:0.8rem; margin-bottom:0.75rem;">Equation: ${renderMath(s.governingEquation, false)}</div>
           <div style="color:#64748b; font-size:0.75rem; margin-bottom:1rem;">Standard: ${escapeHtml(s.standardReference || 'IEEE/ASME Standard')}</div>
-          <a href="/simulator/${s.id}" onclick="gtag('event', 'simulator_launch', {'simulator': '${escapeHtml(s.title).replace(/'/g, "\\'")}'});" style="display:inline-block; padding:0.5rem 1rem; background:#06b6d4; color:#030712; border-radius:0.5rem; font-weight:bold; text-decoration:none; font-size:0.8rem;">Launch Workbench &rarr;</a>
+          <a href="/simulator/${s.id}/" onclick="gtag('event', 'simulator_launch', {'simulator': '${escapeHtml(s.title).replace(/'/g, "\\'")}'});" style="display:inline-block; padding:0.5rem 1rem; background:#06b6d4; color:#030712; border-radius:0.5rem; font-weight:bold; text-decoration:none; font-size:0.8rem;">Launch Workbench &rarr;</a>
         </article>
       `
       ).join('');
@@ -162,7 +174,7 @@ function renderContentForRoute(route: AppRoute): string {
             <div>
               <span style="font-family:monospace; font-size:0.75rem; color:#38bdf8; text-transform:uppercase; letter-spacing:0.05em; font-weight:bold; background:#0f172a; padding:0.25rem 0.5rem; border-radius:0.25rem; border:1px solid rgba(6,182,212,0.3);">Curriculum Track • Related Concepts</span>
               <h2 style="font-size:1.5rem; font-weight:bold; color:#ffffff; margin:0.5rem 0 0 0;">
-                <a href="/simulator/rlc-resonance" style="color:#38bdf8; text-decoration:underline;">Circuit Theory I Lab Sequence</a>
+                <a href="/simulator/rlc-resonance/" style="color:#38bdf8; text-decoration:underline;">Circuit Theory I Lab Sequence</a>
               </h2>
             </div>
             <p style="color:#94a3b8; font-size:0.875rem; max-width:32rem; margin:0; line-height:1.5;">
@@ -172,22 +184,22 @@ function renderContentForRoute(route: AppRoute): string {
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
             <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
               <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 01 • 2nd-Order ODE</span>
-              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/rlc-resonance" style="color:#ffffff; text-decoration:none; font-weight:bold;">RLC Circuit Resonance &rarr;</a></h3>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/rlc-resonance/" style="color:#ffffff; text-decoration:none; font-weight:bold;">RLC Circuit Resonance &rarr;</a></h3>
               <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Series/parallel RLC frequency response, quality factor, and transient damping.</p>
             </div>
             <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
               <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 02 • Active Biquad</span>
-              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/sallen-key-filter" style="color:#ffffff; text-decoration:none; font-weight:bold;">Sallen-Key Active Filter &rarr;</a></h3>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/sallen-key-filter/" style="color:#ffffff; text-decoration:none; font-weight:bold;">Sallen-Key Active Filter &rarr;</a></h3>
               <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Op-amp frequency selectivity, Butterworth vs Chebyshev peaking, and phase roll-off.</p>
             </div>
             <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
               <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 03 • Harmonic Theory</span>
-              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/fourier-synthesis" style="color:#ffffff; text-decoration:none; font-weight:bold;">Fourier Series Synthesis &rarr;</a></h3>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/fourier-synthesis/" style="color:#ffffff; text-decoration:none; font-weight:bold;">Fourier Series Synthesis &rarr;</a></h3>
               <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Harmonic decomposition of square and triangle waves, Gibbs phenomenon, and IEEE 519 THD.</p>
             </div>
             <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
               <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 04 • Wave Propagation</span>
-              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/transmission-line" style="color:#ffffff; text-decoration:none; font-weight:bold;">RF Transmission Line &rarr;</a></h3>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/transmission-line/" style="color:#ffffff; text-decoration:none; font-weight:bold;">RF Transmission Line &rarr;</a></h3>
               <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Distributed parameter telegrapher equations, impedance mismatch, and VSWR.</p>
             </div>
           </div>
@@ -200,7 +212,7 @@ function renderContentForRoute(route: AppRoute): string {
             <div>
               <span style="font-family:monospace; font-size:0.75rem; color:#f59e0b; text-transform:uppercase; letter-spacing:0.05em; font-weight:bold; background:#0f172a; padding:0.25rem 0.5rem; border-radius:0.25rem; border:1px solid rgba(245,158,11,0.3);">Curriculum Track • Related Concepts</span>
               <h2 style="font-size:1.5rem; font-weight:bold; color:#ffffff; margin:0.5rem 0 0 0;">
-                <a href="/simulator/harmonic-oscillator" style="color:#f59e0b; text-decoration:underline;">Mechanical Dynamics Sequence</a>
+                <a href="/simulator/harmonic-oscillator/" style="color:#f59e0b; text-decoration:underline;">Mechanical Dynamics Sequence</a>
               </h2>
             </div>
             <p style="color:#94a3b8; font-size:0.875rem; max-width:32rem; margin:0; line-height:1.5;">
@@ -210,22 +222,22 @@ function renderContentForRoute(route: AppRoute): string {
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
             <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
               <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 01 • Vibrations &amp; SDOF</span>
-              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/harmonic-oscillator" style="color:#ffffff; text-decoration:none; font-weight:bold;">Harmonic Oscillator &rarr;</a></h3>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/harmonic-oscillator/" style="color:#ffffff; text-decoration:none; font-weight:bold;">Harmonic Oscillator &rarr;</a></h3>
               <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Mass-spring-damper resonance, dynamic magnification factor M(ω), and 90° phase shift.</p>
             </div>
             <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
               <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 02 • Planar Kinematics</span>
-              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/four-bar-mechanism" style="color:#ffffff; text-decoration:none; font-weight:bold;">4-Bar Mechanism &rarr;</a></h3>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/four-bar-mechanism/" style="color:#ffffff; text-decoration:none; font-weight:bold;">4-Bar Mechanism &rarr;</a></h3>
               <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Grashof mobility criterion, Freudenstein loop closure, and transmission angle tracking.</p>
             </div>
             <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
               <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 03 • Machine Elements</span>
-              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/spur-gear-mesh" style="color:#ffffff; text-decoration:none; font-weight:bold;">Spur Gear Mesh &rarr;</a></h3>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/spur-gear-mesh/" style="color:#ffffff; text-decoration:none; font-weight:bold;">Spur Gear Mesh &rarr;</a></h3>
               <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Conjugate involute tooth action, pitch line velocity, and AGMA 2001 contact ratio.</p>
             </div>
             <div style="padding:1rem; background:#070d19; border:1px solid #1e293b; border-radius:0.5rem;">
               <span style="font-family:monospace; font-size:0.7rem; color:#64748b;">Step 04 • Thermodynamics</span>
-              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/rankine-cycle" style="color:#ffffff; text-decoration:none; font-weight:bold;">Rankine Cycle &rarr;</a></h3>
+              <h3 style="font-size:0.95rem; margin:0.25rem 0;"><a href="/simulator/rankine-cycle/" style="color:#ffffff; text-decoration:none; font-weight:bold;">Rankine Cycle &rarr;</a></h3>
               <p style="color:#94a3b8; font-size:0.8rem; margin:0; line-height:1.4;">Steam boiler heat addition, non-isentropic turbine expansion, and thermal efficiency on T-s diagrams.</p>
             </div>
           </div>
@@ -328,7 +340,7 @@ function renderContentForRoute(route: AppRoute): string {
       <article class="engineering-theory-formulas" itemscope itemtype="https://schema.org/TechArticle" style="max-width:72rem; margin:0 auto; padding:2rem 1.5rem 4rem;">
         <nav style="font-family:monospace; font-size:0.8rem; color:#64748b; margin-bottom:1.5rem;">
           <a href="/" style="color:#38bdf8; text-decoration:none;">Home</a> / 
-          <a href="/department/${dept ? dept.id : 'electrical'}" style="color:#38bdf8; text-decoration:none;">${escapeHtml(dept ? dept.name : sim.disciplineName)}</a> / 
+          <a href="/department/${dept ? dept.id : 'electrical'}/" style="color:#38bdf8; text-decoration:none;">${escapeHtml(dept ? dept.name : sim.disciplineName)}</a> / 
           <span style="color:#94a3b8;">${escapeHtml(sim.title)}</span>
         </nav>
 
@@ -558,7 +570,7 @@ function renderContentForRoute(route: AppRoute): string {
                       ${targetSim ? `<span style="font-family:monospace; font-size:0.75rem; color:#94a3b8;">${escapeHtml(targetSim.disciplineName)}</span>` : ''}
                     </div>
                     <h3 style="font-size:1rem; font-weight:bold; margin:0.25rem 0 0.5rem 0;">
-                      <a href="/simulator/${eq.targetSimulatorId}" style="color:#38bdf8; text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem;">
+                      <a href="/simulator/${eq.targetSimulatorId}/" style="color:#38bdf8; text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem;">
                         ${escapeHtml(eq.anchorText)} &rarr;
                       </a>
                     </h3>
@@ -605,11 +617,11 @@ function renderContentForRoute(route: AppRoute): string {
           </div>
           <div style="display:flex; gap:1.25rem; flex-wrap:wrap;">
             <a href="/" style="color:#94a3b8; text-decoration:none;">Home</a>
-            <a href="/about" style="color:#94a3b8; text-decoration:none;">About</a>
+            <a href="/about/" style="color:#94a3b8; text-decoration:none;">About</a>
             <a href="/about/methodology.html" style="color:#38bdf8; text-decoration:none;">Methodology &amp; Verification</a>
-            <a href="/contact" style="color:#94a3b8; text-decoration:none;">Contact</a>
-            <a href="/privacy-policy" style="color:#94a3b8; text-decoration:none;">Privacy Policy</a>
-            <a href="/terms" style="color:#94a3b8; text-decoration:none;">Terms</a>
+            <a href="/contact/" style="color:#94a3b8; text-decoration:none;">Contact</a>
+            <a href="/privacy-policy/" style="color:#94a3b8; text-decoration:none;">Privacy Policy</a>
+            <a href="/terms/" style="color:#94a3b8; text-decoration:none;">Terms</a>
           </div>
         </footer>
       </article>
@@ -625,7 +637,7 @@ function renderContentForRoute(route: AppRoute): string {
             <span style="font-family:monospace; font-size:0.75rem; color:#38bdf8; letter-spacing:0.05em;">LIVESIMULATORS • VIRTUAL LAB EMBED</span>
             <h1 style="font-size:1.5rem; font-weight:800; color:#ffffff; margin:0.25rem 0;">${escapeHtml(sim.title)}</h1>
           </div>
-          <a href="/simulator/${sim.id}" onclick="gtag('event', 'simulator_launch', {'simulator': '${escapeHtml(sim.title).replace(/'/g, "\\'")}'});" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem; font-weight:bold; color:#06b6d4; text-decoration:none; padding:0.4rem 0.8rem; background:#0f172a; border:1px solid #1e293b; border-radius:0.5rem;">Launch Full Lab ↗</a>
+          <a href="/simulator/${sim.id}/" onclick="gtag('event', 'simulator_launch', {'simulator': '${escapeHtml(sim.title).replace(/'/g, "\\'")}'});" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem; font-weight:bold; color:#06b6d4; text-decoration:none; padding:0.4rem 0.8rem; background:#0f172a; border:1px solid #1e293b; border-radius:0.5rem;">Launch Full Lab ↗</a>
         </header>
         <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.6; margin-bottom:1rem;">${escapeHtml(sim.description)}</p>
         <div style="font-family:monospace; color:#38bdf8; font-size:0.9rem; padding:0.75rem; background:#0f172a; border-radius:0.5rem; margin-bottom:1rem;">

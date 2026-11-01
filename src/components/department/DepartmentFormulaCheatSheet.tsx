@@ -44,8 +44,8 @@ sol = odeint(rlc_derivs, [0.0, 0.0], t, args=(25.0, 0.05, 50e-6, 120.0, 2*np.pi*
           { symbol: 'L', meaning: 'Inductance', unit: 'H (Henries)' },
           { symbol: 'R', meaning: 'Series Resistance', unit: 'Ω (Ohms)' },
           { symbol: 'C', meaning: 'Capacitance', unit: 'F (Farads)' },
-          { symbol: 'ω_0', meaning: 'Natural Resonant Frequency 1/√(LC)', unit: 'rad/s' },
-          { symbol: 'ζ', meaning: 'Damping Ratio (R/2)√(C/L)', unit: 'dimensionless' },
+          { symbol: '\\omega_0', meaning: 'Natural Resonant Frequency 1/√(LC)', unit: 'rad/s' },
+          { symbol: '\\zeta', meaning: 'Damping Ratio (R/2)√(C/L)', unit: 'dimensionless' },
         ],
       },
       {
@@ -67,8 +67,8 @@ print(f"Reflection Coefficient: {gamma:.4f}, VSWR: {vswr:.2f}")`,
         variables: [
           { symbol: 'Z_0', meaning: 'Characteristic Wave Impedance √(L\'/C\')', unit: 'Ω (Ohms)' },
           { symbol: 'Z_L', meaning: 'Complex Load Impedance', unit: 'Ω (Ohms)' },
-          { symbol: 'Γ_L', meaning: 'Voltage Reflection Coefficient', unit: 'complex dimensionless' },
-          { symbol: 'VSWR', meaning: 'Voltage Standing Wave Ratio (1+|Γ|)/(1-|Γ|)', unit: 'ratio' },
+          { symbol: '\\Gamma_L', meaning: 'Voltage Reflection Coefficient', unit: 'complex dimensionless' },
+          { symbol: '\\text{VSWR}', meaning: 'Voltage Standing Wave Ratio (1+|Γ|)/(1-|Γ|)', unit: 'ratio' },
         ],
       },
       {
@@ -89,8 +89,8 @@ t = np.linspace(0, 0.033, 1000)
 waveform = square_wave_fourier(t, f0=60.0, num_harmonics=15)`,
         variables: [
           { symbol: 'a_n, b_n', meaning: 'Euler-Fourier Spectral Coefficients', unit: 'Volts (V)' },
-          { symbol: 'ω_0', meaning: 'Fundamental Grid Angular Frequency 2πf_0', unit: 'rad/s' },
-          { symbol: 'THD', meaning: 'Total Harmonic Distortion (IEEE 519)', unit: '% or ratio' },
+          { symbol: '\\omega_0', meaning: 'Fundamental Grid Angular Frequency 2πf_0', unit: 'rad/s' },
+          { symbol: '\\text{THD}', meaning: 'Total Harmonic Distortion (IEEE 519)', unit: '% or ratio' },
         ],
       },
     ],
@@ -143,8 +143,8 @@ def four_bar_output_angle(theta2_rad, a=40.0, b=120.0, c=80.0, d=150.0):
     return 2.0 * np.arctan(t)`,
         variables: [
           { symbol: 'a, b, c, d', meaning: 'Link Lengths (Crank, Coupler, Rocker, Ground)', unit: 'mm' },
-          { symbol: 'θ_2', meaning: 'Input Crank Driver Angle', unit: 'rad or deg' },
-          { symbol: 'θ_4', meaning: 'Output Rocker Follower Angle', unit: 'rad or deg' },
+          { symbol: '\\theta_2', meaning: 'Input Crank Driver Angle', unit: 'rad or deg' },
+          { symbol: '\\theta_4', meaning: 'Output Rocker Follower Angle', unit: 'rad or deg' },
         ],
       },
     ],
@@ -174,7 +174,7 @@ w_deflections = [simply_supported_deflection(xi) * 1000 for xi in x_span] # mm`,
           { symbol: 'EI', meaning: 'Flexural Rigidity (Modulus E × Second Moment of Area I)', unit: 'N·m²' },
           { symbol: 'w(x)', meaning: 'Vertical Elastic Curve Deflection', unit: 'm or mm' },
           { symbol: 'M(x)', meaning: 'Bending Moment Distribution', unit: 'N·m or kN·m' },
-          { symbol: 'σ_max', meaning: 'Extreme Fiber Bending Stress', unit: 'MPa' },
+          { symbol: '\\sigma_{\\max}', meaning: 'Extreme Fiber Bending Stress', unit: 'MPa' },
         ],
       },
       {
@@ -195,10 +195,10 @@ def mohr_principal_stresses(sigma_x, sigma_y, tau_xy):
 
 s1, s2, tmax, ang = mohr_principal_stresses(80.0, -40.0, 30.0)`,
         variables: [
-          { symbol: 'σ_x, σ_y', meaning: 'Normal In-Plane Stresses', unit: 'MPa' },
-          { symbol: 'τ_xy', meaning: 'In-Plane Shear Stress', unit: 'MPa' },
-          { symbol: 'σ_1, σ_2', meaning: 'Maximum and Minimum Principal Stresses', unit: 'MPa' },
-          { symbol: 'θ_p', meaning: 'Principal Plane Orientation Angle', unit: 'deg' },
+          { symbol: '\\sigma_x, \\sigma_y', meaning: 'Normal In-Plane Stresses', unit: 'MPa' },
+          { symbol: '\\tau_{xy}', meaning: 'In-Plane Shear Stress', unit: 'MPa' },
+          { symbol: '\\sigma_1, \\sigma_2', meaning: 'Maximum and Minimum Principal Stresses', unit: 'MPa' },
+          { symbol: '\\theta_p', meaning: 'Principal Plane Orientation Angle', unit: 'deg' },
         ],
       },
     ],
@@ -252,7 +252,7 @@ q_flow = valve_flow_rate(Cv=45.0, delta_P_psi=25.0, SG=1.0)
 print(f"Flow Rate: {q_flow:.2f} GPM")`,
         variables: [
           { symbol: 'C_v', meaning: 'Valve Flow Capacity Coefficient', unit: 'GPM/psi^0.5' },
-          { symbol: 'ΔP', meaning: 'Pressure Drop Across Valve Body', unit: 'psi or bar' },
+          { symbol: '\\Delta P', meaning: 'Pressure Drop Across Valve Body', unit: 'psi or bar' },
           { symbol: 'F_L', meaning: 'Liquid Pressure Recovery Factor', unit: 'dimensionless' },
         ],
       },
@@ -281,8 +281,8 @@ def cstr_ode(state, t, F, V, CA0, T0, k0, Ea, R_gas, delta_H, rho, Cp, UA, Tc):
           { symbol: 'C_A', meaning: 'Reactant Concentration', unit: 'mol/L' },
           { symbol: 'T', meaning: 'Reactor Operating Temperature', unit: 'K' },
           { symbol: 'E_a', meaning: 'Arrhenius Activation Energy', unit: 'J/mol' },
-          { symbol: 'ΔH_R', meaning: 'Heat of Reaction (Negative for Exothermic)', unit: 'kJ/mol' },
-          { symbol: 'U A', meaning: 'Cooling Jacket Heat Transfer Conductance', unit: 'W/K' },
+          { symbol: '\\Delta H_R', meaning: 'Heat of Reaction (Negative for Exothermic)', unit: 'kJ/mol' },
+          { symbol: 'UA', meaning: 'Cooling Jacket Heat Transfer Conductance', unit: 'W/K' },
         ],
       },
       {
@@ -302,7 +302,7 @@ print(f"LMTD: {lmtd:.2f} deg C")`,
         variables: [
           { symbol: 'Q', meaning: 'Thermal Heat Transfer Duty', unit: 'kW or W' },
           { symbol: 'U', meaning: 'Overall Heat Transfer Coefficient', unit: 'W/(m²·K)' },
-          { symbol: 'ΔT_lm', meaning: 'Logarithmic Mean Temperature Difference', unit: 'K or °C' },
+          { symbol: '\\Delta T_{lm}', meaning: 'Logarithmic Mean Temperature Difference', unit: 'K or °C' },
         ],
       },
     ],
@@ -328,10 +328,10 @@ w_dep_0V = depletion_width(Va=0.0)
 w_dep_rev = depletion_width(Va=-5.0)
 print(f"Depletion width @ 0V: {w_dep_0V:.3f} um | @ -5V: {w_dep_rev:.3f} um")`,
         variables: [
-          { symbol: 'W_dep', meaning: 'Space-Charge Depletion Width', unit: 'µm or nm' },
-          { symbol: 'V_bi', meaning: 'Built-in Junction Potential Barrier', unit: 'V' },
+          { symbol: 'W_{dep}', meaning: 'Space-Charge Depletion Width', unit: 'µm or nm' },
+          { symbol: 'V_{bi}', meaning: 'Built-in Junction Potential Barrier', unit: 'V' },
           { symbol: 'V_a', meaning: 'Applied External Terminal Bias', unit: 'V' },
-          { symbol: 'ε_s', meaning: 'Semiconductor Permittivity', unit: 'F/cm' },
+          { symbol: '\\varepsilon_s', meaning: 'Semiconductor Permittivity', unit: 'F/cm' },
         ],
       },
       {
@@ -350,8 +350,8 @@ def switching_loss(V_dc=800.0, I_load=50.0, t_rise=15e-9, t_fall=20e-9):
 e_on, e_off, e_tot = switching_loss()
 print(f"Total Switching Energy: {e_tot*1e3:.3f} mJ")`,
         variables: [
-          { symbol: 'E_sw', meaning: 'Total Dynamic Switching Energy Dissipation', unit: 'mJ or µJ' },
-          { symbol: 'v_ds(t)', meaning: 'Drain-to-Source Voltage Waveform', unit: 'V' },
+          { symbol: 'E_{sw}', meaning: 'Total Dynamic Switching Energy Dissipation', unit: 'mJ or µJ' },
+          { symbol: 'v_{ds}(t)', meaning: 'Drain-to-Source Voltage Waveform', unit: 'V' },
           { symbol: 'i_d(t)', meaning: 'Drain Terminal Current Waveform', unit: 'A' },
         ],
       },
@@ -490,7 +490,9 @@ export const DepartmentFormulaCheatSheet: React.FC<DepartmentFormulaCheatSheetPr
                     key={i}
                     className="flex items-center justify-between px-2 py-1 rounded bg-slate-900/60 border border-slate-800/60"
                   >
-                    <span className="text-cyan-300 font-bold">{v.symbol}</span>
+                    <span className="text-cyan-300 font-bold">
+                      <MathView math={v.symbol} />
+                    </span>
                     <span className="text-slate-400 text-right truncate ml-2">
                       {v.meaning} <span className="text-slate-500">({v.unit})</span>
                     </span>

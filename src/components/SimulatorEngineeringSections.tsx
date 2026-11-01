@@ -9,13 +9,15 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertTriangle,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 import { SimulatorItem } from '../types';
 import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
 import { MathView } from './MathView';
 import { getEngineeringTheory } from '../utils/engineeringTheory';
 import { getSimulatorEngineeringDetails, WorkedEngineeringScenario } from '../utils/engineeringScenarios';
+import { getSimulatorEngineeringContent } from '../data/simulatorEngineeringContent';
 
 interface SimulatorEngineeringSectionsProps {
   simulator: SimulatorItem;
@@ -28,6 +30,11 @@ export const SimulatorEngineeringSections: React.FC<SimulatorEngineeringSections
 }) => {
   const theory = getEngineeringTheory(simulator);
   const details = getSimulatorEngineeringDetails(simulator);
+  const engContent = getSimulatorEngineeringContent(simulator.id);
+
+  const directAnswerSummary = simulator.directAnswerSummary || engContent.directAnswerSummary;
+  const industrialFailureCase = simulator.industrialFailureCase || engContent.industrialFailureCase;
+  const faqs = (simulator.faqs && simulator.faqs.length >= 3) ? simulator.faqs : engContent.faqs;
 
   const relatedSimulators = ALL_AVAILABLE_SIMULATORS.filter(
     (s) => s.discipline === simulator.discipline && s.id !== simulator.id
@@ -46,7 +53,32 @@ export const SimulatorEngineeringSections: React.FC<SimulatorEngineeringSections
   };
 
   return (
-    <div className="w-full bg-[#0a0f18] text-slate-100 border-t border-slate-800/80 px-3 sm:px-6 lg:px-8 py-8 space-y-10">
+    <article
+      id="simulator-engineering-content"
+      aria-label={`${simulator.title} Technical Overview and Engineering Specifications`}
+      className="w-full bg-[#0a0f18] text-slate-100 border-t border-slate-800/80 px-3 sm:px-6 lg:px-8 py-8 space-y-10"
+    >
+      {/* DIRECT ANSWER SUMMARY: 50-WORD RAG-READY CITATION BLOCK */}
+      <section
+        id="direct-answer-summary"
+        aria-labelledby="heading-direct-answer"
+        className="max-w-6xl mx-auto p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-slate-900 to-blue-950/40 border border-cyan-500/30 shadow-lg space-y-2.5"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-cyan-500/20">
+          <div className="flex items-center gap-2">
+            <span className="p-1 rounded-md bg-cyan-500/20 text-cyan-400 font-mono text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Direct Engineering Answer &amp; Formulation Citation</span>
+            </span>
+          </div>
+          <span className="text-[11px] font-mono text-slate-400">
+            {simulator.standardReference || `${simulator.badge} Consensus Standard`}
+          </span>
+        </div>
+        <p className="text-xs sm:text-sm text-cyan-100 font-sans leading-relaxed m-0 font-medium">
+          {directAnswerSummary}
+        </p>
+      </section>
       
       {/* SECTION 1: GOVERNING EQUATIONS & MATHEMATICAL FORMULATION */}
       <section
@@ -103,7 +135,9 @@ export const SimulatorEngineeringSections: React.FC<SimulatorEngineeringSections
                 className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/70 flex flex-col gap-0.5 shadow-inner"
               >
                 <dt className="text-cyan-300 font-bold flex items-center justify-between">
-                  <span>{p.name} ({p.symbol})</span>
+                  <span className="inline-flex items-center gap-1">
+                    {p.name} (<MathView math={p.symbol} />)
+                  </span>
                   <span className="text-[11px] text-amber-300 px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800">
                     {p.unit || 'dimensionless'}
                   </span>
@@ -174,7 +208,7 @@ export const SimulatorEngineeringSections: React.FC<SimulatorEngineeringSections
                   {details.boundaryConditions.operationalLimits.map((lim, idx) => (
                     <tr key={idx}>
                       <td className="py-2 text-slate-200 font-medium">
-                        {lim.parameter} <span className="text-cyan-400 font-mono">({lim.symbol})</span>
+                        {lim.parameter} <span className="text-cyan-400 font-mono inline-flex items-center gap-0.5">(<MathView math={lim.symbol} />)</span>
                       </td>
                       <td className="py-2 font-mono text-amber-300">{lim.operationalRange}</td>
                     </tr>
@@ -191,6 +225,17 @@ export const SimulatorEngineeringSections: React.FC<SimulatorEngineeringSections
               <span>Saturation Thresholds &amp; Industrial Failure Modes</span>
             </h3>
             <div className="space-y-3 text-xs">
+              {/* Real-World Industrial Failure Mode, RCA & Protection Thresholds */}
+              <div className="p-3.5 rounded-xl bg-gradient-to-br from-rose-950/30 via-slate-900 to-rose-950/20 border border-rose-900/50 space-y-1.5">
+                <span className="font-mono font-bold text-rose-300 uppercase text-[11px] flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Real-World Industrial Failure Case &amp; Root Cause Analysis (RCA):</span>
+                </span>
+                <p className="text-slate-200 m-0 text-xs sm:text-[13px] leading-relaxed font-sans">
+                  {industrialFailureCase}
+                </p>
+              </div>
+
               <div className="p-2.5 rounded-lg bg-rose-950/20 border border-rose-900/40 space-y-1">
                 <span className="font-mono font-bold text-rose-300 uppercase text-[10px]">
                   Critical Saturation Boundary:
@@ -333,7 +378,7 @@ export const SimulatorEngineeringSections: React.FC<SimulatorEngineeringSections
         </div>
 
         <div className="space-y-3">
-          {details.faqs.map((faq, idx) => (
+          {faqs.map((faq, idx) => (
             <details
               key={idx}
               open={idx === 0}
@@ -413,6 +458,6 @@ export const SimulatorEngineeringSections: React.FC<SimulatorEngineeringSections
         </div>
       </section>
 
-    </div>
+    </article>
   );
 };

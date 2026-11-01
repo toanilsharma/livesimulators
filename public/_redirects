@@ -2,4 +2,22 @@
 /llms.txt /llms.txt 200
 /llms-full.txt /llms-full.txt 200
 /sitemap.xml /sitemap.xml 200
+
+# 301 Redirect non-trailing-slash to standardized trailing-slash
+/simulator/:slug /simulator/:slug/ 301!
+/departments/:dept /departments/:dept/ 301!
+/department/:dept /departments/:dept/ 301
+/departments/instrumentation/ /departments/control/ 301
+/department/instrumentation/ /departments/control/ 301
+/comparison /comparison/ 301!
+/compare /comparison/ 301!
+/lab/:lab /lab/:lab/ 301!
+/about /about/ 301!
+/contact /contact/ 301!
+/cookie-policy /cookie-policy/ 301!
+/disclaimer /disclaimer/ 301!
+/privacy-policy /privacy-policy/ 301!
+/terms /terms/ 301!
+
 /* /index.html 200
+

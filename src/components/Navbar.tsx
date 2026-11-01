@@ -238,7 +238,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     if (onLaunchSimulator) {
       onLaunchSimulator(simulatorId);
     } else {
-      navigateTo(`/simulator/${simulatorId}`);
+      navigateTo(`/simulator/${simulatorId}/`);
     }
   };
 
@@ -427,7 +427,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         {dept.simulators.map((sim) => (
                           <a
                             key={sim.id}
-                            href={`/simulator/${sim.id}`}
+                            href={`/simulator/${sim.id}/`}
                             onClick={(e) => {
                               e.preventDefault();
                               handleSimulatorClick(sim.id, sim.discipline, sim.title);
@@ -556,7 +556,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             {dept.simulators.slice(0, 5).map((sim) => (
                               <a
                                 key={sim.id}
-                                href={`/simulator/${sim.id}`}
+                                href={`/simulator/${sim.id}/`}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleSimulatorClick(sim.id, sim.discipline, sim.title);
@@ -856,7 +856,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {dept.simulators.map((sim) => (
                         <a
                           key={sim.id}
-                          href={`/simulator/${sim.id}`}
+                          href={`/simulator/${sim.id}/`}
                           onClick={(e) => {
                             e.preventDefault();
                             handleSimulatorClick(sim.id, sim.discipline, sim.title);

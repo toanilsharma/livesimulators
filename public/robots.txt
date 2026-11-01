@@ -2,14 +2,7 @@
 User-agent: *
 Allow: /
 
-# Primary Search Engine Crawlers
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-# Dedicated AI Search & Agentic Crawlers (OpenAI, Anthropic, Perplexity, Google)
+# Dedicated AI Search, LLM Retrieval & Agentic Crawlers
 User-agent: GPTBot
 Allow: /
 
@@ -31,10 +24,10 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-User-agent: Googleother
+User-agent: Googlebot
 Allow: /
 
-User-agent: anthropic-ai
+User-agent: Bingbot
 Allow: /
 
 User-agent: Applebot-Extended
@@ -49,21 +42,6 @@ Allow: /
 User-agent: cohere-ai
 Allow: /
 
-User-agent: Diffbot
-Allow: /
-
-User-agent: Bytespider
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: YouBot
-Allow: /
-
-User-agent: DuckAssistBot
-Allow: /
-
 # Disallow private scratch or non-crawlable assets
 Disallow: /tmp/
 Disallow: /scratch/
@@ -71,7 +49,7 @@ Disallow: /scratch/
 # XML Sitemap
 Sitemap: https://livesimulators.com/sitemap.xml
 
-# LLM Structured Context (https://llmstxt.org)
+# LLM Structured Knowledge Context (https://llmstxt.org)
 # Canonical LLM text endpoints:
 # https://livesimulators.com/llms.txt
 # https://livesimulators.com/llms-full.txt

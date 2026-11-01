@@ -2634,7 +2634,7 @@ export const Hero: React.FC<HeroProps> = ({
                   </button>
 
                   <a
-                    href={`/simulator/${getActiveSimulator().id}`}
+                    href={`/simulator/${getActiveSimulator().id}/`}
                     onClick={(e) => {
                       if (typeof (window as any).gtag === 'function') {
                         (window as any).gtag('event', 'simulator_launch', { simulator: getActiveSimulator().title });

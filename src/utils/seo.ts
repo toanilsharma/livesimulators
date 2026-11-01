@@ -176,6 +176,41 @@ export const CENTRAL_STATIC_ROUTES: Record<string, RouteConfig> = {
     changefreq: 'monthly',
     priority: 0.5,
   },
+  '/comparison/': {
+    path: '/comparison/',
+    title: 'LiveSimulators vs. PhET vs. Falstad vs. MATLAB Simulink | Engineering Simulator Comparison',
+    description: 'Comprehensive engineering comparison of LiveSimulators vs. PhET, Falstad, and MATLAB Simulink. Compare 60 FPS RK4 solver fidelity, IEC/IEEE standards compliance, real-time industrial fault injection, dual-domain telemetry, and zero-install browser access.',
+    keywords: [
+      'LiveSimulators vs PhET',
+      'LiveSimulators vs Falstad',
+      'LiveSimulators vs MATLAB Simulink',
+      'engineering simulator comparison',
+      'best circuit simulator',
+      'online physics simulator comparison',
+      'RK4 solver vs Euler',
+      'IEC IEEE simulation standards',
+      'interactive engineering education',
+    ],
+    ogType: 'article',
+    changefreq: 'weekly',
+    priority: 0.9,
+  },
+  '/comparison': {
+    path: '/comparison/',
+    title: 'LiveSimulators vs. PhET vs. Falstad vs. MATLAB Simulink | Engineering Simulator Comparison',
+    description: 'Comprehensive engineering comparison of LiveSimulators vs. PhET, Falstad, and MATLAB Simulink. Compare 60 FPS RK4 solver fidelity, IEC/IEEE standards compliance, real-time industrial fault injection, dual-domain telemetry, and zero-install browser access.',
+    keywords: [
+      'LiveSimulators vs PhET',
+      'LiveSimulators vs Falstad',
+      'LiveSimulators vs MATLAB Simulink',
+      'engineering simulator comparison',
+      'best circuit simulator',
+      'online physics simulator comparison',
+    ],
+    ogType: 'article',
+    changefreq: 'weekly',
+    priority: 0.9,
+  },
 };
 import {
   FOUNDER_PERSON_SCHEMA,
@@ -411,6 +446,41 @@ export function getSeoMetadata(route: AppRoute): RouteSeoMetadata {
               { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
               { '@type': 'ListItem', position: 2, name: 'Terms of Service', item: canonicalUrl },
             ],
+          },
+        ],
+      };
+    }
+
+    case 'comparison': {
+      const cfg = CENTRAL_STATIC_ROUTES['/comparison/'];
+      return {
+        title: cfg.title,
+        description: cfg.description,
+        canonicalUrl,
+        ogType: cfg.ogType,
+        ogImage: defaultOgImage,
+        keywords: cfg.keywords,
+        jsonLd: [
+          ORGANIZATION_SCHEMA,
+          FOUNDER_PERSON_SCHEMA,
+          WEBSITE_SCHEMA,
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+              { '@type': 'ListItem', position: 2, name: 'Simulator Comparison', item: canonicalUrl },
+            ],
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'TechArticle',
+            '@id': `${canonicalUrl}#article`,
+            headline: 'Engineering Simulator Comparison: LiveSimulators vs. PhET vs. Falstad vs. MATLAB Simulink',
+            description: cfg.description,
+            author: { '@id': `${SITE_URL}/#founder` },
+            publisher: { '@id': `${SITE_URL}/#organization` },
+            url: canonicalUrl,
           },
         ],
       };

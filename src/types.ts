@@ -90,6 +90,8 @@ export interface SimulatorItem {
   colorStandardRule?: string;
   courseMapping?: string;
   textbookReferences?: string;
+  directAnswerSummary?: string;
+  industrialFailureCase?: string;
   faqs?: Array<{ question: string; answer: string }>;
   assumptions?: string[];
   calculationExample?: CalculationExample;
@@ -139,5 +141,6 @@ export type AppRoute =
   | { view: 'disclaimer' }
   | { view: 'privacy-policy' }
   | { view: 'terms' }
+  | { view: 'comparison' }
   | { view: 'not-found'; attemptedPath?: string };
 

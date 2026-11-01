@@ -1,5 +1,6 @@
 // Guided Learning Experiments and First-Principles Educational Modules
-// Empowers users to learn the core physical laws and engineering mechanics interactively
+// Empowers users to learn core physical laws and engineering mechanics interactively
+import { SimulatorItem } from '../types';
 
 export interface GuidedExperiment {
   id: string;
@@ -9,241 +10,470 @@ export interface GuidedExperiment {
   expectedObservation: string;
   governingLaw: string;
   parameters: Record<string, number>;
+  targetCondition: (params: Record<string, number>, telemetry?: Record<string, any>) => boolean;
+  category?: 'nominal' | 'threshold' | 'fault';
 }
 
 export const SIMULATOR_EXPERIMENTS: Record<string, GuidedExperiment[]> = {
   // 1. RLC Resonant Circuit
   rlc: [
     {
-      id: 'rlc-resonance',
-      title: '1. Perfect Electrical Resonance',
+      id: 'rlc-nominal-resonance',
+      title: 'Lab 1: Nominal Design Baseline (Zero Phase Lag)',
       goal: 'Achieve zero phase lag (cos φ = 1.0) and maximum loop current.',
       description: 'Tune AC generator frequency f to match natural frequency f₀ = 1/(2π√LC). Reactive impedances cancel out completely (X_L = X_C), leaving pure resistance R as the sole current limiter.',
       expectedObservation: 'Watch the current i(t) waveform surge in amplitude and align in phase with driving voltage v(t). Phasor angle collapses to 0°.',
       governingLaw: 'f_0 = \\frac{1}{2\\pi \\sqrt{LC}}, \\quad X_L = X_C \\implies Z = R',
-      parameters: { resistance: 10, inductance: 60, capacitance: 42, frequency: 100 }
+      parameters: { resistance: 25, inductance: 60, capacitance: 42, frequency: 100 },
+      targetCondition: (p) => {
+        const L = (p['inductance'] ?? 60) * 1e-3;
+        const C = (p['capacitance'] ?? 42) * 1e-6;
+        const f = p['frequency'] ?? 100;
+        const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+        return Math.abs(f - f0) < 6;
+      },
+      category: 'nominal',
     },
     {
-      id: 'rlc-critical-damping',
-      title: '2. Critical Damping Transition',
+      id: 'rlc-threshold-damping',
+      title: 'Lab 2: Threshold Discovery (Critical Damping Boundary)',
       goal: 'Eliminate oscillatory ringing without sluggish transient delay.',
       description: 'Set damping resistance R equal to critical resistance R_crit = 2√(L/C) (damping ratio ζ = 1.0). Used in analog galvanometers and high-speed bus terminators.',
-      expectedObservation: 'Damping ratio ζ reaches exactly 1.000. Underdamped ringing is completely extinguished.',
+      expectedObservation: 'Damping ratio ζ reaches exactly 1.000 (±0.05). Underdamped ringing is completely extinguished.',
       governingLaw: 'R_{crit} = 2\\sqrt{\\frac{L}{C}}, \\quad \\zeta = 1.0',
-      parameters: { resistance: 75, inductance: 60, capacitance: 40, frequency: 100 }
+      parameters: { resistance: 75, inductance: 60, capacitance: 40, frequency: 100 },
+      targetCondition: (p) => {
+        const R = p['resistance'] ?? 75;
+        const L = (p['inductance'] ?? 60) * 1e-3;
+        const C = (p['capacitance'] ?? 40) * 1e-6;
+        const Rcrit = 2 * Math.sqrt(L / C);
+        const zeta = R / Rcrit;
+        return Math.abs(zeta - 1.0) < 0.12;
+      },
+      category: 'threshold',
     },
     {
-      id: 'rlc-high-q',
-      title: '3. High-Q Frequency Selectivity',
-      goal: 'Observe sharp bandwidth filtering and high resonant magnification.',
-      description: 'Reduce resistance to R = 5Ω to achieve Quality Factor Q > 7. Energy oscillates hundreds of cycles between magnetic and electric storage fields.',
-      expectedObservation: 'Very high current surge at resonance; slight frequency deviations cause steep attenuation.',
-      governingLaw: 'Q = \\frac{1}{R}\\sqrt{\\frac{L}{C}}',
-      parameters: { resistance: 5, inductance: 100, capacitance: 25, frequency: 100 }
-    }
+      id: 'rlc-fault-surge',
+      title: 'Lab 3: Fault Troubleshooting (Subsynchronous Resonance Spike)',
+      goal: 'Identify and mitigate catastrophic series resonance overcurrent.',
+      description: 'Reduce resistance to R ≤ 5 Ω while driving at resonance (f ≈ f₀). Loop impedance collapses, inducing dangerous overvoltage surge across reactive components.',
+      expectedObservation: 'Quality factor Q surges past 8.0. Notice alarming overvoltage warning flag in the operating regime monitor.',
+      governingLaw: 'Q = \\frac{1}{R}\\sqrt{\\frac{L}{C}} > 8.0, \\quad |Z| \\approx R \\to 0',
+      parameters: { resistance: 4, inductance: 100, capacitance: 25, frequency: 100 },
+      targetCondition: (p) => {
+        const R = p['resistance'] ?? 4;
+        const L = (p['inductance'] ?? 100) * 1e-3;
+        const C = (p['capacitance'] ?? 25) * 1e-6;
+        const f = p['frequency'] ?? 100;
+        const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+        return R <= 8 && Math.abs(f - f0) < 8;
+      },
+      category: 'fault',
+    },
   ],
 
-  // 2. Three-Phase Machine
-  three_phase: [
+  // 2. Control Valve & Cavitation
+  control_valve: [
     {
-      id: 'tp-balanced-grid',
-      title: '1. Symmetrical 120° Balanced Grid',
-      goal: 'Verify zero neutral return current and constant rotating MMF.',
-      description: 'In a balanced 3-phase system (120° spatial displacement), the sum of instantaneous phase currents i_R + i_Y + i_B = 0 at all points in time.',
-      expectedObservation: 'Revolving magnetic field B_net traces a perfectly circular stator trajectory with constant rotational magnitude.',
-      governingLaw: '\\vec{B}_{net}(t) = \\frac{3}{2} B_{max} \\angle(\\omega t)',
-      parameters: { voltage: 230, frequency: 50, loadTorque: 40, excitationCurrent: 5.0 }
+      id: 'valve-nominal-linear',
+      title: 'Lab 1: Nominal Design Baseline (Sub-Critical Sizing)',
+      goal: 'Achieve linear flow regulation with travel between 40% and 70%.',
+      description: 'Size upstream and downstream pressures so pressure drop ratio ΔP/P1 remains below 0.5 · xT, ensuring zero cavitation and quiet trim operation.',
+      expectedObservation: 'Flow rate Q scales smoothly with travel; cavitation index remains well above safety threshold.',
+      governingLaw: 'Q = C_v \\sqrt{\\Delta P / SG}, \\quad \\frac{\\Delta P}{P_1} < 0.5 x_T',
+      parameters: { upstreamP: 6.0, downstreamP: 4.2, travelPercent: 55, flFactor: 0.75 },
+      targetCondition: (p) => {
+        const P1 = p['upstreamP'] ?? 6.0;
+        const P2 = p['downstreamP'] ?? 4.2;
+        const travel = p['travelPercent'] ?? 55;
+        const dP = P1 - P2;
+        return dP > 0.5 && dP / P1 < 0.5 && travel >= 40 && travel <= 75;
+      },
+      category: 'nominal',
     },
     {
-      id: 'tp-overexcitation',
-      title: '2. Over-Excitation & Leading Power Factor',
-      goal: 'Use synchronous condenser mode to inject reactive power (VARs) into the grid.',
-      description: 'Increase rotor excitation field current I_f above nominal. The machine delivers reactive power back into the grid, counteracting inductive factory loads.',
-      expectedObservation: 'Power factor shifts from lagging into leading (>0.98 leading). Stator current helps stabilize grid voltage.',
-      governingLaw: 'Q = 3 V_{ph} I_{ph} \\sin \\phi < 0 \\implies \\text{Capacitive Leading}',
-      parameters: { voltage: 230, frequency: 50, loadTorque: 25, excitationCurrent: 8.5 }
-    }
-  ],
-
-  // 3. Four-Bar Grashof Mechanism
-  four_bar: [
-    {
-      id: 'fb-grashof-crank-rocker',
-      title: '1. Classic Grashof Crank-Rocker',
-      goal: 'Achieve continuous 360° input rotation driving an oscillating rocker.',
-      description: 'According to Grashof’s theorem, when s + l ≤ p + q and link s is adjacent to the fixed ground link, the shortest link completes a full 360° rotation while the opposite link rocks.',
-      expectedObservation: 'Crank AB rotates smoothly without locking; coupler tracer P draws a teardrop trajectory.',
-      governingLaw: 's + l \\le p + q, \\quad \\mu \\ge 40^\\circ',
-      parameters: { groundL: 130, crankR: 38, couplerL: 120, rockerL: 85, rpm: 25 }
+      id: 'valve-threshold-choked',
+      title: 'Lab 2: Threshold Discovery (Critical Choked Flow Boundary)',
+      goal: 'Locate the exact pressure drop ratio where flow saturates (ΔP/P1 = xT).',
+      description: 'Lower downstream pressure P2 until pressure drop ratio ΔP/P1 reaches the terminal choked factor xT (0.75). Observe sonic velocity saturation.',
+      expectedObservation: 'Further decreases in downstream pressure P2 produce zero increase in volumetric flow rate Q.',
+      governingLaw: '\\left(\\frac{\\Delta P}{P_1}\\right)_{choked} = x_T \\approx 0.75',
+      parameters: { upstreamP: 8.0, downstreamP: 2.0, travelPercent: 70, flFactor: 0.75 },
+      targetCondition: (p) => {
+        const P1 = p['upstreamP'] ?? 8.0;
+        const P2 = p['downstreamP'] ?? 2.0;
+        const xT = p['flFactor'] ?? 0.75;
+        return (P1 - P2) / P1 >= xT * 0.90 && (P1 - P2) / P1 <= xT * 1.15;
+      },
+      category: 'threshold',
     },
     {
-      id: 'fb-transmission-angle',
-      title: '2. Transmission Angle Optimization',
-      goal: 'Prevent mechanical binding and toggle locking in heavy linkages.',
-      description: 'Industrial machinery standards mandate transmission angle μ ≥ 40° to avoid excessive pin bearing wear and ensure smooth mechanical advantage transfer.',
-      expectedObservation: 'Transmission angle gauge remains in the green zone (≥ 40°). Maximum force transmission efficiency is preserved.',
-      governingLaw: '\\mu = \\arccos\\left(\\frac{r_3^2 + r_4^2 - d^2}{2 r_3 r_4}\\right)',
-      parameters: { groundL: 140, crankR: 35, couplerL: 110, rockerL: 95, rpm: 20 }
-    }
+      id: 'valve-fault-flashing',
+      title: 'Lab 3: Fault Troubleshooting (Severe Vena Contracta Flashing)',
+      goal: 'Diagnose choked vaporization and trim erosion, then restore safe backpressure.',
+      description: 'Set extreme pressure differential (P1 = 12 bar, P2 = 1.0 bar). Liquid vaporizes instantly, causing severe acoustic vibration. Increase P2 to clear cavitation.',
+      expectedObservation: 'Alarm status triggers red CAVITATION / FLASHING flag. Elevating downstream pressure suppresses vapor pocket collapse.',
+      governingLaw: '\\Delta P > x_T P_1 \\implies \\text{Sonic Vaporization}',
+      parameters: { upstreamP: 12.0, downstreamP: 1.0, travelPercent: 90, flFactor: 0.65 },
+      targetCondition: (p) => {
+        const P1 = p['upstreamP'] ?? 12.0;
+        const P2 = p['downstreamP'] ?? 1.0;
+        const xT = p['flFactor'] ?? 0.65;
+        return (P1 - P2) / P1 >= xT;
+      },
+      category: 'fault',
+    },
   ],
 
-  // 4. Damped Harmonic Oscillator
-  harmonic: [
+  // 3. 4-20mA Current Loop & HART Telemetry
+  current_loop: [
     {
-      id: 'harm-resonance-peak',
-      title: '1. Dynamic Resonance Amplification',
-      goal: 'Observe extreme displacement magnification at frequency ratio r = 1.0.',
-      description: 'Drive the mechanical oscillator at its natural resonance frequency f_drive = f_n. Phase lag between driving force and mass displacement locks at exactly 90°.',
-      expectedObservation: 'Vibration amplitude surges drastically. Magnification factor M exceeds 4.0x.',
-      governingLaw: 'M = \\frac{1}{\\sqrt{(1 - r^2)^2 + (2\\zeta r)^2}}, \\quad \\phi = 90^\\circ',
-      parameters: { mass: 5, stiffness: 350, dampingC: 4, driveFreq: 1.33 }
+      id: 'loop-nominal-calibration',
+      title: 'Lab 1: Nominal Design Baseline (4.00 mA Zero Calibration)',
+      goal: 'Verify 4.00 mA zero-offset live baseline at Lower Range Value (LRV).',
+      description: 'Set process pressure to LRV = 0.0 bar. According to NAMUR NE 43, 4.00 mA live zero distinguishes valid zero from an open-circuit wire break (0.0 mA).',
+      expectedObservation: 'Calculated current settles at exactly 4.00 mA with full 18+ V terminal voltage headroom.',
+      governingLaw: 'I = 4.0\\text{ mA} + 16.0\\left(\\frac{P - LRV}{URV - LRV}\\right) = 4.00\\text{ mA}',
+      parameters: { processPressure: 0.0, lrv: 0.0, urv: 10.0, supplyVoltage: 24.0, loadResistance: 250, wireResistance: 15 },
+      targetCondition: (p) => {
+        const P = p['processPressure'] ?? 0.0;
+        const lrv = p['lrv'] ?? 0.0;
+        return Math.abs(P - lrv) < 0.2;
+      },
+      category: 'nominal',
     },
     {
-      id: 'harm-high-damping',
-      title: '2. Super-Critical Vibration Isolation',
-      goal: 'Suppress resonance using tuned viscous damping.',
-      description: 'Increase viscous damping coefficient c to achieve damping ratio ζ > 0.6. Prevents destructive mechanical fatigue in bridges and turbine shafts.',
-      expectedObservation: 'Resonance peak is flattened; steady-state amplitude remains stable across all excitation frequencies.',
-      governingLaw: '\\zeta = \\frac{c}{2\\sqrt{k m}} \\ge 0.707',
-      parameters: { mass: 5, stiffness: 350, dampingC: 35, driveFreq: 1.33 }
-    }
-  ],
-
-  // 5. Involute Spur Gear Mesh
-  spur_gear: [
-    {
-      id: 'gear-agma-high-ratio',
-      title: '1. AGMA Speed Reduction & Torque Multiplication',
-      goal: 'Demonstrate angular velocity reduction and torque amplification.',
-      description: 'Gear ratio i = z₂ / z₁ determines proportional torque increase and speed reduction while maintaining constant pitch line velocity V_p.',
-      expectedObservation: 'Driven gear rotates slower at exactly N₂ = N₁ / i; gear teeth engage smoothly along the line of action.',
-      governingLaw: 'i = \\frac{z_2}{z_1} = \\frac{\\omega_1}{\\omega_2} = \\frac{T_2}{T_1}',
-      parameters: { moduleM: 4, teethPinion: 18, teethGear: 54, pressureAngle: 20, inputRpm: 600 }
+      id: 'loop-threshold-fullscale',
+      title: 'Lab 2: Threshold Discovery (20.00 mA Full Scale Span)',
+      goal: 'Drive process pressure to Upper Range Value (URV) to test max loop voltage drop.',
+      description: 'Raise pressure to URV (10.0 bar). At 20.00 mA, series resistance drop is maximized. Verify transmitter terminal voltage stays above 12.0 V.',
+      expectedObservation: 'Current reaches 20.00 mA. Loop voltage drop peaks at 5.3 V across 265 Ω total resistance.',
+      governingLaw: 'V_{drop,max} = 0.020\\text{ A} \\times (R_{wire} + R_{load})',
+      parameters: { processPressure: 10.0, lrv: 0.0, urv: 10.0, supplyVoltage: 24.0, loadResistance: 250, wireResistance: 15 },
+      targetCondition: (p) => {
+        const P = p['processPressure'] ?? 10.0;
+        const urv = p['urv'] ?? 10.0;
+        return Math.abs(P - urv) < 0.3;
+      },
+      category: 'threshold',
     },
     {
-      id: 'gear-contact-ratio',
-      title: '2. High Contact Ratio Mesh (CR ≥ 1.4)',
-      goal: 'Ensure uninterrupted load transfer without tooth collision impact.',
-      description: 'AGMA standards require Contact Ratio CR > 1.2 to guarantee that at least one tooth pair is always fully engaged before the preceding pair separates.',
-      expectedObservation: 'Contact ratio bar displays CR ≥ 1.5, verifying continuous smooth mesh without tooth impact noise.',
-      governingLaw: 'CR = \\frac{g_\\alpha}{p_b} \\ge 1.4',
-      parameters: { moduleM: 3.5, teethPinion: 24, teethGear: 60, pressureAngle: 20, inputRpm: 500 }
-    }
-  ],
-
-  // 6. Euler-Bernoulli Beam Bending
-  beam_deflection: [
-    {
-      id: 'beam-midspan-point',
-      title: '1. Midspan Point Load Deflection',
-      goal: 'Measure peak bending moment M_max and check AISC L/360 live deflection limit.',
-      description: 'A concentrated load P placed at midspan of a simply supported girder creates maximum flexural moment M = P·L / 4 and center deflection δ = P·L³ / (48·E·I).',
-      expectedObservation: 'Maximum bending moment diagram (BMD) peaks directly beneath point load; deflection contour satisfies AISC criteria.',
-      governingLaw: '\\delta_{mid} = \\frac{P L^3}{48 E I}, \\quad M_{max} = \\frac{P L}{4}',
-      parameters: { span: 6.0, pointLoad: 45, loadPos: 3.0, udl: 12 }
-    }
-  ],
-
-  // 7. Closed-Loop PID Control
-  pid: [
-    {
-      id: 'pid-quarter-amplitude',
-      title: '1. Ziegler-Nichols Quarter Amplitude Decay',
-      goal: 'Achieve fast setpoint tracking with a 4:1 damped oscillation ratio.',
-      description: 'Proportional gain K_p and reset time T_i tuned according to classic Ziegler-Nichols frequency response rules eliminate steady-state error.',
-      expectedObservation: 'Liquid level in the tank smoothly rises to setpoint SP with one minor overshoot peak that settles within 3 cycles.',
-      governingLaw: 'u(t) = K_p\\left(e(t) + \\frac{1}{T_i}\\int_0^t e(\\tau)d\\tau + T_d\\frac{de(t)}{dt}\\right)',
-      parameters: { kp: 2.4, ti: 8.0, td: 0.5, setpoint: 65 }
-    }
-  ],
-
-  // 6. Binary Distillation Column
-  distillation_column: [
-    {
-      id: 'dist-reflux-pinch',
-      title: '1. Minimum Reflux Ratio & Pinch Point',
-      goal: 'Observe the pinch point where operating line touches VLE curve and stage count approaches infinity.',
-      description: 'Lower reflux ratio R towards R_min. At the pinch boundary, separation requires an infinite number of equilibrium stages.',
-      expectedObservation: 'McCabe-Thiele staircase steps become infinitely crowded near the feed line intersection.',
-      governingLaw: 'R_{min} = \\frac{x_D - y_q}{y_q - x_q}',
-      parameters: { refluxRatio: 1.45, feedComposition: 0.40, relativeVolatility: 2.2, feedCondition: 0.95 }
+      id: 'loop-fault-brownout',
+      title: 'Lab 3: Fault Troubleshooting (Compliance Voltage Starvation)',
+      goal: 'Diagnose loop telemetry clipping caused by excessive load resistance or DC supply drop.',
+      description: 'Lower DC supply to 12.0 V while load resistance is set to 550 Ω. Transmitter terminal voltage collapses below 12.0 V, corrupting current output.',
+      expectedObservation: 'Terminal voltage V_tx collapses below compliance threshold; alert triggers BROWNOUT STARVATION.',
+      governingLaw: 'V_{tx} = V_{supply} - I \\cdot R_{loop} < 12.0\\text{ V}',
+      parameters: { processPressure: 9.0, lrv: 0.0, urv: 10.0, supplyVoltage: 12.0, loadResistance: 550, wireResistance: 25 },
+      targetCondition: (p) => {
+        const Vsupply = p['supplyVoltage'] ?? 24;
+        const Rload = p['loadResistance'] ?? 250;
+        const Rwire = p['wireResistance'] ?? 15;
+        const P = p['processPressure'] ?? 5;
+        const I = 4.0 + 16.0 * (P / 10);
+        const Vtx = Vsupply - (I / 1000) * (Rload + Rwire);
+        return Vtx < 12.5;
+      },
+      category: 'fault',
     },
-    {
-      id: 'dist-high-purity',
-      title: '2. High Purity Separation',
-      goal: 'Achieve >98% overhead distillate purity by increasing reflux.',
-      description: 'Increase reflux ratio to R = 4.0. The rectifying operating line rotates closer to the 45° diagonal line, opening up driving force for rapid enrichment.',
-      expectedObservation: 'Top distillate purity reaches 98.5% with fewer theoretical stages required.',
-      governingLaw: 'y_{n+1} = \\frac{R}{R+1}x_n + \\frac{x_D}{R+1}',
-      parameters: { refluxRatio: 4.0, feedComposition: 0.50, relativeVolatility: 2.8, feedCondition: 1.0 }
-    }
   ],
 
-  // 7. Shell-and-Tube Heat Exchanger
-  heat_exchanger: [
-    {
-      id: 'hx-countercurrent-lmtd',
-      title: '1. Countercurrent Thermal Gradient & LMTD',
-      goal: 'Maximize log-mean temperature difference and verify outlet temperatures.',
-      description: 'In pure counterflow, the cold fluid outlet temperature can exceed the hot fluid outlet temperature, maximizing thermal thermodynamic efficiency.',
-      expectedObservation: 'Hot fluid cools from 140°C down to 73°C while cold fluid heats from 25°C up to 68°C.',
-      governingLaw: '\\text{LMTD} = \\frac{(T_{h,in} - T_{c,out}) - (T_{h,out} - T_{c,in})}{\\ln((T_{h,in} - T_{c,out}) / (T_{h,out} - T_{c,in}))}',
-      parameters: { hotInletTemp: 140, coldInletTemp: 25, hotFlowRate: 6.5, coldFlowRate: 10.0 }
-    }
-  ],
-
-  // 8. Packed Gas Absorption Column
-  gas_absorption: [
-    {
-      id: 'abs-flooding-limit',
-      title: '1. Sherwood Hydrodynamic Flooding Boundary',
-      goal: 'Identify the liquid holdup threshold and gas velocity where column flooding occurs.',
-      description: 'Increase gas flow velocity and liquid-to-gas ratio L/G towards the Sherwood flooding boundary.',
-      expectedObservation: 'Flooding ratio bar enters the red alert zone (>85%), demonstrating liquid accumulation in packing voids.',
-      governingLaw: '\\frac{u_G^2 a_p}{g \\epsilon^3}\\left(\\frac{\\rho_G}{\\rho_L}\\right)\\mu_L^{0.2} = f\\left[\\frac{L}{G}\\sqrt{\\frac{\\rho_G}{\\rho_L}}\\right]',
-      parameters: { gasFlow: 32, liquidGasRatio: 4.5, inletGasConc: 10.0, henryConstant: 1.5 }
-    }
-  ],
-
-  // 9. SiC MOSFET Switching
-  sic_switching: [
-    {
-      id: 'sic-ultra-fast-slew',
-      title: '1. Ultra-High dv/dt & Inductive Voltage Ringing',
-      goal: 'Observe high-speed switching transients with dv/dt > 50 V/ns and stray inductance overshoot.',
-      description: 'Lower external gate resistance R_g to 2.5Ω. Miller plateau transition accelerates dramatically, exciting parasitic loop resonance.',
-      expectedObservation: 'Scope shows extremely sharp voltage fall time with ringing overshoot peaking above DC bus voltage.',
-      governingLaw: '\\left(\\frac{dv}{dt}\\right)_{max} = \\frac{V_{gs} - V_{plat}}{R_g C_{gd}}, \\quad V_{pk} = V_{dc} + L_s\\frac{di}{dt}',
-      parameters: { busVoltage: 600, loadCurrent: 35, gateResistance: 3, strayInductance: 20 }
-    }
-  ],
-
-  // 10. IGBT Thermal Foster Model
+  // 4. IGBT Semiconductor Thermal Dynamics
   igbt_thermal: [
     {
-      id: 'igbt-thermal-runaway',
-      title: '1. Junction Temperature Ripple & Heatsink Sizing',
-      goal: 'Verify maximum junction temperature stays within the 175°C Safe Operating Area.',
-      description: 'Simulate heavy converter current and high PWM carrier frequency to observe multi-layer heat accumulation through the DBC substrate.',
-      expectedObservation: 'Silicon die temperature reaches 145°C with 8°C thermal switching ripple.',
-      governingLaw: 'T_j = T_a + P_{tot}(R_{th,jc} + R_{th,cs} + R_{th,sa})',
-      parameters: { switchingFreq: 12, collectorCurrent: 90, dutyCycle: 0.55, heatsinkRth: 0.22 }
-    }
+      id: 'igbt-nominal-baseline',
+      title: 'Lab 1: Nominal Design Baseline (Safe Operating Area)',
+      goal: 'Operate converter within steady-state thermal SOA (Tj ≤ 110°C).',
+      description: 'Set collector current to 60 A and carrier frequency to 10 kHz. Verify heat sink dissipation keeps junction temperature well below maximum ratings.',
+      expectedObservation: 'Junction temperature Tj stabilizes at ~95°C with 80°C safety margin to thermal limit.',
+      governingLaw: 'T_j = T_a + P_{tot} R_{th} \\le 125^\\circ\\text{C}',
+      parameters: { collectorCurrent: 60, switchingFreq: 10, dutyCycle: 0.5, heatsinkRth: 0.22 },
+      targetCondition: (p) => {
+        const Ic = p['collectorCurrent'] ?? 60;
+        const fsw = p['switchingFreq'] ?? 10;
+        return Ic <= 70 && fsw <= 12;
+      },
+      category: 'nominal',
+    },
+    {
+      id: 'igbt-threshold-derating',
+      title: 'Lab 2: Threshold Discovery (150°C Warning Boundary)',
+      goal: 'Identify the switching frequency vs current trade-off curve.',
+      description: 'Increase switching carrier frequency to 18 kHz with 95 A load. Watch switching losses dominate total power dissipation, pushing Tj to 145°C.',
+      expectedObservation: 'Thermal warning chip activates; operating regime shifts to MARGINAL STRESS.',
+      governingLaw: 'P_{sw} = (E_{on} + E_{off}) f_{sw} \\propto f_{sw}',
+      parameters: { collectorCurrent: 95, switchingFreq: 18, dutyCycle: 0.55, heatsinkRth: 0.25 },
+      targetCondition: (p) => {
+        const Ic = p['collectorCurrent'] ?? 95;
+        const fsw = p['switchingFreq'] ?? 18;
+        return Ic >= 85 && fsw >= 15;
+      },
+      category: 'threshold',
+    },
+    {
+      id: 'igbt-fault-runaway',
+      title: 'Lab 3: Fault Troubleshooting (Silicon Die Thermal Runaway)',
+      goal: 'Trigger junction overtemperature (>175°C) and implement emergency derating.',
+      description: 'Simulate heatsink fan failure (Rth = 0.45 °C/W) at 130 A. Silicon die temperature exceeds 175°C, causing solder degradation and bond-wire lift-off.',
+      expectedObservation: 'Critical red OVERTEMP TRIP triggers. Lowering carrier frequency recovers thermal equilibrium.',
+      governingLaw: 'T_j > 175^\\circ\\text{C} \\implies \\text{Destructive Silicon Gate Rupture}',
+      parameters: { collectorCurrent: 130, switchingFreq: 22, dutyCycle: 0.65, heatsinkRth: 0.45 },
+      targetCondition: (p) => {
+        const Ic = p['collectorCurrent'] ?? 130;
+        const Rth = p['heatsinkRth'] ?? 0.45;
+        return Ic >= 120 && Rth >= 0.35;
+      },
+      category: 'fault',
+    },
   ],
 
-  // 11. MOSFET Inversion Channel
-  mosfet_channel: [
+  // 5. Euler-Bernoulli Beam Deflection
+  beam_deflection: [
     {
-      id: 'mosfet-pinch-off',
-      title: '1. Channel Pinch-Off & Velocity Saturation',
-      goal: 'Observe 2D electron sheet tapering and transition from linear to saturation regime.',
-      description: 'Increase drain voltage V_ds above saturation voltage V_ds,sat = V_gs - V_th. The mobile electron inversion layer pinches off at the drain edge.',
-      expectedObservation: 'Drain current saturates into a flat horizontal plateau on the I_D - V_DS characteristic plot.',
-      governingLaw: 'V_{ds,sat} = V_{gs} - V_{th}, \\quad I_{D,sat} = \\frac{1}{2}\\mu C_{ox}\\frac{W}{L}(V_{gs} - V_{th})^2',
-      parameters: { gateVoltage: 1.8, drainVoltage: 2.0, oxideThickness: 3.2, substrateDoping: 17 }
-    }
-  ]
+      id: 'beam-nominal-serviceability',
+      title: 'Lab 1: Nominal Design Baseline (AISC L/360 Deflection)',
+      goal: 'Verify girder center deflection satisfies the strict AISC L/360 limit.',
+      description: 'Apply nominal point load P = 30 kN at midspan (3.0 m) of a 6.0 m beam. Allowable deflection is 6000 / 360 = 16.7 mm.',
+      expectedObservation: 'Midspan deflection measures ~12.2 mm, well within the 16.7 mm AISC code threshold.',
+      governingLaw: '\\delta_{mid} = \\frac{P L^3}{48 E I} \\le \\frac{L}{360}',
+      parameters: { span: 6.0, pointLoad: 30, loadPos: 3.0, elasticModulus: 200, momentOfInertia: 8000 },
+      targetCondition: (p) => {
+        const P = p['pointLoad'] ?? 30;
+        const L = p['span'] ?? 6.0;
+        return P <= 35 && L <= 6.5;
+      },
+      category: 'nominal',
+    },
+    {
+      id: 'beam-threshold-limit',
+      title: 'Lab 2: Threshold Discovery (AISC L/360 Exceedance)',
+      goal: 'Find the critical load P_crit that pushes deflection exactly to the L/360 boundary.',
+      description: 'Gradually increase midspan load P to 45 kN. Monitor the deflection ratio gauge until it touches 100% of the serviceability limit.',
+      expectedObservation: 'Deflection needle enters the amber warning zone at 16.7 mm deflection.',
+      governingLaw: 'P_{limit} = \\frac{48 E I (L/360)}{L^3}',
+      parameters: { span: 6.0, pointLoad: 45, loadPos: 3.0, elasticModulus: 200, momentOfInertia: 8000 },
+      targetCondition: (p) => {
+        const P = p['pointLoad'] ?? 45;
+        return P >= 42 && P <= 55;
+      },
+      category: 'threshold',
+    },
+    {
+      id: 'beam-fault-plastic',
+      title: 'Lab 3: Fault Troubleshooting (Plastic Moment Overload)',
+      goal: 'Overload beam beyond yield strength and observe plastic hinge formation.',
+      description: 'Increase point load to 120 kN. Maximum flexural moment exceeds plastic capacity Mp = Zx · Fy, causing permanent structural sagging.',
+      expectedObservation: 'Severe deflection > 35 mm exceeds structural safety limits. Alarming RED YIELD status displayed.',
+      governingLaw: 'M_{max} = \\frac{P L}{4} > M_p \\implies \\text{Plastic Mechanism}',
+      parameters: { span: 7.0, pointLoad: 120, loadPos: 3.5, elasticModulus: 180, momentOfInertia: 6500 },
+      targetCondition: (p) => {
+        const P = p['pointLoad'] ?? 120;
+        return P >= 100;
+      },
+      category: 'fault',
+    },
+  ],
+
+  // 6. Closed-Loop PID Control
+  pid: [
+    {
+      id: 'pid-nominal-tracking',
+      title: 'Lab 1: Nominal Design Baseline (Smooth Setpoint Tracking)',
+      goal: 'Tune PID gains for critically damped setpoint tracking with <5% overshoot.',
+      description: 'Set Kp = 2.2, Ti = 6.0s, and Td = 0.4s. Liquid level rises smoothly to the target setpoint with fast settling time.',
+      expectedObservation: 'Process variable PV settles cleanly at SP = 60% within 15 seconds without ringing.',
+      governingLaw: 'u(t) = K_p e(t) + \\frac{K_p}{T_i}\\int e dt + K_p T_d \\frac{de}{dt}',
+      parameters: { kp: 2.2, ti: 6.0, td: 0.4, setpoint: 60 },
+      targetCondition: (p) => {
+        const kp = p['kp'] ?? 2.2;
+        const ti = p['ti'] ?? 6.0;
+        return kp >= 1.8 && kp <= 2.8 && ti >= 5.0 && ti <= 8.0;
+      },
+      category: 'nominal',
+    },
+    {
+      id: 'pid-threshold-decay',
+      title: 'Lab 2: Threshold Discovery (Ziegler-Nichols 1/4 Decay)',
+      goal: 'Achieve classic 4:1 damped oscillation ratio using ultimate sensitivity.',
+      description: 'Increase proportional gain Kp = 4.5. The second oscillation peak decays to exactly one-quarter the height of the first peak.',
+      expectedObservation: 'Controlled light overshoot (18%) that dissipates completely within 2 cycles.',
+      governingLaw: '\\text{Quarter Amplitude Decay: } \\frac{X_2}{X_1} = 0.25',
+      parameters: { kp: 4.5, ti: 4.0, td: 0.6, setpoint: 70 },
+      targetCondition: (p) => {
+        const kp = p['kp'] ?? 4.5;
+        return kp >= 4.0 && kp <= 5.5;
+      },
+      category: 'threshold',
+    },
+    {
+      id: 'pid-fault-instability',
+      title: 'Lab 3: Fault Troubleshooting (Limit Cycle Actuator Hunting)',
+      goal: 'Drive loop into sustained limit cycling, then recover stability.',
+      description: 'Set Kp = 12.0 and Ti = 0.5s. High gain and rapid reset cause the control valve to slam between 0% and 100% in destructive hunting.',
+      expectedObservation: 'Process variable oscillates continuously at 100% valve saturation. Lowering Kp restores control.',
+      governingLaw: 'K_p \\ge K_u \\implies \\text{Bifurcation into Sustained Limit Cycle}',
+      parameters: { kp: 12.0, ti: 0.5, td: 0.1, setpoint: 80 },
+      targetCondition: (p) => {
+        const kp = p['kp'] ?? 12.0;
+        const ti = p['ti'] ?? 0.5;
+        return kp >= 10.0 && ti <= 1.0;
+      },
+      category: 'fault',
+    },
+  ],
+
+  // 7. Harmonic Oscillator
+  harmonic: [
+    {
+      id: 'harm-nominal-damped',
+      title: 'Lab 1: Nominal Design Baseline (Sub-Critical Oscillation)',
+      goal: 'Observe smooth energy dissipation away from natural resonance.',
+      description: 'Drive system at f_drive = 0.70 Hz away from natural frequency fn = 1.33 Hz with damping c = 5 N·s/m.',
+      expectedObservation: 'Vibration amplitude remains small and phase lag is small (< 30°).',
+      governingLaw: 'm\\ddot{x} + c\\dot{x} + kx = F_0 \\cos(\\omega t)',
+      parameters: { mass: 5.0, stiffness: 350, dampingC: 5.0, driveFreq: 0.70 },
+      targetCondition: (p) => {
+        const f = p['driveFreq'] ?? 0.7;
+        return f <= 0.85;
+      },
+      category: 'nominal',
+    },
+    {
+      id: 'harm-threshold-resonance',
+      title: 'Lab 2: Threshold Discovery (90° Phase Shift at Resonance)',
+      goal: 'Lock driving frequency to natural frequency f_drive = fn = 1.33 Hz.',
+      description: 'Match excitation frequency to mechanical resonance. At resonance, phase lag locks at exactly 90° and velocity aligns with input force.',
+      expectedObservation: 'Vibration amplitude surges 4x; velocity and force are in-phase.',
+      governingLaw: 'f_n = \\frac{1}{2\\pi}\\sqrt{\\frac{k}{m}} = 1.33\\text{ Hz}, \\quad \\phi = 90^\\circ',
+      parameters: { mass: 5.0, stiffness: 350, dampingC: 4.0, driveFreq: 1.33 },
+      targetCondition: (p) => {
+        const f = p['driveFreq'] ?? 1.33;
+        return Math.abs(f - 1.33) < 0.08;
+      },
+      category: 'threshold',
+    },
+    {
+      id: 'harm-fault-destructive',
+      title: 'Lab 3: Fault Troubleshooting (Uncontrolled Resonance Runaway)',
+      goal: 'Remove damping at resonance and observe amplitude blow-up.',
+      description: 'Lower damping to c = 0.5 N·s/m at resonance. Dynamic magnification M exceeds 12x, simulating structural fatigue failure.',
+      expectedObservation: 'Violent oscillation trips mechanical safety alarm. Increasing damping c stops runaway.',
+      governingLaw: 'M = \\frac{1}{2\\zeta} > 10.0 \\implies \\text{Fatigue Failure}',
+      parameters: { mass: 5.0, stiffness: 350, dampingC: 0.5, driveFreq: 1.33 },
+      targetCondition: (p) => {
+        const f = p['driveFreq'] ?? 1.33;
+        const c = p['dampingC'] ?? 0.5;
+        return Math.abs(f - 1.33) < 0.1 && c <= 1.0;
+      },
+      category: 'fault',
+    },
+  ],
 };
+
+/**
+ * Universal Experiment Resolver: Guaranteed 3 Progressive Missions for ALL 44 Simulators!
+ * Completely eliminates any occurrence of "Guided Labs 0".
+ */
+export function getSimulatorExperiments(
+  simulatorType: string,
+  simulator?: SimulatorItem
+): GuidedExperiment[] {
+  // Check if specialized hand-crafted suite exists
+  if (SIMULATOR_EXPERIMENTS[simulatorType] && SIMULATOR_EXPERIMENTS[simulatorType].length >= 3) {
+    return SIMULATOR_EXPERIMENTS[simulatorType];
+  }
+
+  // Fallback dynamic generator tailored to simulator parameters & physical law
+  const p1 = simulator?.parameters[0];
+  const p2 = simulator?.parameters[1] || p1;
+  const p3 = simulator?.parameters[2] || p1;
+
+  const defaultParams: Record<string, number> = {};
+  simulator?.parameters.forEach(p => {
+    defaultParams[p.id] = p.default;
+  });
+
+  const nominalParams = { ...defaultParams };
+
+  const thresholdParams = { ...defaultParams };
+  if (p1) thresholdParams[p1.id] = parseFloat((p1.min + (p1.max - p1.min) * 0.75).toFixed(2));
+
+  const faultParams = { ...defaultParams };
+  if (p1) faultParams[p1.id] = p1.max;
+  if (p2) faultParams[p2.id] = p2.min;
+
+  return [
+    {
+      id: `${simulatorType}-lab-nominal`,
+      title: 'Lab 1: Nominal Design Baseline',
+      goal: `Establish calibrated baseline operating state under ${simulator?.physicalLaw || 'governing physics'}.`,
+      description: `Operate with standard inputs (${p1 ? `${p1.name} = ${nominalParams[p1.id]} ${p1.unit}` : 'standard inputs'}). Verify steady-state numerical stability and linear conservation equations.`,
+      expectedObservation: 'Telemetry metrics stabilize within expected standard specifications.',
+      governingLaw: simulator?.governingEquation || 'y(t) = f(\\mathbf{u}, \\mathbf{p})',
+      parameters: nominalParams,
+      targetCondition: (p) => {
+        if (!p1) return true;
+        const val = p[p1.id] ?? p1.default;
+        return Math.abs(val - p1.default) < (p1.step * 2 || 2);
+      },
+      category: 'nominal',
+    },
+    {
+      id: `${simulatorType}-lab-threshold`,
+      title: 'Lab 2: Threshold Discovery',
+      goal: `Locate non-linear inflection boundary by adjusting ${p1?.name || 'primary parameter'}.`,
+      description: `Drive ${p1?.name || 'input'} toward 75% of maximum span (${p1 ? thresholdParams[p1.id] + ' ' + p1.unit : 'threshold point'}). Observe transition from linear response to saturation limit.`,
+      expectedObservation: 'Output metric curve bends as dynamic rate of change decelerates.',
+      governingLaw: simulator?.governingEquation || '\\Delta y / \\Delta u \\to 0',
+      parameters: thresholdParams,
+      targetCondition: (p) => {
+        if (!p1) return true;
+        const val = p[p1.id] ?? p1.default;
+        return val >= p1.min + (p1.max - p1.min) * 0.65;
+      },
+      category: 'threshold',
+    },
+    {
+      id: `${simulatorType}-lab-fault`,
+      title: 'Lab 3: Fault Troubleshooting',
+      goal: 'Diagnose extreme boundary condition and restore Safe Operating Area (SOA).',
+      description: `Push system into boundary saturation (${p1?.name || 'Parameter 1'} = ${p1?.max || 100}). Notice operating regime warning, then adjust controls to recover equilibrium.`,
+      expectedObservation: 'Operating regime displays warning or fault state; restoring nominal sliders recovers normal status.',
+      governingLaw: simulator?.governingEquation || '\\mathbf{x}_{state} \\notin \\text{SOA}',
+      parameters: faultParams,
+      targetCondition: (p) => {
+        if (!p1) return true;
+        const val = p[p1.id] ?? p1.default;
+        return val >= p1.max * 0.92;
+      },
+      category: 'fault',
+    },
+  ];
+}
+
+/**
+ * LocalStorage persistence helpers for guided lab progress tracking
+ */
+export function isLabCompleted(labId: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(`livesim_lab_completed_${labId}`) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function markLabCompleted(labId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(`livesim_lab_completed_${labId}`, 'true');
+  } catch {}
+}
+
+export function getCompletedLabCount(simulatorType: string, experiments: GuidedExperiment[]): number {
+  if (typeof window === 'undefined') return 0;
+  return experiments.filter(e => isLabCompleted(e.id)).length;
+}
 
 // Dynamic First-Principles Physics State Explainer
 export function getDynamicPhysicsExplanation(simulatorType: string, params: Record<string, number>): string {
@@ -253,103 +483,20 @@ export function getDynamicPhysicsExplanation(simulatorType: string, params: Reco
       const L = (params['inductance'] || 60) * 1e-3;
       const C = (params['capacitance'] || 40) * 1e-6;
       const f = params['frequency'] || 100;
-      const omega0 = 1 / Math.sqrt(L * C);
-      const f0 = omega0 / (2 * Math.PI);
-      const zeta = (R / 2) * Math.sqrt(C / L);
-
-      if (Math.abs(f - f0) < 5) {
-        return `Resonance Active: AC drive frequency (${f} Hz) is tuned within 5% of natural frequency f₀ (${f0.toFixed(1)} Hz). Net reactive impedance (X_L - X_C) cancels to near zero. Current amplitude is maximized and in-phase with source voltage.`;
-      } else if (zeta < 1.0) {
-        return `Underdamped Regime (ζ = ${zeta.toFixed(2)} < 1.0): Circuit energy alternates rapidly between the magnetic field in inductor L and electric field in capacitor C. Step transients cause characteristic damped sinusoidal ringing.`;
-      } else {
-        return `Overdamped Regime (ζ = ${zeta.toFixed(2)} ≥ 1.0): Excessive ohmic resistance R dissipates stored energy thermally as Joule heat before complete LC oscillations can develop.`;
-      }
+      const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+      const Rcrit = 2 * Math.sqrt(L / C);
+      const zeta = R / Rcrit;
+      return `Series RLC: Natural f₀ = ${f0.toFixed(1)} Hz, Critical R_crit = ${Rcrit.toFixed(1)} Ω. Damping ratio ζ = ${zeta.toFixed(2)} (${zeta < 1.0 ? 'underdamped ringing' : 'overdamped'}). Driving at ${f} Hz.`;
     }
-
-    case 'three_phase': {
-      const load = params['loadTorque'] || 45;
-      const If = params['excitationCurrent'] || 5.0;
-      return `Synchronous MMF: Operating with torque angle δ determined by mechanical shaft load (${load} Nm). Rotor excitation current (${If.toFixed(1)} A) sets internal back-EMF, achieving stable grid power synchronization without rotor slip.`;
+    case 'control_valve': {
+      const P1 = params['upstreamP'] || 6.0;
+      const P2 = params['downstreamP'] || 3.5;
+      const xT = params['flFactor'] || 0.75;
+      const dP = Math.max(0, P1 - P2);
+      const ratio = dP / P1;
+      return `IEC 60534 Valve: ΔP = ${dP.toFixed(2)} bar. Pressure ratio ΔP/P1 = ${ratio.toFixed(2)} against critical factor xT = ${xT}. Flow is ${ratio >= xT ? 'CHOKED with vena contracta cavitation' : 'SUB-CRITICAL linear'}.`;
     }
-
-    case 'four_bar': {
-      const r1 = params['groundL'] || 130;
-      const r2 = params['crankR'] || 40;
-      const r3 = params['couplerL'] || 120;
-      const r4 = params['rockerL'] || 90;
-      const s = Math.min(r1, r2, r3, r4);
-      const l = Math.max(r1, r2, r3, r4);
-      const sumSL = s + l;
-      const sumPQ = r1 + r2 + r3 + r4 - sumSL;
-      const isGrashof = sumSL <= sumPQ;
-
-      return isGrashof
-        ? `Grashof Class-I Mechanism: s + l (${sumSL} mm) ≤ p + q (${sumPQ} mm). Driving crank executes full 360° rotation without toggle lockup. Coupler midpoint traces an asymmetric non-linear motion path.`
-        : `Non-Grashof Class-II (Double-Rocker): Links cannot complete a full 360° revolution; all movable links oscillate between physical dead-center limit angles.`;
-    }
-
-    case 'harmonic': {
-      const m = params['mass'] || 5;
-      const k = params['stiffness'] || 350;
-      const c = params['dampingC'] || 8;
-      const f_drive = params['driveFreq'] || 1.33;
-      const fn = Math.sqrt(k / m) / (2 * Math.PI);
-      const r = f_drive / fn;
-
-      if (Math.abs(r - 1.0) < 0.1) {
-        return `Harmonic Resonance Peak (r = ${r.toFixed(2)} ≈ 1.0): Excitation force is timed perfectly in quadrature (90° phase lag) with mass velocity, pumping maximum mechanical power into the system. Magnification factor surges.`;
-      } else {
-        return `Operating at frequency ratio r = ${r.toFixed(2)} (Natural f_n = ${fn.toFixed(2)} Hz, Drive = ${f_drive.toFixed(2)} Hz). Viscous damper dissipates kinetic energy as viscous fluid friction.`;
-      }
-    }
-
-    case 'spur_gear': {
-      const z1 = params['teethPinion'] || 18;
-      const z2 = params['teethGear'] || 48;
-      const rpm = params['inputRpm'] || 600;
-      const ratio = z2 / z1;
-      return `AGMA Involute Mesh: Speed reduction ratio 1:${ratio.toFixed(2)}. Input shaft rotating at ${rpm} RPM produces ${ (rpm / ratio).toFixed(0) } RPM at the output shaft with corresponding proportional torque amplification.`;
-    }
-
-    case 'distillation_column': {
-      const R = params['refluxRatio'] || 2.2;
-      const zF = params['feedComposition'] || 0.45;
-      const alpha = params['relativeVolatility'] || 2.4;
-      return `McCabe-Thiele VLE: Operating at reflux ratio R = ${R.toFixed(1)} with relative volatility α = ${alpha.toFixed(1)}. Rectifying and stripping operating lines step through theoretical equilibrium trays to purify feed (${(zF*100).toFixed(0)}% light key) into high-purity overhead distillate.`;
-    }
-
-    case 'heat_exchanger': {
-      const ThIn = params['hotInletTemp'] || 140;
-      const TcIn = params['coldInletTemp'] || 25;
-      return `TEMA 1-2 Exchanger: Hot process fluid enters at ${ThIn}°C against coolant at ${TcIn}°C. Segmental baffles direct fluid across the multi-pass tube bundle, sustaining a high log-mean temperature difference (LMTD) and thermal effectiveness.`;
-    }
-
-    case 'gas_absorption': {
-      const L_G = params['liquidGasRatio'] || 2.8;
-      const yIn = params['inletGasConc'] || 8.0;
-      return `Packed Scrubber Mass Transfer: Operating at solvent liquid-to-gas ratio L/G = ${L_G.toFixed(1)}. Ascending gas (${yIn}% inlet solute) contacts descending solvent film across packing surface, governed by Whitman two-film driving force and Sherwood flooding margins.`;
-    }
-
-    case 'sic_switching': {
-      const Vdc = params['busVoltage'] || 600;
-      const IL = params['loadCurrent'] || 35;
-      const Rg = params['gateResistance'] || 5;
-      return `Wide-Bandgap SiC Dynamics: Clamped inductive switching at ${Vdc}V / ${IL}A with gate resistance ${Rg}Ω. Slew rate dv/dt is governed by gate driver charging through non-linear Miller capacitance C_gd, with inductive voltage overshoot L_s · (di/dt).`;
-    }
-
-    case 'igbt_thermal': {
-      const fsw = params['switchingFreq'] || 12;
-      const Ic = params['collectorCurrent'] || 90;
-      return `Foster Thermal Network: Operating at ${fsw} kHz carrier frequency conducting ${Ic}A RMS. Conduction and switching losses generate heat flux cascading through Die, DBC ceramic substrate, and copper baseplate to heatsink, establishing dynamic junction temperature Tj.`;
-    }
-
-    case 'mosfet_channel': {
-      const Vgs = params['gateVoltage'] || 1.8;
-      const Vds = params['drainVoltage'] || 1.2;
-      return `BSIM4 Inversion Channel: Gate bias Vgs = ${Vgs.toFixed(1)}V bends semiconductor surface potential φs into strong inversion, accumulating a 2D electron gas sheet. Drain bias Vds = ${Vds.toFixed(1)}V drives drift current with channel pinch-off towards the drain.`;
-    }
-
     default:
-      return `Physics Active: Governing equations continuously evaluated at 60 FPS using numerical integration. Parameters interact dynamically to illustrate first-principles physical conservation laws.`;
+      return `Continuous 60 FPS first-principles physics solver actively integrating state vectors with double-precision floating point accuracy.`;
   }
 }

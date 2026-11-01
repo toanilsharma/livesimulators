@@ -10,6 +10,7 @@ const { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } = await import('../src/data/simu
 const { LABS } = await import('../src/config/labs.ts');
 const { getEngineeringTheory, cleanLatexToPlainText } = await import('../src/utils/engineeringTheory.ts');
 const { getSimulatorEngineeringDetails } = await import('../src/utils/engineeringScenarios.ts');
+const { getSimulatorEngineeringContent } = await import('../src/data/simulatorEngineeringContent.ts');
 const { getSeoMetadata } = await import('../src/utils/seo.ts');
 const { getRouteSchema } = await import('../src/utils/seoSchema.ts');
 const { routeToPath, SITE_URL } = await import('../src/utils/routes.ts');
@@ -52,6 +53,10 @@ function renderSimulatorStaticContent(sim) {
   const theory = getEngineeringTheory(sim);
   const details = getSimulatorEngineeringDetails(sim);
   const cleanEq = cleanLatexToPlainText(sim.governingEquation);
+  const engContent = getSimulatorEngineeringContent(sim.id);
+  const directAnswer = sim.directAnswerSummary || engContent.directAnswerSummary;
+  const failureCase = sim.industrialFailureCase || engContent.industrialFailureCase;
+  const faqs = (sim.faqs && sim.faqs.length > 0) ? sim.faqs : engContent.faqs;
   const relatedSims = ALL_AVAILABLE_SIMULATORS.filter(
     (s) => s.discipline === sim.discipline && s.id !== sim.id
   ).slice(0, 6);
@@ -116,19 +121,19 @@ function renderSimulatorStaticContent(sim) {
     })
     .join('');
 
-  // FAQs list
-  const faqItems = details.faqs
+  // FAQs list (<details><summary> accordions)
+  const faqItems = faqs
     .map(
       (f, idx) => `
-      <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.6rem; padding: 1rem 1.25rem; margin-bottom: 0.75rem;">
-        <h3 style="font-size: 0.95rem; font-weight: 700; color: #ffffff; margin: 0 0 0.5rem 0; display: flex; align-items: flex-start; gap: 0.5rem;">
+      <details ${idx === 0 ? 'open' : ''} style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.6rem; padding: 1rem 1.25rem; margin-bottom: 0.75rem;">
+        <summary style="font-size: 0.95rem; font-weight: 700; color: #ffffff; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; outline: none;">
           <span style="background: rgba(168, 85, 247, 0.2); color: #d8b4fe; font-family: monospace; font-size: 0.8rem; width: 1.4rem; height: 1.4rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">${idx + 1}</span>
           <span>${escapeHtml(f.question)}</span>
-        </h3>
-        <p style="color: #cbd5e1; font-size: 0.875rem; line-height: 1.65; margin: 0; padding-left: 1.9rem;">
+        </summary>
+        <p style="color: #cbd5e1; font-size: 0.875rem; line-height: 1.65; margin: 0.75rem 0 0 0; padding-left: 1.9rem;">
           ${escapeHtml(f.answer)}
         </p>
-      </div>`
+      </details>`
     )
     .join('');
 
@@ -172,7 +177,7 @@ function renderSimulatorStaticContent(sim) {
     </header>
 
     <!-- Simulation Controls Aside (Crawlers recognize this as non-text toolbar) -->
-    <aside aria-label="Simulation Controls" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.85rem; font-family: monospace; color: #94a3b8;">
+    <aside aria-label="Simulation Controls" data-nosnippet="true" aria-hidden="true" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.85rem; font-family: monospace; color: #94a3b8;">
       <div>
         <strong style="color: #38bdf8;">SIMULATION WORKBENCH:</strong> 60 FPS First-Principles Solver | Double-Precision Integration
       </div>
@@ -180,6 +185,16 @@ function renderSimulatorStaticContent(sim) {
         <span>Controls: Pause &bull; 0.5x / 1x / 2x &bull; Reset &bull; Scope Cursors &bull; Guided Labs</span>
       </div>
     </aside>
+
+    <!-- RAG-READY CITATION & DIRECT ANSWER SUMMARY BLOCK -->
+    <section id="direct-answer-summary" style="background: rgba(8, 145, 178, 0.12); border: 1px solid rgba(6, 182, 212, 0.4); border-left: 4px solid #06b6d4; border-radius: 0.5rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem;">
+      <h2 style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8; margin: 0 0 0.5rem 0; font-family: monospace;">
+        Direct Engineering Formulation &amp; Standard Citation
+      </h2>
+      <p style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.7; margin: 0;">
+        ${escapeHtml(directAnswer)}
+      </p>
+    </section>
 
     <!-- SECTION 1: GOVERNING EQUATIONS & MATHEMATICAL FORMULATION -->
     <section id="governing-equations" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(6, 182, 212, 0.35); border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);">
@@ -217,6 +232,14 @@ ${escapeHtml(cleanEq)}
         Boundary Conditions &amp; Industrial Operating Limits
       </h2>
       <div style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.7;">
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+          <h3 style="font-size: 0.9rem; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.05em; font-family: monospace; margin: 0 0 0.5rem 0;">
+            Industrial Failure Mode, RCA &amp; Protection Limits:
+          </h3>
+          <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.65; margin: 0;">
+            ${escapeHtml(failureCase)}
+          </p>
+        </div>
         <p style="margin: 0 0 1rem 0;">
           <strong style="color: #f59e0b;">Critical Saturation Boundary:</strong>
           ${escapeHtml(details.boundaryConditions.saturationThreshold)}
@@ -308,48 +331,91 @@ function renderDepartmentStaticContent(dept) {
   const sims = ALL_AVAILABLE_SIMULATORS.filter((s) => s.discipline === dept.id);
   const cleanCore = cleanLatexToPlainText(dept.coreEquation);
 
+  // Collect unique standards referenced across all simulators in this department
+  const standardsSet = new Set();
+  sims.forEach((s) => {
+    if (s.standardReference) standardsSet.add(s.standardReference);
+    if (s.standardBody) standardsSet.add(s.standardBody);
+  });
+  const standardsList = Array.from(standardsSet);
+
+  const standardsHtml = standardsList.length > 0
+    ? `
+    <section id="department-standards" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem;">
+      <h2 style="font-size: 1.25rem; font-weight: 700; color: #38bdf8; margin: 0 0 0.75rem 0;">
+        Referenced International Consensus Standards (${standardsList.length})
+      </h2>
+      <p style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 1rem;">
+        Mathematical boundaries, physical tolerance thresholds, and sizing criteria across ${escapeHtml(dept.name)} conform to published industry codes:
+      </p>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        ${standardsList.map((std) => `<span style="background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.3); color: #a5f3fc; padding: 0.35rem 0.65rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem;">${escapeHtml(std)}</span>`).join('')}
+      </div>
+    </section>`
+    : '';
+
   const simCards = sims
     .map(
       (s) => `
       <li style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.5rem; padding: 1.25rem; margin-bottom: 0.75rem;">
-        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem;">
-          <a href="/simulator/${s.id}/" style="color: #38bdf8; text-decoration: underline; font-weight: 700;">
-            ${escapeHtml(s.title)} &rarr;
-          </a>
-        </h3>
-        <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0 0 0.5rem 0; line-height: 1.5;">${escapeHtml(s.tagline)}</p>
-        <div style="font-size: 0.8rem; font-family: monospace; color: #94a3b8;">
-          Equation: \`${escapeHtml(cleanLatexToPlainText(s.governingEquation))}\`
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+          <h3 style="margin: 0; font-size: 1.15rem;">
+            <a href="/simulator/${s.id}/" style="color: #38bdf8; text-decoration: underline; font-weight: 700;">
+              ${escapeHtml(s.title)} &rarr;
+            </a>
+          </h3>
+          <span style="font-size: 0.75rem; font-family: monospace; background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3); color: #38bdf8; padding: 0.15rem 0.5rem; border-radius: 4px;">
+            ${escapeHtml(s.badge)} &bull; ${escapeHtml(s.difficulty)} Level
+          </span>
         </div>
+        <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0 0 0.5rem 0; line-height: 1.5;">${escapeHtml(s.tagline || s.description)}</p>
+        <div style="font-size: 0.8rem; font-family: monospace; color: #a5f3fc; background: #030712; padding: 0.4rem 0.6rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.5rem; word-break: break-word;">
+          Governing Formulation: \`${escapeHtml(cleanLatexToPlainText(s.governingEquation))}\`
+        </div>
+        ${s.standardReference ? `<div style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">Standard: ${escapeHtml(s.standardReference)}</div>` : ''}
       </li>`
     )
     .join('');
 
   return `
-  <article id="seo-static-content" style="max-width: 58rem; margin: 0 auto; padding: 2.5rem 1.5rem; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+  <article id="seo-static-content" style="max-width: 62rem; margin: 0 auto; padding: 2.5rem 1.5rem; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6;">
     <header style="margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 1.5rem;">
-      <p style="font-size: 0.85rem; font-family: monospace; color: #06b6d4; text-transform: uppercase; margin: 0 0 0.5rem 0;">Engineering Department &bull; ${escapeHtml(dept.code)}</p>
-      <h1 style="font-size: 2.4rem; font-weight: 800; color: #ffffff; margin: 0 0 1rem 0;">
-        ${escapeHtml(dept.name)} (${escapeHtml(dept.code)})
+      <nav aria-label="Breadcrumb" style="font-size: 0.85rem; font-family: monospace; color: #06b6d4; margin-bottom: 0.75rem;">
+        <a href="/" style="color: #06b6d4; text-decoration: none;">Home</a> / 
+        <span style="color: #94a3b8;">${escapeHtml(dept.name)}</span>
+      </nav>
+      <div style="font-size: 0.85rem; font-family: monospace; color: #06b6d4; text-transform: uppercase; margin-bottom: 0.5rem;">
+        University Engineering Department Hub &bull; ${escapeHtml(dept.code)}
+      </div>
+      <h1 style="font-size: 2.4rem; font-weight: 800; color: #ffffff; margin: 0 0 1rem 0; line-height: 1.25;">
+        ${escapeHtml(dept.name)} Simulators Hub &amp; Curricular Syllabus (${escapeHtml(dept.code)})
       </h1>
       <p style="font-size: 1.15rem; color: #cbd5e1; margin: 0 0 1.25rem 0; line-height: 1.6;">
         ${escapeHtml(dept.description)}
       </p>
-      <div style="background: #030712; padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); font-family: monospace; color: #a5f3fc; font-size: 1.05rem;">
-        Core Discipline Equation: \`${escapeHtml(cleanCore)}\`
+      <div style="background: #030712; padding: 1.25rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.12); font-family: monospace; color: #a5f3fc; font-size: 1.05rem; overflow-x: auto;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.35rem;">Canonical Governing Formulation:</div>
+        \`${escapeHtml(cleanCore)}\`
       </div>
     </header>
 
-    <section style="margin-bottom: 2rem;">
-      <h2 style="font-size: 1.4rem; font-weight: 700; color: #ffffff; margin: 0 0 1rem 0;">Curricular Subfields &amp; Focus Domains</h2>
-      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+    <section id="department-syllabus" style="margin-bottom: 2rem; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.75rem; padding: 1.5rem;">
+      <h2 style="font-size: 1.35rem; font-weight: 700; color: #ffffff; margin: 0 0 0.75rem 0;">
+        Department Syllabus Overview &amp; Curricular Subfields
+      </h2>
+      <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.6;">
+        The ${escapeHtml(dept.name)} curriculum covers key fundamental and advanced topics across undergraduate and postgraduate coursework. Interactive solvers replace static derivations with live dynamic parameter testing:
+      </p>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
         ${dept.subfields.map((sub) => `<span style="background: rgba(255,255,255,0.08); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; color: #cbd5e1;">${escapeHtml(sub)}</span>`).join('')}
       </div>
     </section>
 
-    <section>
-      <h2 style="font-size: 1.4rem; font-weight: 700; color: #ffffff; margin: 0 0 1rem 0;">
-        Interactive Engineering Simulators (${sims.length})
+    ${standardsHtml}
+
+    <section id="department-simulators">
+      <h2 style="font-size: 1.35rem; font-weight: 700; color: #ffffff; margin: 0 0 1rem 0;">
+        Interactive Engineering Simulators (${sims.length} Active Workbenches)
       </h2>
       <ul style="list-style-type: none; padding: 0; margin: 0;">
         ${simCards}
@@ -483,6 +549,78 @@ function renderStaticPageContent(view) {
         <h1 style="font-size: 2.25rem; font-weight: 800; color: #ffffff; margin: 0 0 1rem 0;">Cookie Policy &mdash; LiveSimulators</h1>
         <p style="font-size: 1.1rem; color: #cbd5e1;">Review disclosures on telemetry and cookie settings across the LiveSimulators platform.</p>
       </article>`;
+    case 'comparison':
+      return `
+      <article id="seo-static-content" style="max-width: 68rem; margin: 0 auto; padding: 2.5rem 1.5rem; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6;">
+        <header style="margin-bottom: 2.5rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 2rem;">
+          <div style="font-size: 0.85rem; font-family: monospace; color: #06b6d4; text-transform: uppercase; margin-bottom: 0.5rem;">Comprehensive Evaluation &bull; 2026 Edition</div>
+          <h1 style="font-size: 2.5rem; font-weight: 800; color: #ffffff; margin: 0 0 1rem 0;">
+            LiveSimulators vs. PhET vs. Falstad vs. MATLAB Simulink: Engineering Simulator Comparison
+          </h1>
+          <p style="font-size: 1.15rem; color: #cbd5e1; max-width: 50rem; margin: 0 auto;">
+            A rigorous engineering comparison of 60 FPS Runge-Kutta numerical fidelity, international standards compliance (IEC / IEEE / API / ASME / ISA), real-time industrial fault modeling, and zero-install browser access.
+          </p>
+        </header>
+
+        <section style="margin-bottom: 3rem; overflow-x: auto;">
+          <h2 style="font-size: 1.4rem; font-weight: 700; color: #ffffff; margin-bottom: 1rem;">Platform Comparison Matrix</h2>
+          <table style="width: 100%; border-collapse: collapse; text-align: left; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: rgba(3,7,18,0.8); border-bottom: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-family: monospace;">
+                <th style="padding: 1rem;">Evaluation Dimension</th>
+                <th style="padding: 1rem; color: #38bdf8; background: rgba(6,182,212,0.15);">LiveSimulators</th>
+                <th style="padding: 1rem;">PhET Simulations</th>
+                <th style="padding: 1rem;">Falstad Circuit Simulator</th>
+                <th style="padding: 1rem;">MATLAB Simulink</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <td style="padding: 1rem; font-weight: bold; color: #ffffff;">Solver Fidelity (60 FPS RK4)</td>
+                <td style="padding: 1rem; background: rgba(6,182,212,0.08); color: #a5f3fc;"><strong>60 FPS Float64 RK4 Engine</strong>: Continuous 4th-Order Runge-Kutta double-precision integration in browser canvas with Butcher tableau proof.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Euler / low-order Verlet approximations tuned for K-12 conceptual demos. Timesteps clamped.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Modified Nodal Analysis (MNA) matrix solver; excellent for lumped circuits, restricted strictly to electrical networks.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Desktop variable-step ODE solvers (ode45/ode15s), but requires heavy desktop installations or paid MathWorks cloud.</td>
+              </tr>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <td style="padding: 1rem; font-weight: bold; color: #ffffff;">Standards Compliance (IEC/IEEE/ASME/API/ISA)</td>
+                <td style="padding: 1rem; background: rgba(6,182,212,0.08); color: #a5f3fc;"><strong>Full Consensus Standards</strong>: Sized and calibrated against IEEE 1459, IEC 60076, IEC 60534, ISA-75, API 610/617, ASME B31.3, AISC 360, and ACI 318.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Zero standards compliance (designed purely for qualitative introductory science pedagogy).</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Idealized textbook models without IEEE/IEC equipment standards, thermal derating, or tolerances.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Compliance toolboxes available (Simscape, Aerospace Blockset), requiring enterprise licenses ($2,000–$10,000+/seat).</td>
+              </tr>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <td style="padding: 1rem; font-weight: bold; color: #ffffff;">Real-Time Industrial Fault Injection</td>
+                <td style="padding: 1rem; background: rgba(6,182,212,0.08); color: #a5f3fc;"><strong>1-Click Industrial Failure Regimes</strong>: Real-time simulation of control valve cavitation vs flashing, subsynchronous resonance, CT saturation, compliance starvation, and IGBT thermal runaway.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Strictly nominal bounds; zero equipment failure or destructive physical regimes modeled.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Basic short circuit and open circuit only; no equipment failure physics or component degradation.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Supported via manual custom Stateflow scripting or paid Simscape fault injection extensions.</td>
+              </tr>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <td style="padding: 1rem; font-weight: bold; color: #ffffff;">Dual-Domain Telemetry</td>
+                <td style="padding: 1rem; background: rgba(6,182,212,0.08); color: #a5f3fc;"><strong>Synchronous Dual-Domain Scopes</strong>: Time-domain oscilloscopes paired side-by-side with frequency-domain FFT, Bode plots, phasor vectors, or P-V / T-s state planes.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Scalar meters and simple single-variable strip charts without dual-domain spectral correlation.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Dual-trace electronic oscilloscope windows; restricted strictly to electronic voltages and currents.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Comprehensive via Scope and Spectrum Analyzer blocks, but non-interactive for browser web learners without accounts.</td>
+              </tr>
+              <tr>
+                <td style="padding: 1rem; font-weight: bold; color: #ffffff;">Zero-Install Browser Access</td>
+                <td style="padding: 1rem; background: rgba(6,182,212,0.08); color: #a5f3fc;"><strong>100% Free &amp; Zero-Install</strong>: Instant access across mobile, tablet, and desktop browsers with 100% client-side Float64 computation and privacy.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Free HTML5 web access, but limited to conceptual K-12/early college physics demonstrations.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Web browser Java/JS port, but retains a 1990s desktop interface that is difficult to use on mobile devices.</td>
+                <td style="padding: 1rem; color: #cbd5e1;">Requires massive 20+ GB local software installations or restricted campus license server tokens.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section style="margin-bottom: 2.5rem;">
+          <h2 style="font-size: 1.35rem; font-weight: 700; color: #ffffff; margin-bottom: 1rem;">Platform Selection Guide for Engineering Faculty</h2>
+          <p style="color: #cbd5e1; line-height: 1.6;">
+            PhET is ideal for introductory high-school physics intuition. Falstad is optimal for quick hobbyist breadboard circuit drafting. MATLAB Simulink remains standard for deep offline engineering R&amp;D. <strong>LiveSimulators</strong> was created specifically for accredited engineering higher education and industrial plant troubleshooting: delivering continuous 60 FPS Runge-Kutta numerical rigor, real-time industrial fault injection, and consensus standards compliance directly inside the web browser.
+          </p>
+        </section>
+      </article>`;
     default:
       return '<article id="seo-static-content"><h1>LiveSimulators</h1></article>';
   }
@@ -514,15 +652,25 @@ async function runPrerenderRoutes() {
   );
 
   // 1. Discover all routes
+  const departmentRoutes = [];
+  for (const d of DISCIPLINES) {
+    departmentRoutes.push({ view: 'department', departmentId: d.id, customPath: `/departments/${d.id}/` });
+    departmentRoutes.push({ view: 'department', departmentId: d.id, customPath: `/department/${d.id}/` });
+  }
+  // Common aliases for department routes
+  departmentRoutes.push({ view: 'department', departmentId: 'control', customPath: '/departments/instrumentation/' });
+  departmentRoutes.push({ view: 'department', departmentId: 'control', customPath: '/department/instrumentation/' });
+
   const routesToPrerender = [
     { view: 'home' },
     { view: 'about' },
+    { view: 'comparison' },
     { view: 'contact' },
     { view: 'cookie-policy' },
     { view: 'disclaimer' },
     { view: 'privacy-policy' },
     { view: 'terms' },
-    ...DISCIPLINES.map((d) => ({ view: 'department', departmentId: d.id })),
+    ...departmentRoutes,
     ...ALL_AVAILABLE_SIMULATORS.map((s) => ({ view: 'simulator', simulatorId: s.id })),
     ...ALL_AVAILABLE_SIMULATORS.map((s) => ({ view: 'embed', simulatorId: s.id })),
     ...LABS.map((l) => ({ view: 'lab', labId: l.id })),
@@ -534,7 +682,7 @@ async function runPrerenderRoutes() {
   let generatedCount = 0;
   for (const route of routesToPrerender) {
     const meta = getSeoMetadata(route);
-    const routePath = routeToPath(route);
+    const routePath = route.customPath || routeToPath(route);
 
     let html = templateHtml;
 
@@ -648,33 +796,47 @@ async function runPrerenderRoutes() {
 
   // 6. Generate dist/sitemap.xml and public/sitemap.xml with today's lastmod and trailing slashes
   const today = new Date().toISOString().split('T')[0];
-  const sitemapEntries = routesToPrerender
-    .filter((r) => r.view !== 'embed')
-    .map((r) => {
-      const p = routeToPath(r);
-      let freq = 'weekly';
-      let prio = '0.8';
-      if (p === '/') {
-        freq = 'daily';
-        prio = '1.0';
-      } else if (p.startsWith('/department/') || p.startsWith('/simulator/') || p.startsWith('/lab/')) {
-        freq = 'weekly';
-        prio = '0.9';
-      } else if (p === '/about/' || p === '/contact/' || p === '/about' || p === '/contact') {
-        freq = 'weekly';
-        prio = '0.8';
-      } else {
-        freq = 'monthly';
-        prio = '0.5';
-      }
-      const locPath = p === '/' ? '/' : (p.endsWith('/') ? p : `${p}/`);
-      return `  <url>
-    <loc>${SITE_URL}${locPath}</loc>
+  const uniqueUrls = new Map();
+  for (const r of routesToPrerender) {
+    if (r.view === 'embed') continue;
+    const p = r.customPath || routeToPath(r);
+    const locPath = p === '/' ? '/' : (p.endsWith('/') ? p : `${p}/`);
+    const fullUrl = `${SITE_URL}${locPath}`;
+    
+    let freq = 'weekly';
+    let prio = '0.8';
+    if (locPath === '/') {
+      freq = 'daily';
+      prio = '1.0';
+    } else if (
+      locPath.startsWith('/departments/') ||
+      locPath.startsWith('/department/') ||
+      locPath.startsWith('/simulator/') ||
+      locPath.startsWith('/lab/') ||
+      locPath === '/comparison/'
+    ) {
+      freq = 'weekly';
+      prio = '0.9';
+    } else if (locPath === '/about/' || locPath === '/contact/') {
+      freq = 'weekly';
+      prio = '0.8';
+    } else {
+      freq = 'monthly';
+      prio = '0.5';
+    }
+
+    if (!uniqueUrls.has(fullUrl)) {
+      uniqueUrls.set(fullUrl, { freq, prio });
+    }
+  }
+
+  const sitemapEntries = Array.from(uniqueUrls.entries())
+    .map(([url, cfg]) => `  <url>
+    <loc>${url}</loc>
     <lastmod>${today}</lastmod>
-    <changefreq>${freq}</changefreq>
-    <priority>${prio}</priority>
-  </url>`;
-    })
+    <changefreq>${cfg.freq}</changefreq>
+    <priority>${cfg.prio}</priority>
+  </url>`)
     .join('\n\n');
 
   const guideUrls = [

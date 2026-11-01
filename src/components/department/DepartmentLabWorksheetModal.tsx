@@ -35,7 +35,7 @@ export const DepartmentLabWorksheetModal: React.FC<DepartmentLabWorksheetModalPr
 **Course:** ${departmentName} (${departmentCode})  
 **Platform:** LiveSimulators Real-Time Computational Workbench  
 **Accreditation Alignment:** ABET Student Outcome 1 (Complex Problem Solving) & Outcome 6 (Experimental Analysis)  
-**URL:** https://livesimulators.com/simulator/${currentSim?.id}  
+**URL:** https://livesimulators.com/simulator/${currentSim?.id}/  
 
 ---
 
@@ -67,7 +67,7 @@ $$\n${currentSim?.math || 'f(x) = 0'}\n$$
 ---
 
 ## 4. Step-by-Step Experimental Procedure
-1. Navigate to the online laboratory station: \`https://livesimulators.com/simulator/${currentSim?.id}\`.
+1. Navigate to the online laboratory station: \`https://livesimulators.com/simulator/${currentSim?.id}/\`.
 2. Inspect the default initial states and confirm zero initial condition drift.
 3. **Run Trial 1 (Nominal):** Set the baseline slider parameters to nominal mid-scale values. Record the peak amplitude, settling time, and steady-state equilibrium value.
 4. **Run Trial 2 (Low Damping / High Stress):** Reduce damping or resistance by 50%. Observe transient oscillatory overshoot and calculate the damping ratio $\\zeta$ or quality factor $Q$.
@@ -287,7 +287,7 @@ $$\n${currentSim?.math || 'f(x) = 0'}\n$$
               <span>3. Experimental Procedure Protocol</span>
             </h2>
             <ol className="list-decimal list-inside space-y-1.5 text-slate-300 pl-1">
-              <li>Open the interactive lab station at: <code className="text-cyan-300 font-mono text-xs">livesimulators.com/simulator/{currentSim?.id}</code></li>
+              <li>Open the interactive lab station at: <code className="text-cyan-300 font-mono text-xs">livesimulators.com/simulator/{currentSim?.id}/</code></li>
               <li>Verify that initial states are at rest and record baseline parameter values in Table 1 below.</li>
               <li><strong>Step Response / Nominal Test:</strong> Apply nominal excitation. Record steady-state value and peak transient response.</li>
               <li><strong>Parametric Sweep:</strong> Modify primary damping / stiffness / resistance slider by ±50% and record resulting frequency or overshoot.</li>

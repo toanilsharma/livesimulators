@@ -1,5 +1,6 @@
 import { SimulatorItem, ParameterDef } from '../types';
 import { cleanLatexToPlainText } from './engineeringTheory';
+import { getSimulatorEngineeringContent } from '../data/simulatorEngineeringContent';
 
 export interface ScenarioParameter {
   symbol: string;
@@ -365,33 +366,20 @@ export function getSimulatorFaqs(sim: SimulatorItem): DomainFaqItem[] {
     }));
   }
 
+  const content = getSimulatorEngineeringContent(sim.id);
+  if (content && content.faqs && content.faqs.length >= 3) {
+    return content.faqs.slice(0, 3).map((f) => ({
+      question: f.question,
+      answer: cleanLatexToPlainText(f.answer),
+    }));
+  }
+
   const existing = (sim.faqs || []).map((f) => ({
     question: f.question,
     answer: cleanLatexToPlainText(f.answer),
   }));
 
-  const p1 = sim.parameters[0] || { name: 'primary parameter', symbol: 'p1', unit: '' };
-
-  const genericFaqs: DomainFaqItem[] = [
-    {
-      question: `What governing physical principles and laws dictate the behavior of ${sim.title}?`,
-      answer: `This apparatus is governed by ${sim.physicalLaw}. Dynamic state evolution follows the mathematical formulation ${cleanLatexToPlainText(sim.governingEquation)}, ensuring continuous conservation of energy, momentum, or charge across operational states.`,
-    },
-    {
-      question: `How does tuning ${p1.name} (${p1.symbol}) affect system performance and stability?`,
-      answer: `Adjusting ${p1.name} directly alters the system transfer function and characteristic response. Within the range [${p1.min} to ${p1.max} ${p1.unit}], the response remains predictable and linear. Moving toward the boundary risks saturation, increased losses, or oscillation.`,
-    },
-    {
-      question: `Which industrial engineering standards and field diagnostics apply to ${sim.title}?`,
-      answer: `Design, commissioning, and safety validation reference ${sim.standardReference || `${sim.badge} industry codes`}${sim.standardBody ? ` issued by ${sim.standardBody}` : ''}. Field engineers monitor key telemetry to prevent equipment tripping and ensure long-term operational integrity.`,
-    },
-  ];
-
-  while (existing.length < 3) {
-    existing.push(genericFaqs[existing.length]);
-  }
-
-  return existing.slice(0, 3);
+  return existing;
 }
 
 /**

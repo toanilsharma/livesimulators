@@ -21,7 +21,7 @@ export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps>
   const [citationCopied, setCitationCopied] = useState(false);
 
   const currentYear = new Date().getFullYear();
-  const fullUrl = `https://livesimulators.com/simulator/${simulator.id}`;
+  const fullUrl = `https://livesimulators.com/simulator/${simulator.id}/`;
   const bibtexKey = `livesimulators_${simulator.id.replace(/-/g, '_')}_${currentYear}`;
   const bibtexString = `@misc{${bibtexKey},
   author = {Sharma, A.},
@@ -122,7 +122,9 @@ export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-mono">
                         {eq.variables.map((v, vIdx) => (
                           <div key={vIdx} className="p-1.5 rounded bg-slate-900/60 border border-slate-800/50 flex items-start gap-2">
-                            <span className="text-cyan-400 font-bold shrink-0">{v.symbol}:</span>
+                            <span className="text-cyan-400 font-bold shrink-0 inline-flex items-center">
+                              <MathView math={v.symbol} />:
+                            </span>
                             <span className="text-slate-300">
                               {v.name} {v.unit ? `[${v.unit}]` : ''} — <span className="text-slate-400 text-[11px]">{v.description}</span>
                             </span>
@@ -218,7 +220,10 @@ export const EngineeringTheoryFormulas: React.FC<EngineeringTheoryFormulasProps>
                 {theory.stepByStepExample.givenInputs.map((inp, idx) => (
                   <div key={idx} className="p-2 rounded bg-slate-900 border border-slate-800/80">
                     <div className="text-[10px] text-slate-400 truncate">{inp.parameter}</div>
-                    <div className="text-cyan-300 font-bold">{inp.symbol} = {inp.value}</div>
+                    <div className="text-cyan-300 font-bold flex items-center gap-1">
+                      <MathView math={inp.symbol} />
+                      <span>= {inp.value}</span>
+                    </div>
                   </div>
                 ))}
               </div>

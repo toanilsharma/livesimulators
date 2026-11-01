@@ -500,7 +500,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <a
-                                    href={`/simulator/${sim.id}`}
+                                    href={`/simulator/${sim.id}/`}
                                     onClick={(e) => {
                                       if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
                                         e.preventDefault();
@@ -533,7 +533,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
                             {/* Right: Sleek Action Button */}
                             <div className="shrink-0 flex items-center gap-2">
                               <a
-                                href={`/simulator/${sim.id}`}
+                                href={`/simulator/${sim.id}/`}
                                 onClick={(e) => {
                                   if (typeof (window as any).gtag === 'function') {
                                     (window as any).gtag('event', 'simulator_launch', { simulator: sim.title });
@@ -656,7 +656,7 @@ export const HomeDepartmentsHub: React.FC<HomeDepartmentsHubProps> = ({
 
                       {/* Launch Spotlight Simulator Button */}
                       <a
-                        href={`/simulator/${activeSim.id}`}
+                        href={`/simulator/${activeSim.id}/`}
                         onClick={(e) => {
                           if (typeof (window as any).gtag === 'function') {
                             (window as any).gtag('event', 'simulator_launch', { simulator: activeSim.title });

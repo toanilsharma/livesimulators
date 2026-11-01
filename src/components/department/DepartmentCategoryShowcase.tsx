@@ -423,7 +423,7 @@ export const DepartmentCategoryShowcase: React.FC<DepartmentCategoryShowcaseProp
           </button>
 
           <a
-            href={`/simulator/${sim.id}`}
+            href={`/simulator/${sim.id}/`}
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold font-mono text-slate-950 shadow-md transition-all duration-200 active:scale-95"
             style={{
               backgroundColor: category.accentColor,

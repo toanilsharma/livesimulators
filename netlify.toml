@@ -23,6 +23,61 @@
   to = "/sitemap.xml"
   status = 200
 
+# 301 Redirect non-trailing-slash routes to standardized trailing-slash URLs
+[[redirects]]
+  from = "/simulator/:slug"
+  to = "/simulator/:slug/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/department/:dept"
+  to = "/department/:dept/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/lab/:lab"
+  to = "/lab/:lab/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/about"
+  to = "/about/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/cookie-policy"
+  to = "/cookie-policy/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/disclaimer"
+  to = "/disclaimer/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/privacy-policy"
+  to = "/privacy-policy/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms/"
+  status = 301
+  force = true
+
 # Client-side Single Page Application fallback rule
 [[redirects]]
   from = "/*"

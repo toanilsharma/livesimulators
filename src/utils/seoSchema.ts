@@ -1,6 +1,6 @@
-import { AppRoute, Discipline, SimulatorItem } from '../types';
+import { AppRoute, DisciplineInfo, SimulatorItem } from '../types';
 import { DISCIPLINES, ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
-import { LABS, LabConfig } from '../config/labs';
+import { LABS, LabItem } from '../config/labs';
 import { SITE_URL, routeToPath } from './routes';
 import { cleanLatexToPlainText } from './engineeringTheory';
 import { getSimulatorFaqs, DomainFaqItem } from './engineeringScenarios';
@@ -237,19 +237,37 @@ export function getSimulatorSchema(sim: SimulatorItem): { '@context': string; '@
     ],
   };
 
-  // 2. ["SoftwareApplication", "LearningResource"] compound entity
+  // 2. ["WebApplication", "LearningResource"] compound entity
   const aboutThings = getSimulatorAboutThings(sim);
 
-  const softwareAndLearningResource = {
-    '@type': ['SoftwareApplication', 'LearningResource'],
+  const teachesConcepts: string[] = Array.from(
+    new Set([
+      sim.physicalLaw,
+      sim.equationDescription,
+      sim.standardReference,
+      sim.standardBody,
+      sim.disciplineName,
+      ...(sim.tags || []),
+    ])
+  ).filter((item): item is string => Boolean(item));
+
+  const educationalLevel =
+    sim.difficulty === 'Fundamentals'
+      ? 'Undergraduate Engineering (Lower Division)'
+      : sim.difficulty === 'Intermediate'
+      ? 'Undergraduate Engineering (Upper Division)'
+      : 'Graduate Engineering / Professional Practice';
+
+  const webApplicationAndLearningResource = {
+    '@type': ['WebApplication', 'LearningResource'],
     '@id': `${canonicalUrl}#simulator`,
     name: `Interactive ${sim.title} Simulator & Calculator`,
     alternateName: sim.title,
     description: sim.description,
     url: canonicalUrl,
-    applicationCategory: 'EducationalApplication',
+    applicationCategory: 'EngineeringApplication, EducationalApplication',
     applicationSubCategory: 'Engineering Simulation',
-    operatingSystem: 'All (Web Browser)',
+    operatingSystem: 'All (Browser-based 60 FPS RK4 Solver)',
     isAccessibleForFree: true,
     browserRequirements: 'Requires modern browser with HTML5 Canvas and Float64 JavaScript engine support.',
     offers: {
@@ -257,6 +275,8 @@ export function getSimulatorSchema(sim: SimulatorItem): { '@context': string; '@
       price: '0',
       priceCurrency: 'USD',
     },
+    educationalLevel,
+    teaches: teachesConcepts,
     educationalUse: [
       'Simulation',
       'Virtual Laboratory',
@@ -300,7 +320,7 @@ export function getSimulatorSchema(sim: SimulatorItem): { '@context': string; '@
     FOUNDER_PERSON_SCHEMA,
     WEBSITE_SCHEMA,
     breadcrumbList,
-    softwareAndLearningResource,
+    webApplicationAndLearningResource,
     faqPage,
   ];
 
@@ -313,7 +333,7 @@ export function getSimulatorSchema(sim: SimulatorItem): { '@context': string; '@
 /**
  * Constructs schema for Engineering Department routes (https://livesimulators.com/department/[id]/)
  */
-export function getDepartmentSchema(dept: Discipline): { '@context': string; '@graph': Record<string, any>[] } {
+export function getDepartmentSchema(dept: DisciplineInfo): { '@context': string; '@graph': Record<string, any>[] } {
   const canonicalUrl = `${SITE_URL}/department/${dept.id}/`;
   const deptSimulators = ALL_AVAILABLE_SIMULATORS.filter((s) => s.discipline === dept.id);
   const deptFaqs = DEPARTMENT_FAQ_DATA[dept.id] || [];
@@ -397,7 +417,7 @@ export function getDepartmentSchema(dept: Discipline): { '@context': string; '@g
 /**
  * Constructs schema for Industrial Labs Pro routes (https://livesimulators.com/lab/[id]/)
  */
-export function getLabSchema(lab: LabConfig): { '@context': string; '@graph': Record<string, any>[] } {
+export function getLabSchema(lab: LabItem): { '@context': string; '@graph': Record<string, any>[] } {
   const canonicalUrl = `${SITE_URL}/lab/${lab.id}/`;
 
   const breadcrumbList = {
@@ -414,7 +434,7 @@ export function getLabSchema(lab: LabConfig): { '@context': string; '@graph': Re
     '@type': ['SoftwareApplication', 'LearningResource'],
     '@id': `${canonicalUrl}#lab`,
     name: `${lab.name} - Professional Industrial Laboratory`,
-    description: lab.desc,
+    description: (lab as any).desc || lab.tagline,
     url: canonicalUrl,
     applicationCategory: 'EducationalApplication',
     applicationSubCategory: 'Industrial Engineering Simulation',

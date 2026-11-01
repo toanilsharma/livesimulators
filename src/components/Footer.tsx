@@ -22,7 +22,8 @@ import {
   Zap,
   BarChart3,
   Layers,
-  GraduationCap
+  GraduationCap,
+  Scale
 } from 'lucide-react';
 import { LABS, trackLabLaunch } from '../config/labs';
 import { navigateTo } from '../utils/routes';
@@ -37,6 +38,7 @@ interface FooterProps {
   onNavigateToDisclaimer?: () => void;
   onNavigateToPrivacyPolicy?: () => void;
   onNavigateToTerms?: () => void;
+  onNavigateToComparison?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ 
@@ -48,6 +50,7 @@ export const Footer: React.FC<FooterProps> = ({
   onNavigateToDisclaimer,
   onNavigateToPrivacyPolicy,
   onNavigateToTerms,
+  onNavigateToComparison,
 }) => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactSubmitted, setContactSubmitted] = useState(false);
@@ -259,69 +262,69 @@ export const Footer: React.FC<FooterProps> = ({
 
           </div>
 
-          {/* Group 1: Disciplines */}
+          {/* Group 1: Disciplines & Department Hubs */}
           <div className="lg:col-span-2 space-y-3.5">
             <h4 className="text-white font-display font-semibold text-xs uppercase tracking-wider">
-              Disciplines
+              Department Hubs
             </h4>
             <ul className="space-y-2.5 text-xs text-slate-300">
               <li>
                 <a 
-                  href="/department/electrical"
+                  href="/departments/electrical/"
                   onClick={(e) => { e.preventDefault(); handleDisciplineClick('electrical'); }}
                   className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group"
                 >
-                  <span>Electrical Engineering</span>
+                  <span>Electrical Systems</span>
                   <ArrowUpRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all" />
                 </a>
               </li>
               <li>
                 <a 
-                  href="/department/mechanical"
-                  onClick={(e) => { e.preventDefault(); handleDisciplineClick('mechanical'); }}
-                  className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group"
-                >
-                  <span>Mechanical Systems</span>
-                  <ArrowUpRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all" />
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="/department/control"
+                  href="/departments/instrumentation/"
                   onClick={(e) => { e.preventDefault(); handleDisciplineClick('control'); }}
                   className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group"
                 >
-                  <span>Control & Signals</span>
+                  <span>Instrumentation &amp; Control</span>
                   <ArrowUpRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all" />
                 </a>
               </li>
               <li>
                 <a 
-                  href="/department/chemical"
-                  onClick={(e) => { e.preventDefault(); handleDisciplineClick('chemical'); }}
+                  href="/departments/mechanical/"
+                  onClick={(e) => { e.preventDefault(); handleDisciplineClick('mechanical'); }}
                   className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group"
                 >
-                  <span>Chemical & Process</span>
+                  <span>Mechanical Dynamics</span>
                   <ArrowUpRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all" />
                 </a>
               </li>
               <li>
                 <a 
-                  href="/department/civil"
+                  href="/departments/civil/"
                   onClick={(e) => { e.preventDefault(); handleDisciplineClick('civil'); }}
                   className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group"
                 >
-                  <span>Civil & Structural</span>
+                  <span>Civil &amp; Structures</span>
                   <ArrowUpRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all" />
                 </a>
               </li>
               <li>
                 <a 
-                  href="/department/physics"
+                  href="/departments/chemical/"
+                  onClick={(e) => { e.preventDefault(); handleDisciplineClick('chemical'); }}
+                  className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group"
+                >
+                  <span>Chemical &amp; Process</span>
+                  <ArrowUpRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all" />
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/departments/physics/"
                   onClick={(e) => { e.preventDefault(); handleDisciplineClick('physics'); }}
                   className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group"
                 >
-                  <span>Applied Physics</span>
+                  <span>Semiconductors &amp; Physics</span>
                   <ArrowUpRight className="w-3 h-3 text-slate-600 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all" />
                 </a>
               </li>
@@ -392,12 +395,39 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <a 
+                  href="/comparison/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onNavigateToComparison) onNavigateToComparison();
+                    else navigateTo('/comparison/');
+                  }}
+                  className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group text-cyan-300 font-medium"
+                  id="footer-comparison-link"
+                >
+                  <Scale className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Platform Comparison</span>
+                </a>
+              </li>
+              <li>
+                <a 
                   href="/about/methodology.html"
                   className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group text-emerald-400 font-medium"
                   id="footer-methodology-link"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Methodology &amp; Verification</span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/llms.txt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-cyan-400 transition-colors text-left flex items-center gap-1 group text-amber-400 font-mono text-[11px]"
+                  id="footer-llms-link"
+                >
+                  <span>AI Context (/llms.txt)</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
                 </a>
               </li>
               <li>

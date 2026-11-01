@@ -22,6 +22,7 @@ import { CookiePolicyPage } from './components/pages/CookiePolicyPage';
 import { DisclaimerPage } from './components/pages/DisclaimerPage';
 import { PrivacyPolicyPage } from './components/pages/PrivacyPolicyPage';
 import { TermsPage } from './components/pages/TermsPage';
+import { ComparisonPage } from './components/pages/ComparisonPage';
 import { NotFoundPage } from './components/pages/NotFoundPage';
 import { ALL_AVAILABLE_SIMULATORS, FEATURED_ELECTRICAL_SIMULATORS } from './data/simulators';
 import { SimulatorItem, DisciplineId, AudiencePersona, AppRoute } from './types';
@@ -124,6 +125,10 @@ export default function App() {
     navigateTo('/terms/');
   };
 
+  const handleNavigateToComparison = () => {
+    navigateTo('/comparison/');
+  };
+
   // Open search modal with an optional search term
   const handleOpenSearchWithQuery = (query: string) => {
     setSearchInitialQuery(query);
@@ -183,7 +188,7 @@ export default function App() {
             if (sim) {
               handleLaunchSimulator(sim);
             } else {
-              navigateTo(`/simulator/${simId}`);
+              navigateTo(`/simulator/${simId}/`);
             }
           }}
           onGoHome={handleBackToHome}
@@ -328,6 +333,17 @@ export default function App() {
         </main>
       )}
 
+      {/* Engineering Simulator Comparison Page */}
+      {route.view === 'comparison' && (
+        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+          <ComparisonPage
+            onBackToHome={handleBackToHome}
+            onSelectDepartment={handleSelectDepartment}
+            onSelectSimulator={handleLaunchSimulator}
+          />
+        </main>
+      )}
+
       {/* Branded 404 Page for Unknown Routes */}
       {route.view === 'not-found' && (
         <main className="flex-1 w-full max-w-full overflow-x-hidden">
@@ -367,6 +383,7 @@ export default function App() {
           onNavigateToDisclaimer={handleNavigateToDisclaimer}
           onNavigateToPrivacyPolicy={handleNavigateToPrivacyPolicy}
           onNavigateToTerms={handleNavigateToTerms}
+          onNavigateToComparison={handleNavigateToComparison}
         />
       )}
 

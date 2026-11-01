@@ -63,7 +63,7 @@ export const RelatedPhysicsConcepts: React.FC<RelatedPhysicsConceptsProps> = ({
       <div className="space-y-2.5">
         {equivalents.map((item, idx) => {
           const targetSim = ALL_AVAILABLE_SIMULATORS.find((s) => s.id === item.targetSimulatorId);
-          const href = `/simulator/${item.targetSimulatorId}`;
+          const href = `/simulator/${item.targetSimulatorId}/`;
 
           return (
             <div

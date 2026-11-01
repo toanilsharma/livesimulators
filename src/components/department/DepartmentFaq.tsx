@@ -2,6 +2,19 @@ import React, { useState } from 'react';
 import { HelpCircle, ChevronDown, Check, Copy, Sparkles, BookOpen, Cpu, ShieldCheck } from 'lucide-react';
 import { DisciplineId } from '../../types';
 import { soundEngine } from '../../utils/audio';
+import { MathView } from '../MathView';
+
+export function renderTextWithLatex(text: string): React.ReactNode {
+  if (!text || !text.includes('$')) return text;
+  const parts = text.split(/(\$[^$]+\$)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
+      const math = part.slice(1, -1);
+      return <MathView key={index} math={math} className="inline-block px-0.5" />;
+    }
+    return part;
+  });
+}
 
 export interface DepartmentFaqItem {
   id: string;
@@ -321,7 +334,7 @@ export const DepartmentFaq: React.FC<DepartmentFaqProps> = ({
                   </div>
 
                   <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-cyan-300 transition-colors leading-snug">
-                    {faq.question}
+                    {renderTextWithLatex(faq.question)}
                   </h3>
                 </div>
 
@@ -339,7 +352,7 @@ export const DepartmentFaq: React.FC<DepartmentFaqProps> = ({
               {/* Answer Content */}
               {isOpen && (
                 <div className="px-4 pb-5 sm:px-5 sm:pb-5 pt-1 border-t border-slate-800/80 text-xs sm:text-sm text-slate-300 leading-relaxed font-sans space-y-3 animate-in fade-in duration-200">
-                  <p>{faq.answer}</p>
+                  <p>{renderTextWithLatex(faq.answer)}</p>
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-[11px] font-mono text-slate-400">
                     <span className="flex items-center gap-1.5 text-slate-400">

@@ -72,6 +72,10 @@ export function parsePathToRoute(pathname: string, hash?: string, search?: strin
     return { view: 'terms' };
   }
 
+  if (cleanPath === '/comparison' || cleanPath === '/compare') {
+    return { view: 'comparison' };
+  }
+
   // Static for-professors redirect fallback if navigated via SPA
   if (cleanPath === '/for-professors' || cleanPath === '/for-professors.html') {
     if (typeof window !== 'undefined') {
@@ -80,10 +84,20 @@ export function parsePathToRoute(pathname: string, hash?: string, search?: strin
     return { view: 'home' };
   }
 
-  // Match /department/:departmentId
-  const deptMatch = cleanPath.match(/^\/department\/([a-zA-Z0-9_-]+)$/);
+  // Match /departments/:departmentId or /department/:departmentId
+  const deptMatch = cleanPath.match(/^\/(?:departments|department)\/([a-zA-Z0-9_-]+)$/);
   if (deptMatch) {
-    const deptId = deptMatch[1].toLowerCase() as DisciplineId;
+    let rawDeptId = deptMatch[1].toLowerCase();
+    if (rawDeptId === 'instrumentation' || rawDeptId === 'instrumentation-control' || rawDeptId === 'control-systems') {
+      rawDeptId = 'control';
+    } else if (rawDeptId === 'semiconductor' || rawDeptId === 'semiconductors' || rawDeptId === 'quantum') {
+      rawDeptId = 'physics';
+    } else if (rawDeptId === 'process' || rawDeptId === 'process-engineering') {
+      rawDeptId = 'chemical';
+    } else if (rawDeptId === 'structural' || rawDeptId === 'structural-mechanics') {
+      rawDeptId = 'civil';
+    }
+    const deptId = rawDeptId as DisciplineId;
     if (DISCIPLINES.some((d) => d.id === deptId)) {
       return { view: 'department', departmentId: deptId };
     }
@@ -146,8 +160,10 @@ export function routeToPath(route: AppRoute): string {
       return '/privacy-policy/';
     case 'terms':
       return '/terms/';
+    case 'comparison':
+      return '/comparison/';
     case 'department':
-      return `/department/${route.departmentId}/`;
+      return `/departments/${route.departmentId}/`;
     case 'simulator':
       return `/simulator/${route.simulatorId}/`;
     case 'embed':
