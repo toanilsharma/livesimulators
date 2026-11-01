@@ -248,7 +248,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#060a12]/95 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-[#060a12]/95 backdrop-blur-md">
       
       {/* Precision Top Engineering Strip */}
       <div className="hidden lg:flex items-center justify-between px-6 py-1 text-[11px] font-mono border-b border-slate-800/60 bg-slate-950/70 text-slate-400">

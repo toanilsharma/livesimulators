@@ -288,7 +288,7 @@ export const DepartmentPage: React.FC<DepartmentPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#080d16] text-slate-100 py-5 sm:py-8 px-4 sm:px-6 lg:px-10 xl:px-14 relative overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#080d16] text-slate-100 py-5 sm:py-8 px-4 sm:px-6 lg:px-10 xl:px-14 relative overflow-x-clip w-full max-w-full">
       {/* Sticky Anchor & View Navigation Bar */}
       <DepartmentStickyBar
         departmentId={departmentId}

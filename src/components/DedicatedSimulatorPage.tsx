@@ -2942,7 +2942,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   );
 
   return (
-    <div className={`w-full h-full flex flex-col bg-[#080d16] text-slate-100 ${isEmbedMode ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'} select-none`}>
+    <div className={`w-full flex flex-col bg-[#080d16] text-slate-100 ${isEmbedMode ? 'h-full overflow-hidden' : 'overflow-x-clip'} select-none`}>
       {/* 1. Sleek Breadcrumb & Peer Navigation Bar (Hidden in embed mode) */}
       {!isEmbedMode && (
         <nav aria-label="Breadcrumb & Laboratory Switcher" className="h-10 px-3 sm:px-5 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between gap-2 shrink-0 z-30 shadow-sm">
@@ -3483,7 +3483,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
             ? 'h-full flex-1 p-0'
             : isFullscreen
               ? 'h-[calc(100vh-60px)] min-h-[640px] p-2'
-              : 'h-[calc(100vh-140px)] min-h-[600px] max-h-[1100px] p-1.5 sm:p-2.5'
+              : 'h-[calc(100vh-250px)] min-h-[580px] max-h-[1100px] p-1.5 sm:p-2.5'
         } overflow-hidden`}
       >
         <div className={`h-full w-full ${isEmbedMode ? 'flex flex-col' : 'grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5'} overflow-hidden`}>
@@ -4373,7 +4373,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
       {/* Fullscreen Guided Lab Manual Modal */}
       {showExperimentsModal && (
         <div 
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-6 overflow-y-auto"
           onClick={() => setShowExperimentsModal(false)}
         >
           <div 
@@ -4534,7 +4534,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
       {/* LMS & Web Embed Code Modal */}
       {showEmbedModal && (
         <div 
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
           onClick={() => setShowEmbedModal(false)}
         >
           <div 

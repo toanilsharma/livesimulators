@@ -39,7 +39,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#080d16] text-slate-100 font-sans selection:bg-cyan-500/25 selection:text-cyan-200 relative overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#080d16] text-slate-100 font-sans selection:bg-cyan-500/25 selection:text-cyan-200 relative overflow-x-clip w-full max-w-full">
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-tech-grid opacity-15 pointer-events-none" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-red-500/10 rounded-full blur-[140px] pointer-events-none" />

@@ -165,8 +165,8 @@ export default function App() {
 
   return (
     <div
-      className={`bg-[#080d16] text-slate-100 flex flex-col selection:bg-cyan-500/25 selection:text-cyan-200 w-full max-w-full overflow-x-hidden ${
-        route.view === 'simulator' || route.view === 'embed'
+      className={`bg-[#080d16] text-slate-100 flex flex-col selection:bg-cyan-500/25 selection:text-cyan-200 w-full max-w-full overflow-x-clip ${
+        route.view === 'embed'
           ? 'h-[100dvh] max-h-[100dvh] overflow-hidden'
           : 'min-h-screen'
       }`}
@@ -174,8 +174,8 @@ export default function App() {
       {/* Dynamic Schema.org JSON-LD Structured Data Injection for Head & Crawlers */}
       <JsonLd route={route} />
 
-      {/* 1. Global Navigation Bar (shown on all pages except full-screen workbench and embed) */}
-      {route.view !== 'simulator' && route.view !== 'embed' && (
+      {/* 1. Global Navigation Bar (common and fixed across all pages, omitted only in LMS embed iframe) */}
+      {route.view !== 'embed' && (
         <Navbar
           onOpenSearch={() => {
             setSearchInitialQuery('');
@@ -199,7 +199,7 @@ export default function App() {
 
       {/* 2. Routing Views */}
       {route.view === 'home' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           {/* Real-time Defense-Grade Telemetry Bar */}
           <TelemetryTicker />
 
@@ -233,7 +233,7 @@ export default function App() {
       )}
 
       {route.view === 'department' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <DepartmentPage
             departmentId={route.departmentId}
             onBackToHome={handleBackToHome}
@@ -244,14 +244,14 @@ export default function App() {
       )}
 
       {route.view === 'simulator' && activeSimulator && (
-        <div className="flex-1 min-h-0 h-full w-full max-w-full overflow-hidden flex flex-col">
+        <main className="flex-1 w-full max-w-full overflow-x-clip flex flex-col">
           <DedicatedSimulatorPage
             simulator={activeSimulator}
             onBackToDepartment={(deptId) => handleSelectDepartment(deptId)}
             onBackToHome={handleBackToHome}
             onSelectSimulator={handleLaunchSimulator}
           />
-        </div>
+        </main>
       )}
 
       {/* Embedded Iframe View for University LMS (Canvas, Moodle, Blackboard) */}
@@ -269,7 +269,7 @@ export default function App() {
 
       {/* Dedicated Full-Scale Industrial Lab Workbench */}
       {route.view === 'lab' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <DedicatedLabPage
             labId={route.labId}
             onBack={handleBackToHome}
@@ -279,13 +279,13 @@ export default function App() {
 
       {/* Dedicated World-Class Independent Pages */}
       {route.view === 'contact' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <ContactPage onBackToHome={handleBackToHome} />
         </main>
       )}
 
       {route.view === 'about' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <AboutPage 
             onBackToHome={handleBackToHome} 
             onNavigateToContact={handleNavigateToContact} 
@@ -294,7 +294,7 @@ export default function App() {
       )}
 
       {route.view === 'cookie-policy' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <CookiePolicyPage 
             onBackToHome={handleBackToHome} 
             onNavigateToPrivacy={handleNavigateToPrivacyPolicy}
@@ -304,7 +304,7 @@ export default function App() {
       )}
 
       {route.view === 'disclaimer' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <DisclaimerPage 
             onBackToHome={handleBackToHome} 
             onNavigateToTerms={handleNavigateToTerms}
@@ -314,7 +314,7 @@ export default function App() {
       )}
 
       {route.view === 'privacy-policy' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <PrivacyPolicyPage 
             onBackToHome={handleBackToHome} 
             onNavigateToCookiePolicy={handleNavigateToCookiePolicy}
@@ -324,7 +324,7 @@ export default function App() {
       )}
 
       {route.view === 'terms' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <TermsPage 
             onBackToHome={handleBackToHome} 
             onNavigateToDisclaimer={handleNavigateToDisclaimer}
@@ -335,7 +335,7 @@ export default function App() {
 
       {/* Engineering Simulator Comparison Page */}
       {route.view === 'comparison' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <ComparisonPage
             onBackToHome={handleBackToHome}
             onSelectDepartment={handleSelectDepartment}
@@ -346,7 +346,7 @@ export default function App() {
 
       {/* Branded 404 Page for Unknown Routes */}
       {route.view === 'not-found' && (
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full max-w-full overflow-x-clip">
           <NotFoundPage
             attemptedPath={route.attemptedPath}
             onGoHome={handleBackToHome}
@@ -372,7 +372,7 @@ export default function App() {
       />
 
       {/* 4. Global Footer with all compliance & legal links */}
-      {route.view !== 'simulator' && route.view !== 'embed' && (
+      {route.view !== 'embed' && (
         <Footer
           onSelectDiscipline={(discId) => handleSelectDepartment(discId as DisciplineId)}
           onOpenTopic={handleOpenTopic}
