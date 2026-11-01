@@ -1,5 +1,6 @@
 import { DisciplineInfo, SimulatorItem } from '../types';
 import { SIMULATOR_ENGINEERING_CONTENT } from './simulatorEngineeringContent';
+import { getSimulatorExperiments } from './simulatorExperiments';
 
 export const DISCIPLINES: DisciplineInfo[] = [
   {
@@ -2457,12 +2458,19 @@ export const FEATURED_SEMICONDUCTOR_SIMULATORS: SimulatorItem[] = [
 
 export function attachEngineeringContent(sim: SimulatorItem): SimulatorItem {
   const content = SIMULATOR_ENGINEERING_CONTENT[sim.id];
-  if (!content) return sim;
+  const labs = getSimulatorExperiments(sim.id, sim);
+  if (!content) {
+    return {
+      ...sim,
+      guidedLabs: labs,
+    };
+  }
   return {
     ...sim,
     directAnswerSummary: content.directAnswerSummary,
     industrialFailureCase: content.industrialFailureCase,
     faqs: content.faqs && content.faqs.length >= 3 ? content.faqs : sim.faqs,
+    guidedLabs: labs,
   };
 }
 

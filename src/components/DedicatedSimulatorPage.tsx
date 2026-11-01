@@ -46,6 +46,7 @@ import {
 import { SimulatorItem, DisciplineId } from '../types';
 import { ALL_AVAILABLE_SIMULATORS } from '../data/simulators';
 import { MathView } from './MathView';
+import { RichMathText } from './RichMathText';
 import { physicsAudio } from '../utils/physicsAudio';
 import { SIMULATOR_EXPERIMENTS, getDynamicPhysicsExplanation, GuidedExperiment, getSimulatorExperiments, isLabCompleted, markLabCompleted } from '../data/simulatorExperiments';
 import { getWorkedCalculation } from '../utils/workedCalculations';
@@ -244,6 +245,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const [embedCopied, setEmbedCopied] = useState<boolean>(false);
   const [embedFormat, setEmbedFormat] = useState<'responsive' | 'fixed'>('responsive');
   const [embedHeight, setEmbedHeight] = useState<string>('650');
+  const [showDocumentation, setShowDocumentation] = useState<boolean>(true);
 
   // 1-Click Classroom Projector Mode (High-contrast lecture hall palette)
   const [isProjectorMode, setIsProjectorMode] = useState<boolean>(() => {
@@ -284,7 +286,8 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://livesimulators.com';
     const url = new URL(`/simulator/${simulator.id}/`, origin);
     Object.entries(params).forEach(([k, v]) => {
-      const valStr = Number.isInteger(v) ? v.toString() : Number(v.toFixed(4)).toString();
+      const numVal = Number(v);
+      const valStr = Number.isInteger(numVal) ? numVal.toString() : Number(numVal.toFixed(4)).toString();
       url.searchParams.set(k, valStr);
     });
     if (simSpeed !== 1.0) {
@@ -374,7 +377,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   const workedCalc = getWorkedCalculation(simulator, debouncedParams);
 
   // Interactive Guided Labs Suite (Guaranteed 3 progressive missions per simulator)
-  const experiments = getSimulatorExperiments(simulator.type, simulator);
+  const experiments = (simulator.guidedLabs && simulator.guidedLabs.length >= 2)
+    ? simulator.guidedLabs
+    : getSimulatorExperiments(simulator.id || simulator.type, simulator);
   const [activeExperiment, setActiveExperiment] = useState<GuidedExperiment | null>(null);
   const [labVerified, setLabVerified] = useState<boolean>(false);
   const [completedLabIds, setCompletedLabIds] = useState<string[]>(() => {
@@ -1689,8 +1694,8 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     octx.fillStyle = isLight ? '#1e293b' : '#94a3b8';
     octx.fillText(`STD: ${stdText}`, offscreen.width - 20, 26);
 
-    const regimeName = workedCalc.regime.name.toUpperCase();
-    const regimeCol = workedCalc.regime.status === 'trip' ? '#ef4444' : workedCalc.regime.status === 'warning' ? '#f59e0b' : '#10b981';
+    const regimeName = workedCalc.regimeTitle.toUpperCase();
+    const regimeCol = workedCalc.regime === 'fault' ? '#ef4444' : workedCalc.regime === 'marginal' ? '#f59e0b' : '#10b981';
     octx.fillStyle = regimeCol;
     octx.fillText(`REGIME: ${regimeName}`, offscreen.width - 20, 50);
     octx.textAlign = 'left';
@@ -1749,7 +1754,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
     csv += `# Department: ${simulator.discipline} | Standard: ${simulator.standardReference || 'IEC / IEEE / ASME'}\n`;
     csv += `# Timestamp: ${new Date().toISOString()}\n`;
     csv += `# Parameters: ${Object.entries(params).map(([k, v]) => `${k}=${v}`).join(', ')}\n`;
-    csv += `# Operating Regime: ${workedCalc.regime.name} (${workedCalc.regime.description})\n`;
+    csv += `# Operating Regime: ${workedCalc.regimeTitle} (${workedCalc.regimeDescription})\n`;
     csv += `# Real-Time Telemetry: ${effectiveMetrics.map(m => `${m.label}=${m.value} ${m.unit}`).join(', ')}\n#\n`;
 
     const metricCols = effectiveMetrics.slice(0, 3).map(m => m.label.replace(/[^a-zA-Z0-9_]/g, '_'));
@@ -2937,7 +2942,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
   );
 
   return (
-    <div className={`w-full min-h-full flex flex-col bg-[#080d16] text-slate-100 ${isEmbedMode ? 'h-full overflow-hidden' : 'overflow-y-auto custom-scrollbar'} select-none`}>
+    <div className={`w-full h-full flex flex-col bg-[#080d16] text-slate-100 ${isEmbedMode ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'} select-none`}>
       {/* 1. Sleek Breadcrumb & Peer Navigation Bar (Hidden in embed mode) */}
       {!isEmbedMode && (
         <nav aria-label="Breadcrumb & Laboratory Switcher" className="h-10 px-3 sm:px-5 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between gap-2 shrink-0 z-30 shadow-sm">
@@ -3470,8 +3475,17 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
         </div>
       )}
 
-      {/* 3. Main Workbench Workspace (Fits 100% of screen height; in embed mode canvas takes full area) */}
-      <main className={`flex-1 min-h-0 w-full ${isEmbedMode ? 'p-0' : 'p-1.5 sm:p-2.5'} overflow-hidden`}>
+      {/* 3. Main Workbench Workspace: FIRST PRIORITY OPERATIONAL WORKBENCH (Dominant 100% Viewport Stage) */}
+      <main
+        id="workbench-stage"
+        className={`w-full shrink-0 ${
+          isEmbedMode
+            ? 'h-full flex-1 p-0'
+            : isFullscreen
+              ? 'h-[calc(100vh-60px)] min-h-[640px] p-2'
+              : 'h-[calc(100vh-140px)] min-h-[600px] max-h-[1100px] p-1.5 sm:p-2.5'
+        } overflow-hidden`}
+      >
         <div className={`h-full w-full ${isEmbedMode ? 'flex flex-col' : 'grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5'} overflow-hidden`}>
           
           {/* PRIMARY WORKBENCH STAGE: Giant Interactive Simulation Canvas */}
@@ -3734,10 +3748,10 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                 mobileTab === 'workbench' ? 'hidden lg:flex' : 'flex'
               }`}
             >
-            {/* Top Deck: Parameter Controls */}
+            {/* Top Deck: Parameter Controls (First Priority Sliders Stage) */}
             <div
-              className={`flex flex-col min-h-0 bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 shadow-lg overflow-hidden shrink-0 ${
-                mobileTab === 'analysis' ? 'hidden' : 'flex max-h-[46%]'
+              className={`flex-1 min-h-0 flex flex-col bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 shadow-lg overflow-hidden ${
+                mobileTab === 'analysis' ? 'hidden' : 'flex'
               }`}
             >
               {/* Parameters Header */}
@@ -3869,9 +3883,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
               </div>
             </div>
 
-            {/* Bottom Deck: Tabbed Intelligence & Theory Console */}
+            {/* Bottom Deck: Quick Reference Intelligence & Theory Console */}
             <div
-              className={`flex-1 min-h-0 flex flex-col bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden shadow-lg ${
+              className={`h-[195px] sm:h-[210px] shrink-0 flex flex-col bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden shadow-lg ${
                 mobileTab === 'parameters' ? 'hidden' : 'flex'
               }`}
             >
@@ -4008,9 +4022,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                     <h3 className="text-xs font-bold text-white pt-1">
                       {liveResult.headline}
                     </h3>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                    <RichMathText as="p" className="text-[11px] text-slate-300 leading-relaxed font-sans m-0">
                       {liveResult.summary}
-                    </p>
+                    </RichMathText>
                   </div>
 
                   {whyDetail.simpleExplanation && whyDetail.simpleExplanation.length > 0 && (
@@ -4019,9 +4033,11 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         <Sparkles className="w-3 h-3 text-amber-400" />
                         <span>Physical Mechanism</span>
                       </div>
-                      <ul className="space-y-1 text-[11px] text-slate-300 leading-relaxed list-disc pl-4">
+                      <ul className="space-y-1 text-[11px] text-slate-300 leading-relaxed list-disc pl-4 font-sans m-0">
                         {whyDetail.simpleExplanation.map((exp, i) => (
-                          <li key={i}>{exp}</li>
+                          <li key={i}>
+                            <RichMathText as="span">{exp}</RichMathText>
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -4033,9 +4049,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         <TrendingUp className="w-3 h-3 text-amber-400" />
                         <span>Industrial Reality</span>
                       </div>
-                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                      <RichMathText as="p" className="text-[11px] text-slate-300 leading-relaxed font-sans m-0">
                         {whyDetail.realWorldImpact}
-                      </p>
+                      </RichMathText>
                     </div>
                   )}
 
@@ -4063,6 +4079,17 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
 
                   {/* Cross-Discipline Related Concepts Link in Default Insight View */}
                   <RelatedPhysicsConcepts compact currentSimulatorId={simulator.id} onSelectSimulator={onSelectSimulator} />
+
+                  {/* Jump link to full section below */}
+                  <div className="pt-1.5 border-t border-slate-800/80">
+                    <a
+                      href="#section-insight"
+                      className="inline-flex items-center gap-1.5 text-[11px] text-amber-400 hover:text-amber-300 font-medium transition-colors"
+                    >
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span>Read Full Insight &amp; Physical Analysis below &darr;</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Tab 2: Theory & Math */}
@@ -4091,9 +4118,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         <BookOpen className="w-3 h-3" />
                         <span>First-Principles Analytical Derivation:</span>
                       </div>
-                      <p className="text-slate-300 text-[11px] leading-relaxed">
+                      <RichMathText as="p" className="text-slate-300 text-[11px] leading-relaxed font-sans">
                         {simulator.analyticalProof}
-                      </p>
+                      </RichMathText>
                     </div>
                   )}
 
@@ -4102,6 +4129,17 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
 
                   {/* Cross-Discipline Mathematical Equivalents in Theory Tab */}
                   <RelatedPhysicsConcepts compact currentSimulatorId={simulator.id} onSelectSimulator={onSelectSimulator} />
+
+                  {/* Jump link to full section below */}
+                  <div className="pt-1.5 border-t border-slate-800/80">
+                    <a
+                      href="#section-theory"
+                      className="inline-flex items-center gap-1.5 text-[11px] text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+                    >
+                      <BookOpen className="w-3 h-3 text-cyan-400" />
+                      <span>Read Full Theory, Proof &amp; Formulations below &darr;</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Tab: Equivalents */}
@@ -4150,6 +4188,17 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       </div>
                     ))}
                   </div>
+
+                  {/* Jump link to full section below */}
+                  <div className="pt-1.5 border-t border-slate-800/80">
+                    <a
+                      href="#section-telemetry"
+                      className="inline-flex items-center gap-1.5 text-[11px] text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                    >
+                      <Activity className="w-3 h-3 text-emerald-400" />
+                      <span>Read Full Telemetry Register &amp; Probe Specs below &darr;</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Tab 4: Standards */}
@@ -4179,9 +4228,9 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Numerical Benchmark (Error &lt; 0.2%)</span>
                       </div>
-                      <p className="text-slate-300 text-[11px] font-mono leading-relaxed">
+                      <RichMathText as="p" className="text-slate-300 text-[11px] font-mono leading-relaxed">
                         {simulator.validationTest}
-                      </p>
+                      </RichMathText>
                     </div>
                   )}
 
@@ -4190,11 +4239,22 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       <div className="text-[10px] font-mono text-slate-400 uppercase">
                         Waveform &amp; Color Topology Rule:
                       </div>
-                      <p className="text-slate-300 text-[11px] font-mono">
+                      <RichMathText as="p" className="text-slate-300 text-[11px] font-mono">
                         {simulator.colorStandardRule}
-                      </p>
+                      </RichMathText>
                     </div>
                   )}
+
+                  {/* Jump link to full section below */}
+                  <div className="pt-1.5 border-t border-slate-800/80">
+                    <a
+                      href="#section-standards"
+                      className="inline-flex items-center gap-1.5 text-[11px] text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                    >
+                      <Award className="w-3 h-3 text-blue-400" />
+                      <span>Read Full Applicable Standards &amp; Failure RCA below &darr;</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Tab 5: Curriculum */}
@@ -4247,6 +4307,17 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                       </details>
                     ))}
                   </div>
+
+                  {/* Jump link to full section below */}
+                  <div className="pt-1.5 border-t border-slate-800/80">
+                    <a
+                      href="#section-curriculum"
+                      className="inline-flex items-center gap-1.5 text-[11px] text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                    >
+                      <GraduationCap className="w-3 h-3 text-purple-400" />
+                      <span>Read Full Curriculum Mapping &amp; Scenarios below &darr;</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4256,12 +4327,47 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
         </div>
       </main>
 
-      {/* 4. Complete Domain-Specific Engineering Sections Rendered Directly in DOM Below Canvas */}
+      {/* 4. Secondary Engineering Documentation & Standards (Second Priority - Rendered Below Workbench) */}
       {!isEmbedMode && (
-        <SimulatorEngineeringSections
-          simulator={simulator}
-          onSelectSimulator={onSelectSimulator}
-        />
+        <>
+          <div className="w-full bg-slate-950/90 border-t border-b border-slate-800/80 px-4 py-2.5 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <BookOpen className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span className="font-bold text-slate-200 uppercase tracking-wider text-[11px] truncate">
+                First-Principles Theory, Standards &amp; Curriculum Mapping
+              </span>
+              <span className="text-slate-500 hidden md:inline text-[10px] truncate">
+                &mdash; Second Priority Academic Reference Documentation (Scroll down to view)
+              </span>
+            </div>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowDocumentation(!showDocumentation)}
+                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-[11px] text-slate-300 hover:text-white transition-colors flex items-center gap-1 font-mono"
+              >
+                <span>{showDocumentation ? 'Collapse Theory' : 'Expand Theory'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDocumentation ? 'rotate-180' : ''}`} />
+              </button>
+              <a
+                href="#simulator-engineering-content"
+                className="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-[11px] text-cyan-300 hover:text-white transition-colors flex items-center gap-1 font-mono font-bold"
+              >
+                <span>Read Full Theory &darr;</span>
+              </a>
+            </div>
+          </div>
+
+          {showDocumentation && (
+            <SimulatorEngineeringSections
+              simulator={simulator}
+              params={params}
+              metrics={effectiveMetrics}
+              onApplyParameters={handleApplyPreset}
+              onSelectSimulator={onSelectSimulator}
+            />
+          )}
+        </>
       )}
 
       {/* Fullscreen Guided Lab Manual Modal */}
@@ -4775,7 +4881,7 @@ export const DedicatedSimulatorPage: React.FC<DedicatedSimulatorPageProps> = ({
                 </div>
                 <p className="text-slate-700 mb-1.5 leading-relaxed m-0">{exp.description}</p>
                 <div className="bg-white border border-slate-200 rounded p-1 mb-1 font-mono text-[9px] text-slate-800">
-                  <span className="font-bold text-slate-900">Task:</span> {exp.task}
+                  <span className="font-bold text-slate-900">Goal:</span> {exp.goal}
                 </div>
                 <div className="pt-1">
                   <span className="font-bold text-slate-700 text-[9px] uppercase tracking-wide">

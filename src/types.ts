@@ -64,6 +64,18 @@ export interface ParameterDef {
   description: string;
 }
 
+export interface GuidedExperiment {
+  id: string;
+  title: string;
+  goal: string;
+  description: string;
+  expectedObservation: string;
+  governingLaw: string;
+  parameters: Record<string, number>;
+  targetCondition: (params: Record<string, number>, telemetry?: Record<string, any>) => boolean;
+  category?: 'nominal' | 'threshold' | 'fault';
+}
+
 export interface SimulatorItem {
   id: string;
   title: string;
@@ -82,6 +94,7 @@ export interface SimulatorItem {
   keyMetrics: { label: string; unit: string; formulaKey: string }[];
   accentColor: string; // e.g. '#06b6d4' | '#10b981' | '#f59e0b' | '#8b5cf6'
   type: SimulatorType;
+  guidedLabs?: GuidedExperiment[];
   standardReference?: string;
   standardBody?: string;
   analyticalProof?: string;

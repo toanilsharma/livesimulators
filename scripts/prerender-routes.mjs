@@ -11,6 +11,11 @@ const { LABS } = await import('../src/config/labs.ts');
 const { getEngineeringTheory, cleanLatexToPlainText } = await import('../src/utils/engineeringTheory.ts');
 const { getSimulatorEngineeringDetails } = await import('../src/utils/engineeringScenarios.ts');
 const { getSimulatorEngineeringContent } = await import('../src/data/simulatorEngineeringContent.ts');
+const {
+  generateSimulatorUniqueParagraph,
+  getDetailedWhyItHappened,
+  getLiveResultSummary
+} = await import('../src/utils/simulatorExplanations.ts');
 const { getSeoMetadata } = await import('../src/utils/seo.ts');
 const { getRouteSchema } = await import('../src/utils/seoSchema.ts');
 const { routeToPath, SITE_URL } = await import('../src/utils/routes.ts');
@@ -61,6 +66,15 @@ function renderSimulatorStaticContent(sim) {
     (s) => s.discipline === sim.discipline && s.id !== sim.id
   ).slice(0, 6);
 
+  // Dynamic Unique Paragraph and Explanations
+  const defaultParams = {};
+  sim.parameters.forEach((p) => {
+    defaultParams[p.symbol] = p.default;
+  });
+  const uniqueParagraph = generateSimulatorUniqueParagraph(sim, defaultParams);
+  const whyDetail = getDetailedWhyItHappened(sim.type, defaultParams);
+  const liveResult = getLiveResultSummary(sim.type, defaultParams);
+
   // Definition list of variables
   const variableDefinitions = sim.parameters
     .map(
@@ -71,8 +85,39 @@ function renderSimulatorStaticContent(sim) {
           <span style="color: #fbbf24; font-size: 0.8rem; background: rgba(15, 23, 42, 0.8); padding: 0.1rem 0.4rem; border-radius: 4px;">${escapeHtml(p.unit || 'dimensionless')}</span>
         </dt>
         <dd style="color: #cbd5e1; font-size: 0.85rem; margin: 0.25rem 0 0 0; line-height: 1.5;">
-          Range: [${escapeHtml(p.min)} to ${escapeHtml(p.max)} ${escapeHtml(p.unit || '')}] &bull; Default: ${escapeHtml(p.default)} ${escapeHtml(p.unit || '')} &mdash; ${escapeHtml(p.description)}
+          Dynamic Range: [${escapeHtml(p.min)} to ${escapeHtml(p.max)} ${escapeHtml(p.unit || '')}] &bull; Calibrated Default: ${escapeHtml(p.default)} ${escapeHtml(p.unit || '')} &mdash; ${escapeHtml(p.description)}
         </dd>
+      </div>`
+    )
+    .join('');
+
+  // Telemetry sensor probe cards
+  const telemetryList = (sim.keyMetrics && sim.keyMetrics.length > 0)
+    ? sim.keyMetrics
+    : sim.parameters.slice(0, 4).map((p) => ({
+        label: p.name,
+        unit: p.unit || '',
+        formulaKey: p.symbol,
+      }));
+
+  const telemetryCards = telemetryList
+    .map(
+      (m, idx) => `
+      <div style="background: rgba(3, 7, 18, 0.75); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 0.5rem; padding: 0.85rem 1rem; margin-bottom: 0.6rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+          <span style="color: #34d399; font-weight: 700; font-family: monospace; font-size: 0.9rem;">
+            Probe #${idx + 1}: ${escapeHtml(m.label)}
+          </span>
+          <span style="color: #a7f3d0; font-family: monospace; font-size: 0.75rem; background: rgba(6, 78, 59, 0.4); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.15rem 0.45rem; border-radius: 4px;">
+            ${escapeHtml(m.unit || 'SI Standard')}
+          </span>
+        </div>
+        <p style="color: #cbd5e1; font-size: 0.825rem; line-height: 1.5; margin: 0 0 0.35rem 0;">
+          Continuous 60 FPS numerical telemetry register tracking ${escapeHtml(m.label)} state space dynamics under ${escapeHtml(sim.physicalLaw)}.
+        </p>
+        <div style="font-family: monospace; font-size: 0.75rem; color: #6ee7b7;">
+          Register Spec: Float64 Double-Precision &bull; Active Dynamic Sensor Probe
+        </div>
       </div>`
     )
     .join('');
@@ -121,6 +166,10 @@ function renderSimulatorStaticContent(sim) {
     })
     .join('');
 
+  // Assumptions & Limitations HTML
+  const assumptionsList = (theory.assumptions || []).map((a) => `<li style="margin-bottom: 0.4rem; color: #cbd5e1;">&bull; ${escapeHtml(a)}</li>`).join('');
+  const limitationsList = (theory.limitations || []).map((l) => `<li style="margin-bottom: 0.4rem; color: #cbd5e1;">&bull; ${escapeHtml(l)}</li>`).join('');
+
   // FAQs list (<details><summary> accordions)
   const faqItems = faqs
     .map(
@@ -154,9 +203,9 @@ function renderSimulatorStaticContent(sim) {
   const standardsBody = sim.standardBody || 'ISO / IEC / IEEE Standards Body';
 
   return `
-  <article id="seo-static-content" style="max-width: 62rem; margin: 0 auto; padding: 2.5rem 1.5rem; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6;">
+  <article id="seo-static-content" style="max-width: 68rem; margin: 0 auto; padding: 2.5rem 1.5rem; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6;">
     
-    <!-- 1. Semantic Article Header: <h1> Title, Discipline Badge & Technical Summary -->
+    <!-- Semantic Article Header: <h1> Title, Discipline Badge & Technical Summary -->
     <header style="margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 1.5rem;">
       <div style="font-size: 0.85rem; font-family: monospace; text-transform: uppercase; letter-spacing: 0.08em; color: #06b6d4; margin-bottom: 0.6rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
         <a href="/department/${dept ? dept.id : sim.discipline}/" style="color: #06b6d4; text-decoration: none; font-weight: bold;">
@@ -176,7 +225,7 @@ function renderSimulatorStaticContent(sim) {
       </p>
     </header>
 
-    <!-- Simulation Controls Aside (Crawlers recognize this as non-text toolbar) -->
+    <!-- Simulation Controls Aside -->
     <aside aria-label="Simulation Controls" data-nosnippet="true" aria-hidden="true" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.85rem; font-family: monospace; color: #94a3b8;">
       <div>
         <strong style="color: #38bdf8;">SIMULATION WORKBENCH:</strong> 60 FPS First-Principles Solver | Double-Precision Integration
@@ -186,20 +235,65 @@ function renderSimulatorStaticContent(sim) {
       </div>
     </aside>
 
-    <!-- RAG-READY CITATION & DIRECT ANSWER SUMMARY BLOCK -->
-    <section id="direct-answer-summary" style="background: rgba(8, 145, 178, 0.12); border: 1px solid rgba(6, 182, 212, 0.4); border-left: 4px solid #06b6d4; border-radius: 0.5rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem;">
-      <h2 style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8; margin: 0 0 0.5rem 0; font-family: monospace;">
-        Direct Engineering Formulation &amp; Standard Citation
+    <!-- 5-Section Jump Navigation Bar for Quick User & Crawler Traversal -->
+    <nav aria-label="Engineering Documentation Sections" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 2.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; font-size: 0.85rem; font-family: monospace;">
+      <strong style="color: #38bdf8;">DOCUMENTATION SECTIONS:</strong>
+      <a href="#section-insight" style="color: #fbbf24; text-decoration: none; padding: 0.25rem 0.6rem; background: rgba(245, 158, 11, 0.15); border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.3);">1. Insight</a>
+      <a href="#section-theory" style="color: #38bdf8; text-decoration: none; padding: 0.25rem 0.6rem; background: rgba(6, 182, 212, 0.15); border-radius: 4px; border: 1px solid rgba(6, 182, 212, 0.3);">2. Theory</a>
+      <a href="#section-telemetry" style="color: #34d399; text-decoration: none; padding: 0.25rem 0.6rem; background: rgba(16, 185, 129, 0.15); border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3);">3. Telemetry</a>
+      <a href="#section-standards" style="color: #93c5fd; text-decoration: none; padding: 0.25rem 0.6rem; background: rgba(59, 130, 246, 0.15); border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.3);">4. Standards</a>
+      <a href="#section-curriculum" style="color: #c084fc; text-decoration: none; padding: 0.25rem 0.6rem; background: rgba(168, 85, 247, 0.15); border-radius: 4px; border: 1px solid rgba(168, 85, 247, 0.3);">5. Curriculum</a>
+    </nav>
+
+    <!-- SECTION 1: INSIGHT & DYNAMIC PHYSICAL PHENOMENON OVERVIEW -->
+    <section id="section-insight" aria-labelledby="heading-insight" style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(245, 158, 11, 0.35); border-left: 4px solid #f59e0b; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+      <h2 id="heading-insight" style="font-size: 1.35rem; font-weight: 700; color: #fbbf24; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+        <span>✦</span> Section 1: Physical Phenomenon Insight &amp; Analytical Summary
       </h2>
-      <p style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.7; margin: 0;">
-        ${escapeHtml(directAnswer)}
-      </p>
+      <div style="background: rgba(8, 145, 178, 0.12); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8; margin: 0 0 0.4rem 0; font-family: monospace;">
+          Direct Engineering Formulation Summary:
+        </h3>
+        <p style="color: #e2e8f0; font-size: 0.925rem; line-height: 1.65; margin: 0;">
+          ${escapeHtml(directAnswer)}
+        </p>
+      </div>
+      <div style="background: rgba(3, 7, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.5rem; padding: 1.15rem 1.25rem; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fbbf24; margin: 0 0 0.4rem 0; font-family: monospace;">
+          Dynamic Simulator State &amp; Parameter Integration:
+        </h3>
+        <p style="color: #cbd5e1; font-size: 0.925rem; line-height: 1.7; margin: 0;">
+          ${escapeHtml(uniqueParagraph)}
+        </p>
+      </div>
+      ${whyDetail.physicalMechanism ? `
+      <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1rem;">
+        <h3 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8; margin: 0 0 0.4rem 0; font-family: monospace;">
+          Physical Mechanism Breakdown:
+        </h3>
+        <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.65; margin: 0 0 0.5rem 0;">
+          ${escapeHtml(whyDetail.physicalMechanism)}
+        </p>
+        ${whyDetail.behaviorAcrossRange ? `
+        <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.6; margin: 0;">
+          <strong>Dynamic Behavior Across Parameter Spectrum:</strong> ${escapeHtml(whyDetail.behaviorAcrossRange)}
+        </p>` : ''}
+      </div>` : ''}
+      ${whyDetail.industrialReality ? `
+      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 0.5rem; padding: 1rem 1.25rem;">
+        <h3 style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #93c5fd; margin: 0 0 0.4rem 0; font-family: monospace;">
+          Industrial Operating Reality:
+        </h3>
+        <p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.65; margin: 0;">
+          ${escapeHtml(whyDetail.industrialReality)}
+        </p>
+      </div>` : ''}
     </section>
 
-    <!-- SECTION 1: GOVERNING EQUATIONS & MATHEMATICAL FORMULATION -->
-    <section id="governing-equations" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(6, 182, 212, 0.35); border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);">
-      <h2 style="font-size: 1.35rem; font-weight: 700; color: #38bdf8; margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;">
-        <span>&fnof;(x)</span> Governing Equations &amp; Mathematical Formulation
+    <!-- SECTION 2: THEORY & GOVERNING EQUATIONS -->
+    <section id="section-theory" aria-labelledby="heading-theory" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(6, 182, 212, 0.35); border-left: 4px solid #06b6d4; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);">
+      <h2 id="heading-theory" style="font-size: 1.35rem; font-weight: 700; color: #38bdf8; margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;">
+        <span>&fnof;(x)</span> Section 2: Theory &amp; Governing Equations
       </h2>
       <p style="color: #cbd5e1; font-size: 0.95rem; margin: 0 0 1rem 0;">
         <strong>Governing Physical Law:</strong> ${escapeHtml(sim.physicalLaw)} &mdash; ${escapeHtml(sim.equationDescription)}. Continuous dynamic trajectory integration satisfies the canonical differential/algebraic equations:
@@ -211,27 +305,67 @@ ${escapeHtml(cleanEq)}
       <h3 style="font-size: 0.95rem; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.05em; font-family: monospace; margin: 0 0 0.75rem 0;">
         Definition of Formulation Variables &amp; Standard SI Units
       </h3>
-      <dl style="margin: 0; padding: 0;">
+      <dl style="margin: 0 0 1.25rem 0; padding: 0;">
         ${variableDefinitions}
       </dl>
 
       ${sim.analyticalProof ? `
-      <div style="background: rgba(3, 7, 18, 0.8); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 0.5rem; padding: 1rem; margin-top: 1.25rem;">
+      <div style="background: rgba(3, 7, 18, 0.8); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
         <strong style="color: #38bdf8; font-family: monospace; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">
-          Analytical Mathematical Derivation:
+          First-Principles Analytical Derivation:
         </strong>
         <p style="color: #cbd5e1; font-size: 0.875rem; margin: 0; line-height: 1.6;">
           ${escapeHtml(cleanLatexToPlainText(sim.analyticalProof))}
         </p>
       </div>` : ''}
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <div style="background: rgba(3, 7, 18, 0.6); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 0.5rem; padding: 1rem;">
+          <h4 style="font-size: 0.85rem; font-weight: 700; color: #fbbf24; font-family: monospace; text-transform: uppercase; margin: 0 0 0.5rem 0;">Physical Assumptions</h4>
+          <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.825rem; line-height: 1.5;">${assumptionsList}</ul>
+        </div>
+        <div style="background: rgba(3, 7, 18, 0.6); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 0.5rem; padding: 1rem;">
+          <h4 style="font-size: 0.85rem; font-weight: 700; color: #f43f5e; font-family: monospace; text-transform: uppercase; margin: 0 0 0.5rem 0;">Operational Boundaries</h4>
+          <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.825rem; line-height: 1.5;">${limitationsList}</ul>
+        </div>
+      </div>
     </section>
 
-    <!-- SECTION 2: BOUNDARY CONDITIONS & INDUSTRIAL OPERATING LIMITS -->
-    <section id="boundary-conditions" style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem;">
-      <h2 style="font-size: 1.35rem; font-weight: 700; color: #ffffff; margin: 0 0 1rem 0; border-left: 4px solid #f59e0b; padding-left: 0.75rem;">
-        Boundary Conditions &amp; Industrial Operating Limits
+    <!-- SECTION 3: LIVE TELEMETRY DEFINITIONS -->
+    <section id="section-telemetry" aria-labelledby="heading-telemetry" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(16, 185, 129, 0.35); border-left: 4px solid #10b981; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);">
+      <h2 id="heading-telemetry" style="font-size: 1.35rem; font-weight: 700; color: #34d399; margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;">
+        <span>⚡</span> Section 3: Live Telemetry &amp; Sensor Probe Definitions
+      </h2>
+      <p style="color: #cbd5e1; font-size: 0.95rem; margin: 0 0 1rem 0;">
+        Real-time sensor outputs, state vector variables, and continuous 60 FPS numerical integration probe registers:
+      </p>
+      <div style="margin-bottom: 1.25rem;">
+        ${telemetryCards}
+      </div>
+      <div style="background: rgba(3, 7, 18, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0.5rem; padding: 1rem; font-family: monospace; font-size: 0.825rem; color: #94a3b8; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem;">
+        <div><strong style="color: #34d399;">INTEGRATION ENGINE:</strong> Float64 Double-Precision RK4 Solver</div>
+        <div><strong style="color: #38bdf8;">SAMPLING FREQUENCY:</strong> 60 FPS Continuous Real-Time</div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: APPLICABLE ENGINEERING STANDARDS -->
+    <section id="section-standards" aria-labelledby="heading-standards" style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(59, 130, 246, 0.35); border-left: 4px solid #3b82f6; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem;">
+      <h2 id="heading-standards" style="font-size: 1.35rem; font-weight: 700; color: #93c5fd; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+        <span>🏆</span> Section 4: Applicable Engineering Standards &amp; Failure RCA
       </h2>
       <div style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.7;">
+        <div style="background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+          <h3 style="font-size: 0.85rem; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.05em; font-family: monospace; margin: 0 0 0.35rem 0;">
+            Published Consensus Standard:
+          </h3>
+          <div style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.25rem;">
+            ${escapeHtml(standardsText)}
+          </div>
+          <div style="font-size: 0.85rem; color: #94a3b8; font-family: monospace;">
+            Standards Authority: ${escapeHtml(standardsBody)}
+          </div>
+        </div>
+
         <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
           <h3 style="font-size: 0.9rem; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.05em; font-family: monospace; margin: 0 0 0.5rem 0;">
             Industrial Failure Mode, RCA &amp; Protection Limits:
@@ -240,40 +374,75 @@ ${escapeHtml(cleanEq)}
             ${escapeHtml(failureCase)}
           </p>
         </div>
-        <p style="margin: 0 0 1rem 0;">
+
+        ${sim.validationTest ? `
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+          <h3 style="font-size: 0.85rem; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.05em; font-family: monospace; margin: 0 0 0.35rem 0;">
+            Numerical Benchmark Validation (Error Threshold &lt; 0.2%):
+          </h3>
+          <p style="color: #cbd5e1; font-size: 0.875rem; font-family: monospace; line-height: 1.6; margin: 0;">
+            ${escapeHtml(sim.validationTest)}
+          </p>
+        </div>` : ''}
+
+        ${sim.colorStandardRule ? `
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+          <strong style="color: #f59e0b; font-size: 0.85rem; font-family: monospace; display: block; margin-bottom: 0.25rem;">
+            Waveform &amp; Color Topology Rule:
+          </strong>
+          <p style="color: #cbd5e1; font-size: 0.875rem; font-family: monospace; margin: 0;">
+            ${escapeHtml(sim.colorStandardRule)}
+          </p>
+        </div>` : ''}
+
+        <p style="margin: 0 0 0.75rem 0;">
           <strong style="color: #f59e0b;">Critical Saturation Boundary:</strong>
           ${escapeHtml(details.boundaryConditions.saturationThreshold)}
         </p>
-        <p style="margin: 0 0 1rem 0;">
+        <p style="margin: 0 0 0.75rem 0;">
           <strong style="color: #f87171;">Governing Failure Mechanism:</strong>
           ${escapeHtml(details.boundaryConditions.failureMode)}
         </p>
-        <p style="margin: 0 0 1rem 0;">
-          <strong style="color: #38bdf8;">Referenced Industrial Standards:</strong>
-          ${escapeHtml(standardsText)} (Standards Authority: ${escapeHtml(standardsBody)})
-        </p>
         ${sim.fieldInsights ? `
-        <p style="margin: 0 0 1rem 0;">
+        <p style="margin: 0;">
           <strong style="color: #34d399;">Field Engineering Remediation:</strong>
           ${escapeHtml(sim.fieldInsights)}
-        </p>` : ''}
-        ${sim.courseMapping ? `
-        <p style="margin: 0;">
-          <strong style="color: #c084fc;">University Curricular Alignment:</strong>
-          ${escapeHtml(sim.courseMapping)}
         </p>` : ''}
       </div>
     </section>
 
-    <!-- SECTION 3: WORKED ENGINEERING SCENARIOS (COMPARISON TABLE) -->
-    <section id="engineering-scenarios" style="margin-bottom: 2.5rem;">
-      <h2 style="font-size: 1.35rem; font-weight: 700; color: #ffffff; margin: 0 0 1rem 0; border-left: 4px solid #10b981; padding-left: 0.75rem;">
-        Worked Engineering Scenarios &amp; Operating States
+    <!-- SECTION 5: UNIVERSITY CURRICULUM MAPPING & SCENARIOS -->
+    <section id="section-curriculum" aria-labelledby="heading-curriculum" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(168, 85, 247, 0.35); border-left: 4px solid #a855f7; border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);">
+      <h2 id="heading-curriculum" style="font-size: 1.35rem; font-weight: 700; color: #c084fc; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+        <span>🎓</span> Section 5: University Curriculum Mapping &amp; Worked Scenarios
       </h2>
-      <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1rem;">
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 0.5rem; padding: 1rem;">
+          <h3 style="font-size: 0.85rem; font-weight: 700; color: #c084fc; text-transform: uppercase; letter-spacing: 0.05em; font-family: monospace; margin: 0 0 0.4rem 0;">
+            University Course Alignment:
+          </h3>
+          <p style="color: #e2e8f0; font-size: 0.9rem; font-family: monospace; margin: 0;">
+            ${escapeHtml(sim.courseMapping || 'ENG-101 / Core Engineering Curriculum')}
+          </p>
+        </div>
+        <div style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 0.5rem; padding: 1rem;">
+          <h3 style="font-size: 0.85rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; font-family: monospace; margin: 0 0 0.4rem 0;">
+            Standard Textbook References:
+          </h3>
+          <p style="color: #cbd5e1; font-size: 0.875rem; line-height: 1.5; margin: 0;">
+            ${escapeHtml(sim.textbookReferences || 'First-Principles Engineering Curriculum Standard References')}
+          </p>
+        </div>
+      </div>
+
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: #ffffff; margin: 0 0 0.75rem 0;">
+        Worked Engineering Scenarios &amp; Operating States (3-State Comparison)
+      </h3>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">
         Comparison of 3 realistic operating regimes computed from first-principles governing formulations:
       </p>
-      <div style="overflow-x: auto; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem;">
+      <div style="overflow-x: auto; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; margin-bottom: 1.5rem;">
         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
           <thead>
             <tr style="background: rgba(3, 7, 18, 0.8); border-bottom: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-family: monospace; font-size: 0.8rem; text-transform: uppercase;">
@@ -288,24 +457,18 @@ ${escapeHtml(cleanEq)}
           </tbody>
         </table>
       </div>
-    </section>
 
-    <!-- SECTION 4: TECHNICAL FAQ (3 DOMAIN-SPECIFIC Q&AS) -->
-    <section id="technical-faq" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.75rem; padding: 1.75rem; margin-bottom: 2.5rem;">
-      <h2 style="font-size: 1.35rem; font-weight: 700; color: #c084fc; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
-        <span>?</span> Technical Engineering FAQ
-      </h2>
-      <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.25rem;">
-        Domain-specific questions, stability boundaries, and industrial troubleshooting for ${escapeHtml(sim.title)}:
-      </p>
+      <h3 style="font-size: 1.1rem; font-weight: 700; color: #c084fc; margin: 0 0 0.75rem 0;">
+        Frequently Asked Technical Questions:
+      </h3>
       <div>
         ${faqItems}
       </div>
     </section>
 
-    <!-- SECTION 5: INTERNAL SITE GRAPH NAVIGATION LINKS -->
-    <section id="related-simulators" style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 1.75rem;">
-      <h3 style="font-size: 1.2rem; font-weight: 700; color: #ffffff; margin: 0 0 1rem 0;">
+    <!-- SECTION 6: INTERNAL SITE GRAPH NAVIGATION LINKS -->
+    <section id="section-related" aria-labelledby="heading-related-simulators" style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 1.75rem;">
+      <h3 id="heading-related-simulators" style="font-size: 1.2rem; font-weight: 700; color: #ffffff; margin: 0 0 1rem 0;">
         Related ${escapeHtml(sim.disciplineName)} Simulators &amp; Laboratories
       </h3>
       <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1rem;">

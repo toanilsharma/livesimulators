@@ -49,73 +49,73 @@ Simulators:
   - Direct URL: https://livesimulators.com/simulator/rlc-resonance/
   - Governing Formulation: `ω_0 = (1 / √(LC)), ζ = (R / 2)√((C / L))`
   - International Standards: IEEE Std 1459-2010 / IEC 60076 (Power Factor, Resonance & Damping Dynamics)
-  - Direct Answer Summary: The series RLC circuit is governed by Kirchhoff's Voltage Law with natural resonant frequency \omega_0 = 1/\sqrt{LC} and damping ratio \zeta = (R/2)\sqrt{C/L}. Boundary stability requires R > 0 with critical resistance R_{crit} = 2\sqrt{L/C}. Standardized under IEEE Std 1459-2010 and IEC 60076 for power factor compensation and substation resonant overvoltage mitigation.
+  - Direct Answer Summary: The series RLC circuit is governed by **Kirchhoff's Voltage Law** with natural undamped resonant frequency $\omega_0 = \frac{1}{\sqrt{LC}}$ and damping ratio $\zeta = \frac{R}{2}\sqrt{\frac{C}{L}}$. Operational stability requires $R > 0$ with critical damping resistance $R_{\text{crit}} = 2\sqrt{\frac{L}{C}}$. Standardized under **IEEE Std 1459-2010** and **IEC 60076** for substation power factor compensation and resonant overvoltage suppression.
   - Physical Law: Kirchhoff's Voltage Law & Faraday Induction | Difficulty: Fundamentals Level
 - [3-Phase AC Synchronous Motor & Rotating Field](https://livesimulators.com/simulator/three-phase-ac/): Track how three balanced 120° sinusoidal currents generate a continuous rotating stator flux vector.
   - Direct URL: https://livesimulators.com/simulator/three-phase-ac/
   - Governing Formulation: `vec(B)_net(t) = (3 / 2) B_m [ cos(ω t)i^ + sin(ω t)j^ ]`
   - International Standards: IEC 60034-1 / IEEE 141 / IS 3043 (Standard R-Y-B-N 4-Wire Sequence)
-  - Direct Answer Summary: Balanced three-phase networks satisfy active power P = \sqrt{3} V_L I_L \cos\phi and reactive power Q = \sqrt{3} V_L I_L \sin\phi. Boundary conditions mandate 120-degree symmetrical displacement with neutral current I_N = 0. Governed by IEEE Std 1159 and IEC 61000-4-30 Class A compliance for industrial distribution efficiency.
+  - Direct Answer Summary: Balanced three-phase electrical networks satisfy active power $P = \sqrt{3} V_L I_L \cos\phi$ and reactive power $Q = \sqrt{3} V_L I_L \sin\phi$. Symmetrical operating conditions mandate $120^\circ$ spatial phase displacement with neutral current $I_N = 0\text{ A}$. Certified under **IEEE Std 1159** and **IEC 61000-4-30 Class A** for industrial power quality.
   - Physical Law: Faraday-Lenz Law & Lorentz Force Torque | Difficulty: Intermediate Level
 - [Buck-Boost DC-DC Switching Regulator](https://livesimulators.com/simulator/buck-boost-converter/): Explore inductor energy storage, Continuous vs Discontinuous mode, and voltage inversion.
   - Direct URL: https://livesimulators.com/simulator/buck-boost-converter/
   - Governing Formulation: `V_out = -V_in(D / 1 - D), Δ I_L = (V_in D / L f_sw)`
   - International Standards: IEEE Std 1573 / IEC 62040 (Switching Mode Power Regulators)
-  - Direct Answer Summary: The inverting buck-boost converter converts DC voltages according to V_{out} = -V_{in} D / (1 - D). Boundary continuous-conduction mode requires L > (1 - D)^2 R / (2 f_{sw}) under duty ratio 0 < D < 0.85. Designed per IEC 62477-1 and IEEE Std 1515 for automotive and renewable energy conversion.
+  - Direct Answer Summary: The inverting buck-boost switching converter converts DC potentials per $V_{\text{out}} = -V_{\text{in}} \frac{D}{1 - D}$. Continuous Conduction Mode (CCM) boundary mandates inductance $L > \frac{(1 - D)^2 R}{2 f_{\text{sw}}}$ across duty range $0 < D < 0.85$. Engineered per **IEC 62477-1** and **IEEE Std 1515** for automotive and renewable energy conversion.
   - Physical Law: Conservation of Energy & Volt-Second Balance | Difficulty: Intermediate Level
 - [2nd-Order Sallen-Key Active Low-Pass Filter](https://livesimulators.com/simulator/sallen-key-filter/): Tweak component values to shape Butterworth, Chebyshev, or Bessel frequency responses.
   - Direct URL: https://livesimulators.com/simulator/sallen-key-filter/
   - Governing Formulation: `H(s) = (K ω_c^2 / s^2 + (ω_c / Q) s + ω_c^2), f_c = (1 / 2π √(R_1 R_2 C_1 C_2))`
   - International Standards: IEEE Std 1057 / Butterworth-Chebyshev Biquad Filter Realization
-  - Direct Answer Summary: The 2nd-order Sallen-Key low-pass filter exhibits cut-off frequency f_c = 1 / (2\pi\sqrt{R_1 R_2 C_1 C_2}) and quality factor Q. Operational stability requires amplifier gain K < 3 for equal-component layouts to avoid Right-Half-Plane poles. Compliant with IEEE Std 1668 and IEC 60384 for precision anti-aliasing.
+  - Direct Answer Summary: The 2nd-order Sallen-Key active low-pass filter exhibits natural cutoff frequency $f_c = \frac{1}{2\pi\sqrt{R_1 R_2 C_1 C_2}}$ and damping factor $Q$. Operational stability requires amplifier closed-loop gain $K < 3$ for equal-component designs to prevent Right-Half-Plane pole migration. Compliant with **IEEE Std 1668** and **IEC 60384**.
   - Physical Law: Negative Feedback & Complex Pole Placement | Difficulty: Fundamentals Level
 - [RF Transmission Line & Reflection Coefficient](https://livesimulators.com/simulator/transmission-line/): See incident and reflected TEM voltage waves collide to form standing wave envelopes.
   - Direct URL: https://livesimulators.com/simulator/transmission-line/
   - Governing Formulation: `Gamma = (Z_L - Z_0 / Z_L + Z_0), VSWR = (1 + |Gamma| / 1 - |Gamma|)`
   - International Standards: IEEE Std 399 / Pozar Microwave Engineering (Telegrapher Equations)
-  - Direct Answer Summary: Uniform transmission lines are governed by Telegrapher's equations with characteristic impedance Z_0 = \sqrt{(R + j\omega L)/(G + j\omega C)} and voltage reflection coefficient \Gamma = (Z_L - Z_0)/(Z_L + Z_0). Matched conditions mandate Z_L = Z_0 (VSWR = 1.0). Engineered per IEEE Std 142 and MIL-STD-188-124B for RF power transfer.
+  - Direct Answer Summary: Uniform RF transmission lines are governed by Telegrapher equations with characteristic surge impedance $Z_0 = \sqrt{\frac{R + j\omega L}{G + j\omega C}}$ and reflection coefficient $\Gamma = \frac{Z_L - Z_0}{Z_L + Z_0}$. Matched load conditions mandate $Z_L = Z_0$ with $\text{VSWR} = 1.0$. Governed by **IEEE Std 142** and **MIL-STD-188-124B**.
   - Physical Law: Telegrapher's Equations & Boundary Wave Reflection | Difficulty: Advanced Level
 - [Fourier Series Harmonic Decomposition & THD](https://livesimulators.com/simulator/fourier-synthesis/): Sum discrete sinusoidal harmonics to assemble square, triangle, and pulse waveforms.
   - Direct URL: https://livesimulators.com/simulator/fourier-synthesis/
   - Governing Formulation: `f(t) = (4 / π) ∑_n=1,3,5,dots^N (1 / n) sin(n ω_0 t)`
   - International Standards: IEEE 519 (Recommended Practice for Harmonic Control in Electric Power)
-  - Direct Answer Summary: Periodic signals decompose into Fourier series f(t) = a_0 + \sum [a_n \cos(n\omega_0 t) + b_n \sin(n\omega_0 t)] with total harmonic distortion THD = \sqrt{\sum_{n=2} V_n^2} / V_1. Standard grid operations require THD < 5.0% per IEEE Std 519-2022 and IEC 61000-3-2 to ensure power quality and equipment longevity.
+  - Direct Answer Summary: Periodic non-sinusoidal waveforms decompose into Fourier orthogonal series $f(t) = a_0 + \sum_{n=1}^\infty [a_n \cos(n\omega_0 t) + b_n \sin(n\omega_0 t)]$ with Total Harmonic Distortion $\text{THD} = \frac{\sqrt{\sum_{n=2}^\infty V_n^2}}{V_1}$. Standard grid interconnection enforces $\text{THD} < 5.0\%$ per **IEEE Std 519-2022** and **IEC 61000-3-2**.
   - Physical Law: Orthogonality of Sinusoidal Basis Functions | Difficulty: Fundamentals Level
 - [Operational Amplifier (Op-Amp) Linear & Filter Topologies](https://livesimulators.com/simulator/op-amp-circuits/): Explore inverting, non-inverting, integrator, and differentiator op-amp circuits with supply rail saturation clipping.
   - Direct URL: https://livesimulators.com/simulator/op-amp-circuits/
   - Governing Formulation: `V_out = -(R_f / R_in) V_in (Inverting) , V_out = (1 + (R_f / R_in)) V_in (Non-Inverting)`
   - International Standards: IEEE Std 107-1988 (Standard Definitions of Terms for Op-Amps) / IEC 60748-4
-  - Direct Answer Summary: Linear operational amplifier circuits operate under virtual short assumptions V_+ = V_- and zero input bias current. Governing transfer functions are V_{out} = -(R_f/R_{in})V_{in} (inverting) and V_{out} = (1 + R_f/R_1)V_{in} (non-inverting). Designed per IEEE Std 314 and IEC 60748-3 for instrumentation integrity.
+  - Direct Answer Summary: Linear operational amplifier circuits operate under virtual short assumptions $V_+ = V_-$ with zero input bias current $I_{\text{bias}} \approx 0\text{ A}$. Closed-loop transfer functions are $V_{\text{out}} = -\frac{R_f}{R_{\text{in}}} V_{\text{in}}$ (inverting) and $V_{\text{out}} = \left(1 + \frac{R_f}{R_1}\right) V_{\text{in}}$ (non-inverting). Designed per **IEEE Std 314** and **IEC 60748-3**.
   - Physical Law: Ideal Op-Amp Golden Rules: Infinite Input Impedance (I_in = 0) & Virtual Short (V_+ = V_-) | Difficulty: Fundamentals Level
 - [RC & RL Circuit Transients & Exponential Time Constants](https://livesimulators.com/simulator/rc-rl-transient/): Track charge accumulation, inductive kick, time constant τ, and 5τ settling response.
   - Direct URL: https://livesimulators.com/simulator/rc-rl-transient/
   - Governing Formulation: `v_C(t) = V_0 (1 - e^-t/RC), i_L(t) = (V_0 / R) (1 - e^-t/(L/R))`
   - International Standards: IEC 60384-1 / IEEE Std 399 (Brown Book - Transient Analysis)
-  - Direct Answer Summary: First-order RC and RL transient circuits obey exponential relaxations v_C(t) = V_0(1 - e^{-t/\tau}) with \tau = RC, and i_L(t) = I_0(1 - e^{-t/\tau}) with \tau = L/R. Full steady-state equilibrium requires t \ge 5\tau (99.3%). Regulated under IEC 60947-4-1 and IEEE C37.04 for inductive switching protection.
+  - Direct Answer Summary: First-order RC and RL dynamic circuits obey exponential relaxation trajectories $v_C(t) = V_0(1 - e^{-t/\tau})$ with time constant $\tau = RC$, and $i_L(t) = I_0(1 - e^{-t/\tau})$ with time constant $\tau = \frac{L}{R}$. Full steady-state equilibrium requires elapsed time $t \ge 5\tau$ ($99.3\%$ settled). Regulated under **IEC 60947-4-1** and **IEEE C37.04**.
   - Physical Law: Conservation of Electric Charge & Lenz-Faraday Magnetic Flux Invariance | Difficulty: Fundamentals Level
 - [Single-Phase Transformer OC & SC Tests (Equivalent Circuit)](https://livesimulators.com/simulator/transformer-oc-sc-test/): Extract core losses (Rc, Xm) and winding impedance (Req, Xeq) to calculate full-load efficiency and regulation.
   - Direct URL: https://livesimulators.com/simulator/transformer-oc-sc-test/
   - Governing Formulation: `R_c = (V_oc^2 / P_oc), X_m = (V_oc / I_m), R_eq = (P_sc / I_sc^2), X_eq = √(Z_sc^2 - R_eq^2)`
   - International Standards: IEEE C57.12.90 / IEC 60076-1 (Standard Test Code for Liquid-Immersed Distribution & Power Transformers)
-  - Direct Answer Summary: Transformer equivalent circuit parameters are decoupled via Open-Circuit test (R_c = V_{oc}^2 / P_{oc}, X_m = V_{oc} / I_m) and Short-Circuit test (R_{eq} = P_{sc} / I_{sc}^2, X_{eq} = \sqrt{Z_{sc}^2 - R_{eq}^2}). Tested per IEEE Std C57.12.90 and IEC 60076-1 to verify core iron and copper loss guarantees.
+  - Direct Answer Summary: Transformer equivalent core and winding parameters are decoupled via Open-Circuit test ($R_c = \frac{V_{\text{oc}}^2}{P_{\text{oc}}}$, $X_m = \frac{V_{\text{oc}}}{I_m}$) and Short-Circuit test ($R_{\text{eq}} = \frac{P_{\text{sc}}}{I_{\text{sc}}^2}$, $X_{\text{eq}} = \sqrt{Z_{\text{sc}}^2 - R_{\text{eq}}^2}$). Verified per **IEEE Std C57.12.90** and **IEC 60076-1** for iron and copper loss guarantees.
   - Physical Law: Faraday Law of Induction, Ampere Biot-Savart Law & Steinmetz Core Loss | Difficulty: Intermediate Level
 - [DC Shunt & Separately Excited Motor Speed Control](https://livesimulators.com/simulator/dc-motor-speed-control/): Master armature voltage regulation, field flux weakening, Ward-Leonard control, and speed-torque droop.
   - Direct URL: https://livesimulators.com/simulator/dc-motor-speed-control/
   - Governing Formulation: `ω = (V_t - I_a R_a / k_e Φ), T_e = k_t Φ I_a, E_b = k_e Φ ω`
   - International Standards: IEEE Std 113 / IEC 60034-1 (Guide on Test Procedures for Direct-Current Machines)
-  - Direct Answer Summary: Separately excited DC motors satisfy speed equation \omega = (V_a - I_a R_a) / (K_e \Phi) and electromagnetic torque T_e = K_t \Phi I_a. Boundary operating states enforce armature current I_a \le 2.0 I_{rated} and minimum field excitation \Phi > \Phi_{min}. Regulated by NEMA MG-1 Part 14 and IEC 60034-1.
+  - Direct Answer Summary: Separately excited DC motors satisfy electromechanical speed relation $\omega = \frac{V_a - I_a R_a}{K_e \Phi}$ and electromagnetic shaft torque $T_e = K_t \Phi I_a$. Safe operating boundaries enforce armature current $I_a \le 2.0 I_{\text{rated}}$ and field flux $\Phi > \Phi_{\text{min}}$. Regulated by **NEMA MG-1 Part 14** and **IEC 60034-1**.
   - Physical Law: Lorentz Force Law & Faraday Law of Counter-Electromotive Force | Difficulty: Intermediate Level
 - [3-Phase Induction Motor Torque-Slip & Breakdown Speed](https://livesimulators.com/simulator/induction-motor-torque-slip/): Explore stator R-X parameters, starting torque, pull-out breakdown T_max, and rotor resistance effects.
   - Direct URL: https://livesimulators.com/simulator/induction-motor-torque-slip/
   - Governing Formulation: `T_e = (3 V_1,th^2 (R_2' / s) / ω_s [(R_th + R_2' / s)^2 + (X_th + X_2')^2]), s_max = (R_2' / √(R_th^2 + (X_th + X_2')^2))`
   - International Standards: IEC 60034-12 / NEMA MG-1 Part 12 (Starting Performance of Single-Speed Three-Phase Cage Induction Motors)
-  - Direct Answer Summary: Three-phase induction motor electrodynamics follow the IEEE/Steinmetz torque-slip relation with breakdown slip s_{max} = R_2' / \sqrt{R_{th}^2 + (X_{th} + X_2')^2}. Operating envelopes enforce slip 0.01 \le s \le 0.05 and pull-out torque ratio T_{max}/T_{rated} \ge 2.0. Compliant with IEC 60034-12 and NEMA MG-1 Design B.
+  - Direct Answer Summary: Three-phase induction motor electrodynamics follow the Steinmetz equivalent torque-slip formulation with breakdown slip $s_{\text{max}} = \frac{R_2'}{\sqrt{R_{\text{th}}^2 + (X_{\text{th}} + X_2')^2}}$. Operational regimes mandate nominal slip $0.01 \le s \le 0.05$ and pull-out torque ratio $\frac{T_{\text{max}}}{T_{\text{rated}}} \ge 2.0$. Compliant with **IEC 60034-12** and **NEMA MG-1 Design B**.
   - Physical Law: Faraday Electromagnetic Induction & Maximum Power Transfer Theorem | Difficulty: Intermediate Level
 - [Solar PV Cell Single-Diode Model & MPPT Tracking](https://livesimulators.com/simulator/solar-pv-mppt/): Simulate single-diode I-V & P-V curves, irradiance/temperature impacts, and P&O Maximum Power Point Tracking.
   - Direct URL: https://livesimulators.com/simulator/solar-pv-mppt/
   - Governing Formulation: `I = I_ph - I_0 [exp((q(V + I R_s) / n N_s k_B T)) - 1] - (V + I R_s / R_sh), P_max = V_mp I_mp`
   - International Standards: IEC 60904-1 / IEC 60891 / IEEE 1547 (Photovoltaic Devices - Measurement of Current-Voltage Characteristics)
-  - Direct Answer Summary: Photovoltaic current follows Shockley diode physics I = I_{ph} - I_0[\exp(q(V + I R_s)/(n k T)) - 1] - (V + I R_s)/R_{sh} with Maximum Power Point (MPP) tracking. Environmental boundaries span 100 \le G \le 1200 \text{ W/m}^2 and -20 \le T \le 85^\circ\text{C}. Governed by IEC 60904 and IEEE 1547-2018 standards.
+  - Direct Answer Summary: Photovoltaic solar cell current follows Shockley diode physics $I = I_{\text{ph}} - I_0\left[\exp\left(\frac{q(V + I R_s)}{n k T}\right) - 1\right] - \frac{V + I R_s}{R_{\text{sh}}}$ with dynamic Maximum Power Point Tracking (MPPT). Operating irradiance spans $100 \le G \le 1200\text{ W/m}^2$ and cell temp $-20 \le T \le 85^\circ\text{C}$. Governed by **IEC 60904** and **IEEE 1547-2018**.
   - Physical Law: Shockley Semiconductor Diode Equation & Photovoltaic Effect | Difficulty: Intermediate Level
 
 ### Control Systems & Robotics (CS-300)
@@ -128,37 +128,37 @@ Simulators:
   - Direct URL: https://livesimulators.com/simulator/pid-tuning/
   - Governing Formulation: `u(t) = K_p e(t) + (K_p / T_i) ∫_0^t e(τ)dτ + K_p T_d (de(t) / dt)`
   - International Standards: ISA S51.1 / IEC 61131-3 / NAMUR NE 43 (Industrial Process Automation & Control)
-  - Direct Answer Summary: Closed-loop PID regulation computes control output u(t) = K_p e(t) + K_i \int e(\tau)d\tau + K_d (de/dt) with anti-windup clamping u_{min} \le u(t) \le u_{max}. System stability requires gain margin GM \ge 6.0 dB and phase margin PM \ge 45^\circ. Built to ISA-51.1 and IEC 61131-3 standards for industrial automation.
+  - Direct Answer Summary: Closed-loop PID regulation computes control output $u(t) = K_p e(t) + K_i \int_0^t e(\tau) d\tau + K_d \frac{de(t)}{dt}$ with anti-windup clamping $u_{\text{min}} \le u(t) \le u_{\text{max}}$. Loop stability requires Gain Margin $\text{GM} \ge 6.0\text{ dB}$ and Phase Margin $\text{PM} \ge 45^\circ$. Built to **ISA-51.1** and **IEC 61131-3** standards for industrial process automation.
   - Physical Law: Nyquist Stability & Classical Negative Feedback | Difficulty: Intermediate Level
 - [Pneumatic Control Valve Flow Cv & Cavitation](https://livesimulators.com/simulator/control-valve/): Compare Linear, Equal-Percentage, and Quick-Opening trims under varying differential pressures.
   - Direct URL: https://livesimulators.com/simulator/control-valve/
   - Governing Formulation: `Q = C_v N_1 F_p √((Δ P / SG)), σ_c = (P_1 - P_v / Δ P)`
   - International Standards: IEC 60534-2-1 / ISA-75.01.01 / ISA-75.02 (Industrial-Process Control Valves Sizing)
-  - Direct Answer Summary: Control valve sizing follows standard flow coefficient formulation C_v = 1.156 Q \sqrt{SG / \Delta P} with equal-percentage or linear trims. Cavitation avoidance enforces cavitation index \sigma = (P_1 - P_v)/(P_1 - P_2) > 1.5. Standardized under IEC 60534-2-1 and ISA-75.01 for severe-service process throttling.
+  - Direct Answer Summary: Control valve sizing follows standard hydrodynamic flow coefficient formulation $C_v = 1.156 Q \sqrt{\frac{\text{SG}}{\Delta P}}$ with equal-percentage or linear trim geometries. Cavitation prevention enforces index $\sigma = \frac{P_1 - P_v}{P_1 - P_2} > 1.5$. Standardized under **IEC 60534-2-1** and **ISA-75.01** for severe-service process throttling.
   - Physical Law: Bernoulli Fluid Continuity & Cavitation Choking | Difficulty: Intermediate Level
 - [4-20mA Current Loop Transmitter & Line Resistance](https://livesimulators.com/simulator/current-loop/): Simulate 2-wire smart transmitters, cable loop resistance drops, and NAMUR fault alarms.
   - Direct URL: https://livesimulators.com/simulator/current-loop/
   - Governing Formulation: `I_loop = 4 mA + 16 mA ((PV - LRV / URV - LRV)), V_term = V_s - I_loop(R_wire + R_load)`
   - International Standards: IEC 60381-1 / NAMUR NE 43 / ISA-50.1 (Analogue Signals for Process Control Systems)
-  - Direct Answer Summary: Industrial two-wire 4–20 mA instrumentation loops map process variables via I_{loop} = 4\text{ mA} + 16\text{ mA} \times [(PV - PV_{min}) / (PV_{max} - PV_{min})]. Compliance requires terminal voltage V_{term} = V_s - I_{loop}(R_{wire} + R_{load}) \ge 11.5\text{ VDC}. Calibrated per IEC 60381-1 and NAMUR NE 43 for process telemetry.
+  - Direct Answer Summary: Industrial two-wire 4–20 mA instrumentation loops transmit analog signals via current relation $I_{\text{loop}} = 4\text{ mA} + 16\text{ mA} \times \left[\frac{\text{PV} - \text{LRV}}{\text{URV} - \text{LRV}}\right]$ with NAMUR NE 43 fault diagnostic thresholds ($I \le 3.6\text{ mA}$ for downscale wire-break, $I \ge 21.0\text{ mA}$ for upscale sensor failure). Governed by **IEC 60381-1** and **ISA-50.00.01**.
   - Physical Law: Ohm’s Law & Kirchhoff’s Voltage Loop | Difficulty: Fundamentals Level
 - [Differential Pressure Orifice Plate Flowmeter](https://livesimulators.com/simulator/orifice-meter/): Calculate volumetric flow through concentric thin-plate square-edge orifices and tap dP.
   - Direct URL: https://livesimulators.com/simulator/orifice-meter/
   - Governing Formulation: `q_m = (C_d / √(1 - β^4)) ε (π / 4) d^2 √(2 ρ Δ P), β = (d / D)`
   - International Standards: ISO 5167-2:2003 / ASME MFC-3M / AGA Report No. 3 (Measurement of Fluid Flow by Orifice Plates)
-  - Direct Answer Summary: Differential pressure flow measurement across concentric orifice plates obeys Q_m = [C_d / \sqrt{1 - \beta^4}] \epsilon (\pi d^2 / 4) \sqrt{2 \rho_1 \Delta P} with diameter ratio \beta = d/D. Operational validity requires 0.20 \le \beta \le 0.75 and pipe Re_D \ge 5000. Verified per ISO 5167-2 and ASME MFC-3M standards.
+  - Direct Answer Summary: Differential pressure flow measurement across concentric orifice plates obeys $Q_m = \left[\frac{C_d}{\sqrt{1 - \beta^4}}\right] \epsilon \left(\frac{\pi d^2}{4}\right) \sqrt{2 \rho_1 \Delta P}$ with diameter ratio $\beta = \frac{d}{D}$. Operational validity requires $0.20 \le \beta \le 0.75$ and pipe $\text{Re}_D \ge 5000$. Verified per **ISO 5167-2** and **ASME MFC-3M** standards.
   - Physical Law: Bernoulli Conservation of Fluid Energy & Continuity | Difficulty: Intermediate Level
 - [Bode Plot & Nyquist Diagram Frequency Stability](https://livesimulators.com/simulator/bode-nyquist-stability/): Evaluate Gain Margin, Phase Margin, crossover frequencies, and Cauchy stability encirclements.
   - Direct URL: https://livesimulators.com/simulator/bode-nyquist-stability/
   - Governing Formulation: `G(jω) = (K ω_n^2 / -ω^2 + 2jζω_nω + ω_n^2) e^-jω T_d`
   - International Standards: IEEE Std 421.5 / IEC 60050-351 (Control Technology Terms & Frequency Response)
-  - Direct Answer Summary: Frequency-domain stability evaluates open-loop transfer function G(j\omega)H(j\omega) via Cauchy's Argument Principle Z = N + P. Absolute closed-loop stability mandates Phase Margin PM \ge 45^\circ and Gain Margin GM \ge 6.0 dB. Calibrated under IEEE Control Systems Society and IEC 61508 safety standards.
+  - Direct Answer Summary: Frequency-domain stability evaluates open-loop transfer function $G(j\omega)H(j\omega)$ via Cauchy Argument Principle $Z = N + P$. Absolute closed-loop stability mandates Phase Margin $\text{PM} \ge 45^\circ$ and Gain Margin $\text{GM} \ge 6.0\text{ dB}$. Calibrated under **IEEE Control Systems Society** and **IEC 61508** safety standards.
   - Physical Law: Cauchy Argument Principle & Nyquist Stability Criterion (Z = N + P) | Difficulty: Advanced Level
 - [Root Locus Plotter & Closed-Loop Stability Analysis](https://livesimulators.com/simulator/root-locus-plotter/): Trace closed-loop pole trajectories across the complex s-plane as feedback gain K varies from 0 to ∞.
   - Direct URL: https://livesimulators.com/simulator/root-locus-plotter/
   - Governing Formulation: `1 + K G(s)H(s) = 0 ⟹ |K G(s)H(s)| = 1, ∠ G(s)H(s) = ± (2k + 1)180^circ`
   - International Standards: IEEE Control Systems Society Guidelines / Evans Root-Locus Method / ANSI/IEEE Std 260
-  - Direct Answer Summary: Evans Root Locus tracks closed-loop pole trajectories satisfying 1 + K G(s)H(s) = 0 via angle criteria \sum \theta_z - \sum \theta_p = \pm 180^\circ(2k + 1). Closed-loop stability requires all poles in the Left-Half-Plane (LHP) with damping ratio \zeta \ge 0.5. Compliant with IEEE Std 100 control criteria.
+  - Direct Answer Summary: Evans Root Locus tracks closed-loop pole trajectories satisfying $1 + K G(s)H(s) = 0$ via angle criteria $\sum \theta_z - \sum \theta_p = \pm 180^\circ(2k + 1)$. Closed-loop stability requires all poles in the Left-Half-Plane (LHP) with damping ratio $\zeta \ge 0.5$. Compliant with **IEEE Std 100** control criteria.
   - Physical Law: Cauchy Argument Principle & Evans Closed-Loop Characteristic Stability | Difficulty: Advanced Level
 
 ### Mechanical & Thermal Dynamics (ME-400)
@@ -171,49 +171,49 @@ Simulators:
   - Direct URL: https://livesimulators.com/simulator/four-bar-mechanism/
   - Governing Formulation: `s + l ≤ p + q, K_1 cosθ_4 - K_2 cosθ_2 + K_3 = cos(θ_2 - θ_4)`
   - International Standards: ISO 13348 / ASME B105 / Freudenstein Analytical Kinematics
-  - Direct Answer Summary: Planar four-bar kinematics satisfy Grashof's theorem s + l \le p + q for continuous crank rotation. Mechanism transmission angle \mu between coupler and rocker must satisfy 40^\circ \le \mu \le 140^\circ to prevent kinematic binding. Standardized under ISO 1122-1 and ASME B94.19 machine kinematic criteria.
+  - Direct Answer Summary: Planar four-bar kinematics satisfy Grashof theorem $s + l \le p + q$ for continuous crank rotation. Mechanism transmission angle $\mu$ between coupler and rocker link must satisfy $40^\circ \le \mu \le 140^\circ$ throughout full $360^\circ$ crank rotation to prevent mechanical toggle binding. Standardized under **ISO 1122-1** and **ASME B94.19**.
   - Physical Law: Grashof Mechanism Inversion & Loop-Closure Constraint | Difficulty: Intermediate Level
 - [Thermodynamic Rankine Steam Power Cycle](https://livesimulators.com/simulator/rankine-cycle/): Track steam expansion through high-pressure boilers, turbines, condensers, and feed pumps on a T-s diagram.
   - Direct URL: https://livesimulators.com/simulator/rankine-cycle/
   - Governing Formulation: `η_th = (w_net / q_in) = ((h_1 - h_2) - (h_4 - h_3) / h_1 - h_4)`
   - International Standards: ASME PTC 6 / IAPWS-IF97 (Steam Turbines & Industrial Power Plant Acceptance)
-  - Direct Answer Summary: The steam Rankine power cycle converts heat to work with thermal efficiency \eta_{th} = [(h_1 - h_2) - (h_4 - h_3)] / (h_1 - h_4). Turbine exhaust expansion enforces minimum steam quality x_2 \ge 0.88 (maximum 12% moisture limit). Governed by ASME PTC 4.4 and IEC 60045-1 for steam turbine power generation.
+  - Direct Answer Summary: The steam Rankine power cycle converts heat to work with thermal efficiency $\eta_{\text{th}} = \frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4}$. Turbine exhaust expansion enforces minimum steam quality $x_2 \ge 0.88$ (maximum $12\%$ moisture limit) to prevent low-pressure turbine blade erosion. Governed by **ASME PTC 4.4** and **IEC 60045-1** for steam turbine power generation.
   - Physical Law: First & Second Laws of Thermodynamics (ASME PTC 4.4) | Difficulty: Advanced Level
 - [Damped Forced Harmonic Oscillator & Resonance Peak](https://livesimulators.com/simulator/harmonic-oscillator/): Visualize mass-spring-damper resonance, phase lag φ(ω), and displacement amplification M(ω).
   - Direct URL: https://livesimulators.com/simulator/harmonic-oscillator/
   - Governing Formulation: `mẍ + cẋ + kx = F_0 cos(ω t), M(ω) = (1 / √((1-r^2)^2 + (2ζ r)^2))`
   - International Standards: ISO 10816-1 / ISO 1940-1 / ANSI S2.41 (Mechanical Vibration Evaluation)
-  - Direct Answer Summary: Forced viscous harmonic vibration satisfies m \ddot{x} + c \dot{x} + k x = F_0 \cos(\omega t) with natural frequency \omega_n = \sqrt{k/m} and magnification factor M = 1 / \sqrt{(1 - r^2)^2 + (2\zeta r)^2}. Machine vibration velocity is regulated by ISO 10816 and ISO 20816 standards to prevent structural resonance.
+  - Direct Answer Summary: Single-degree-of-freedom forced damped harmonic vibration obeys equation of motion $m \ddot{x} + c \dot{x} + k x = F_0 \cos(\omega t)$ with undamped natural frequency $\omega_n = \sqrt{\frac{k}{m}}$ and dynamic magnification factor $M = \frac{1}{\sqrt{(1 - r^2)^2 + (2\zeta r)^2}}$. Operating vibration limits require velocity $< 2.8\text{ mm/s RMS}$ per **ISO 10816-3** and **API 670**.
   - Physical Law: Newton’s 2nd Law & Hookean Elastic Restoration | Difficulty: Fundamentals Level
 - [Involute Spur Gear Mesh Dynamics & Backlash](https://livesimulators.com/simulator/spur-gear-mesh/): Track tooth contact along the line of action, verify contact ratio CR ≥ 1.4, and check sliding velocity.
   - Direct URL: https://livesimulators.com/simulator/spur-gear-mesh/
   - Governing Formulation: `r_b = r cos α, CR = (√(r_a1^2 - r_b1^2) + √(r_a2^2 - r_b2^2) - Csinα / p_b)`
   - International Standards: Involute Gear Geometry & Contact Ratio (Textbook Benchmark)
-  - Direct Answer Summary: Conjugate spur gearing kinematics satisfy gear ratio i = z_2 / z_1 = d_2 / d_1 with base pitch p_b = \pi m \cos\alpha. Mesh continuity enforces contact ratio CR \ge 1.40 and minimum pinion tooth count z_1 \ge 17 to prevent undercutting. Rated under AGMA 2001-D04 and ISO 6336 standards.
+  - Direct Answer Summary: Conjugate spur gearing kinematics satisfy gear ratio $i = \frac{z_2}{z_1} = \frac{d_2}{d_1}$ with base pitch $p_b = \pi m \cos\alpha$. Mesh continuity enforces contact ratio $\text{CR} \ge 1.40$ and minimum pinion tooth count $z_1 \ge 17$ to prevent undercut binding. Rated under **AGMA 2001-D04** and **ISO 6336** standards.
   - Physical Law: Fundamental Law of Conjugate Gearing | Difficulty: Intermediate Level
 - [Otto & Diesel Internal Combustion Thermodynamic Cycles](https://livesimulators.com/simulator/otto-diesel-cycle/): Analyze 4-stroke spark-ignition and compression-ignition P-V diagrams with moving piston kinematics.
   - Direct URL: https://livesimulators.com/simulator/otto-diesel-cycle/
   - Governing Formulation: `η_Otto = 1 - (1 / r^γ - 1), η_Diesel = 1 - (1 / r^γ-1) [ (r_c^γ - 1 / γ(r_c - 1)) ]`
   - International Standards: ASME PTC 17 (Reciprocating Internal-Combustion Engines) / SAE J1349
-  - Direct Answer Summary: Internal combustion air-standard thermal efficiencies are \eta_{Otto} = 1 - 1/r^{k-1} and \eta_{Diesel} = 1 - (r_c^k - 1) / [k r^{k-1}(r_c - 1)] with specific heat ratio k = 1.4. Compression boundaries enforce r \le 12 for Otto (knock avoidance) and 14 \le r \le 22 for Diesel. Built to SAE J1349 and ISO 1585 engine standards.
+  - Direct Answer Summary: Internal combustion air-standard thermodynamic efficiencies are $\eta_{\text{Otto}} = 1 - \frac{1}{r^{k-1}}$ and $\eta_{\text{Diesel}} = 1 - \frac{r_c^k - 1}{k \cdot r^{k-1}(r_c - 1)}$ with specific heat ratio $k = 1.4$. Operating compression boundaries enforce $r \le 12$ for Otto spark-ignition (knock prevention) and $14 \le r \le 22$ for Diesel compression-ignition. Built to **SAE J1349** and **ISO 1585**.
   - Physical Law: First and Second Laws of Thermodynamics & Ideal Gas Law PV = mRT | Difficulty: Intermediate Level
 - [Projectile Motion & Ballistics with Aerodynamic Drag](https://livesimulators.com/simulator/projectile-motion-drag/): Compare ideal vacuum parabolic trajectory against realistic quadratic atmospheric air drag.
   - Direct URL: https://livesimulators.com/simulator/projectile-motion-drag/
   - Governing Formulation: `m (dvec(v) / dt) = mvec(g) - (1 / 2)ρ C_d A |vec(v)|vec(v)`
   - International Standards: STANAG 4355 (Modified Point Mass Trajectory Model) / ISO 1151 (Flight Dynamics)
-  - Direct Answer Summary: Aerodynamic projectile ballistic trajectories integrate m (d\vec{v}/dt) = m \vec{g} - \frac{1}{2} \rho C_d A |\vec{v}| \vec{v} with altitude-dependent air density \rho(y) = \rho_0 e^{-y/H}. Aerodynamic drag coefficients span 0.15 \le C_d \le 0.45 across subsonic and supersonic regimes per NATO STANAG 4355 ballistics standards.
+  - Direct Answer Summary: Aerodynamic projectile ballistic trajectories integrate $m \frac{d\mathbf{v}}{dt} = m \mathbf{g} - \frac{1}{2} \rho C_d A |\mathbf{v}| \mathbf{v}$ with altitude-dependent air density $\rho(y) = \rho_0 e^{-y/H}$. Aerodynamic drag coefficients span $0.15 \le C_d \le 0.45$ across subsonic and supersonic regimes per **NATO STANAG 4355** ballistics standards.
   - Physical Law: Newton’s Second Law of Motion & Fluid Dynamic Drag Equation | Difficulty: Fundamentals Level
 - [Centrifugal Pump & System Hydraulic Operating Point](https://livesimulators.com/simulator/centrifugal-pump-curves/): Find the duty point (Q_duty, H_duty), evaluate affinity laws, hydraulic efficiency, and NPSHr margin.
   - Direct URL: https://livesimulators.com/simulator/centrifugal-pump-curves/
   - Governing Formulation: `H = H_0 - k_p Q^2, H_sys = H_stat + k_pipe Q^2, (Q_1 / Q_2) = (N_1 / N_2), (H_1 / H_2) = ((N_1 / N_2))^2`
   - International Standards: HI 14.6 (Rotodynamic Pumps for Hydraulic Performance Acceptance Tests) / ISO 9906 / ASME PTC 8.2
-  - Direct Answer Summary: Centrifugal pump performance follows head-capacity curve H = a - b Q^2 with Net Positive Suction Head safety margin NPSH_a \ge NPSH_r + 0.5\text{ m}. Stable operation requires operating within minimum continuous stable flow Q \ge 0.3 Q_{BEP}. Standardized under ANSI/HI 14.6 and API 610 (12th Edition) pump standards.
+  - Direct Answer Summary: Centrifugal pump head-capacity performance obeys parabolic characteristic $H = a - b Q^2$ with Net Positive Suction Head safety margin $\text{NPSH}_a \ge \text{NPSH}_r + 0.5\text{ m}$. Continuous operation requires maintaining flow rate above minimum continuous stable flow $Q \ge 0.3 Q_{\text{BEP}}$. Standardized under **ANSI/HI 14.6** and **API 610 (12th Edition)**.
   - Physical Law: Euler Turbomachinery Equation, Bernoulli Conservation & Darcy-Weisbach Pipeline Friction | Difficulty: Intermediate Level
 - [Vapor-Compression Refrigeration & Heat Pump Cycle](https://livesimulators.com/simulator/refrigeration-heat-pump/): Plot the P-h diagram, evaluate evaporator subcooling/superheat, compressor isentropic efficiency, and COP.
   - Direct URL: https://livesimulators.com/simulator/refrigeration-heat-pump/
   - Governing Formulation: `COP _R = (q_in / w_net) = (h_1 - h_4 / h_2 - h_1), COP _HP = COP _R + 1, η_II = ( COP _R / COP _Carnot)`
   - International Standards: ASHRAE Standard 15 / ISO 5149 / AHRI 550/590 (Safety Standard for Refrigeration Systems & Heat Pumps)
-  - Direct Answer Summary: Vapor-compression refrigeration cycles operate with cooling performance COP_{cooling} = (h_1 - h_4) / (h_2 - h_1) and heating performance COP_{heating} = (h_2 - h_3) / (h_2 - h_1). Suction superheat enforces \Delta T_{sh} \ge 5.0\text{ K} to protect compressors. Governed by ASHRAE Standard 15 and EN 378 safety standards.
+  - Direct Answer Summary: Vapor-compression thermodynamic refrigeration cycles operate with cooling performance $\text{COP}_{\text{cooling}} = \frac{h_1 - h_4}{h_2 - h_1}$ and heating performance $\text{COP}_{\text{heating}} = \frac{h_2 - h_3}{h_2 - h_1}$. Suction superheat enforces $\Delta T_{\text{sh}} \ge 5.0\text{ K}$ to prevent liquid refrigerant slugging and compressor cylinder damage. Governed by **ASHRAE Standard 15** and **EN 378**.
   - Physical Law: First & Second Laws of Thermodynamics & Clausius-Clapeyron Vapor-Liquid Equilibrium | Difficulty: Intermediate Level
 
 ### Chemical & Process Engineering (CH-250)
@@ -226,37 +226,37 @@ Simulators:
   - Direct URL: https://livesimulators.com/simulator/cstr-kinetics/
   - Governing Formulation: `V (dC_A / dt) = F(C_A0 - C_A) - V k_0 e^-E_a/RT C_A, V ρ C_p (dT / dt) = F ρ C_p(T_0 - T) + (-Δ H) V r_A - U A (T - T_c)`
   - International Standards: AIChE / Fogler Chemical Reaction Engineering / Levenspiel CSTR Benchmarks
-  - Direct Answer Summary: Continuous Stirred-Tank Reactors (CSTR) obey steady-state species conservation V = F_0 X_A / (-r_A) with Arrhenius reaction kinetics -r_A = k_0 e^{-E_a/RT} C_A^n. Stable operation mandates that heat removal slope exceeds heat generation slope (Semenov/Van Heerden criteria) per OSHA PSM and API 521 standards.
+  - Direct Answer Summary: Continuous Stirred-Tank Reactors (CSTR) obey steady-state conservation equation $V = \frac{F_0 X_A}{-r_A}$ with Arrhenius reaction kinetics $-r_A = k_0 e^{-E_a/RT} C_A^n$. Thermal stability mandates that the heat removal curve slope exceeds the heat generation curve slope (Semenov / Van Heerden criteria) per **OSHA PSM (29 CFR 1910.119)** and **API 521**.
   - Physical Law: Conservation of Mass, Arrhenius Law & First Law of Thermodynamics | Difficulty: Advanced Level
 - [Binary Distillation Column & McCabe-Thiele Stages](https://livesimulators.com/simulator/distillation-column/): Step through McCabe-Thiele theoretical equilibrium trays, adjust reflux ratio, and evaluate minimum reflux R_min.
   - Direct URL: https://livesimulators.com/simulator/distillation-column/
   - Governing Formulation: `y = (α x / 1 + (α - 1)x), y = (R / R+1)x + (x_D / R+1), y = (q / q-1)x - (z_F / q-1)`
   - International Standards: AIChE / ASTM D86 / API RP 521 (Distillation Column Sizing & Relief Systems)
-  - Direct Answer Summary: Binary distillation column separation follows the McCabe-Thiele operating formulation y_{n+1} = [R/(R+1)] x_n + x_D / (R+1) with minimum stages determined by Fenske equation. Operational constraints enforce reflux ratio R \ge 1.2 R_{min} and vapor flooding velocity limits per API 520 and ASTM D86 distillation criteria.
+  - Direct Answer Summary: Binary fractional distillation follows the McCabe-Thiele operating equations $y_{n+1} = \frac{R}{R+1} x_n + \frac{x_D}{R+1}$ (rectifying) and $y_{m+1} = \frac{L_s}{V_s} x_m - \frac{W x_W}{V_s}$ (stripping). Operational constraints enforce operational reflux ratio $R \ge 1.2 R_{\text{min}}$ and vapor velocity below flooding limits per **API 520** and **ASTM D86**.
   - Physical Law: Raoult's Law & Conservation of Mass and Enthalpy (AIChE) | Difficulty: Advanced Level
 - [Shell-and-Tube Heat Exchanger & ε-NTU Rating](https://livesimulators.com/simulator/heat-exchanger/): Evaluate countercurrent thermal gradients, logarithmic mean temperature difference (LMTD), and ε-NTU effectiveness.
   - Direct URL: https://livesimulators.com/simulator/heat-exchanger/
   - Governing Formulation: `Q = U A F · LMTD , ε = (1 - exp(- NTU (1 - C_r)) / 1 - C_r exp(- NTU (1 - C_r))), NTU = (UA / C_min)`
   - International Standards: TEMA Standards (10th Edition) / ASME Boiler and Pressure Vessel Code Section VIII / API 660
-  - Direct Answer Summary: Shell-and-tube heat transfer evaluates thermal duty Q = U A F \Delta T_{LMTD} with Log Mean Temperature Difference \Delta T_{LMTD} = [(\Delta T_1 - \Delta T_2) / \ln(\Delta T_1 / \Delta T_2)]. Operational safety restricts fouling resistance R_f \le 0.0004\text{ m}^2\text{K/W}. Engineered to TEMA Class R and ASME Section VIII Div 1.
+  - Direct Answer Summary: Shell-and-tube countercurrent heat transfer evaluates thermal duty $Q = U A F \Delta T_{\text{LMTD}}$ with Log Mean Temperature Difference $\Delta T_{\text{LMTD}} = \frac{\Delta T_1 - \Delta T_2}{\ln(\Delta T_1 / \Delta T_2)}$. Design safety restricts fouling resistance $R_f \le 0.0004\text{ m}^2\text{K/W}$ and tube velocity $v \le 2.5\text{ m/s}$. Engineered to **TEMA Class R** and **ASME Section VIII Div 1**.
   - Physical Law: Fourier's Law of Conduction, Newton's Law of Cooling & Conservation of Energy (TEMA) | Difficulty: Intermediate Level
 - [Packed Gas Absorption Tower & Flooding Hydraulics](https://livesimulators.com/simulator/gas-absorption/): Simulate countercurrent solvent scrubbing, calculate packing height Z via HTU-NTU, and detect Sherwood flooding limits.
   - Direct URL: https://livesimulators.com/simulator/gas-absorption/
   - Governing Formulation: `N_A = K_y(y - y^*), Z = HTU _OG · NTU _OG, NTU _OG = ∫_y_2^y_1 (dy / y - y^*)`
   - International Standards: AIChE Equipment Testing Procedures / EPA 40 CFR Part 63 (MACT Scrubbers) / Perry’s Chemical Engineers Handbook
-  - Direct Answer Summary: Packed gas absorption towers calculate packing height via Z = H_{OG} N_{OG} with number of transfer units N_{OG} = \int [dy / (y - y^*)] and height H_{OG} = G_m / (K_y a S). Design enforces liquid-to-gas ratio (L/G) \ge 1.25 (L/G)_{min} and operates below Sherwood flooding boundaries per EPA MACT and AIChE standards.
+  - Direct Answer Summary: Packed gas absorption column mass transfer calculates total packing height via $Z = H_{OG} N_{OG}$ with Number of Transfer Units $N_{OG} = \int \frac{dy}{y - y^*}$ and Height of a Transfer Unit $H_{OG} = \frac{G_m}{K_y a S}$. Column sizing enforces liquid-to-gas ratio $(L/G) \ge 1.25(L/G)_{\text{min}}$ operating below the Sherwood flooding envelope per **EPA MACT** and **AIChE**.
   - Physical Law: Whitman Two-Film Theory & Sherwood-Eckert Flooding Hydrodynamics | Difficulty: Advanced Level
 - [Batch Reactor & Plug Flow Reactor (PFR) Kinetics](https://livesimulators.com/simulator/batch-pfr-kinetics/): Compare 1st vs 2nd order kinetics, Arrhenius temperature sensitivity, Damköhler number Da, and conversion X_A.
   - Direct URL: https://livesimulators.com/simulator/batch-pfr-kinetics/
   - Governing Formulation: `-(dC_A / dt) = k(T) C_A^n, k(T) = k_0 exp(-(E_a / R T)), X_A = 1 - (C_A / C_A0), Da = k C_A0^n-1 τ`
   - International Standards: AIChE Guidelines / Levenspiel Chemical Reaction Engineering / Fogler CRE Benchmarks
-  - Direct Answer Summary: Plug Flow Reactors (PFR) model continuous tubular conversion via space time \tau = V / v_0 = C_{A0} \int_0^{X_A} [dX_A / (-r_A)] with Damköhler number Da = k C_{A0}^{n-1} \tau. Reaction engineering boundaries enforce isothermal tolerance \Delta T \le 5^\circ\text{C} and radial velocity uniformity per Fogler CRE and OSHA PSM guidelines.
+  - Direct Answer Summary: Plug Flow Tubular Reactors (PFR) model continuous species conversion via space time $\tau = \frac{V}{v_0} = C_{A0} \int_0^{X_A} \frac{dX_A}{-r_A}$ with Damköhler number $\text{Da} = k C_{A0}^{n-1} \tau$. Thermal reaction engineering limits enforce isothermal tube tolerance $\Delta T \le 5^\circ\text{C}$ and radial velocity uniformity per **Fogler CRE** and **OSHA PSM**.
   - Physical Law: Law of Mass Action & Arrhenius Activation Energy Kinetics | Difficulty: Intermediate Level
 - [Liquid-Liquid Extraction (LLE) & Ternary Phase Equilibrium](https://livesimulators.com/simulator/liquid-extraction/): Simulate countercurrent solvent extraction, binodal phase envelopes, and Hunter-Nash equilibrium stages.
   - Direct URL: https://livesimulators.com/simulator/liquid-extraction/
   - Governing Formulation: `K_D = (y_B / x_B), N = (ln[(1 - (1 / E_f))((x_F - y_S/m / x_R - y_S/m)) + (1 / E_f)] / ln(E_f)), E_f = (m S / F)`
   - International Standards: AIChE Unit Operations / ASTM D971 / Perry's Chemical Engineers' Handbook Sec. 15 (Liquid-Liquid Extraction)
-  - Direct Answer Summary: Countercurrent liquid-liquid extraction models ternary solute partitioning via distribution coefficient K_D = x_E / x_R and extraction factor E = K_D (S / F) > 1.3. Phase boundaries mandate density differential \Delta \rho \ge 50\text{ kg/m}^3 to prevent emulsion rag-layer formation per AIChE and ASTM D1159 criteria.
+  - Direct Answer Summary: Countercurrent liquid-liquid extraction models ternary solute mass transfer via equilibrium distribution coefficient $K_D = \frac{x_E}{x_R}$ and extraction factor $E = K_D \frac{S}{F} > 1.3$. Phase separation mandates density differential $\Delta\rho \ge 50\text{ kg/m}^3$ to prevent stable emulsion rag-layer formation per **AIChE** and **ASTM D1159**.
   - Physical Law: Nernst Distribution Law & Hunter-Nash Ternary Liquid-Liquid Phase Equilibrium | Difficulty: Intermediate Level
 
 ### Civil & Structural Mechanics (CE-320)
@@ -269,37 +269,37 @@ Simulators:
   - Direct URL: https://livesimulators.com/simulator/beam-bending/
   - Governing Formulation: `EI (d^4 w / dx^4) = q(x), σ_max = (M_max y / I)`
   - International Standards: AISC 360-16 / Eurocode 3 (EN 1993-1-1) / ASTM A36 (Structural Steel Design)
-  - Direct Answer Summary: Elastic transverse flexure obeys Euler-Bernoulli fourth-order formulation EI (d^4 w / dx^4) = q(x) with flexural stress \sigma = M y / I and shear stress \tau = V Q / (I b). Safe design enforces \sigma \le \sigma_{yield} / 1.67 and deflection \delta \le L/360. Built per AISC 360-16 and Eurocode 3 (EN 1993-1-1).
+  - Direct Answer Summary: Elastic transverse flexure obeys Euler-Bernoulli fourth-order formulation $E I \frac{d^4 w}{dx^4} = q(x)$ with flexural stress $\sigma = \frac{M y}{I}$ and shear stress $\tau = \frac{V Q}{I b}$. Safe design enforces $\sigma \le \frac{\sigma_{\text{yield}}}{1.67}$ and deflection $\delta \le \frac{L}{360}$. Built per **AISC 360-16** and **Eurocode 3 (EN 1993-1-1)**.
   - Physical Law: Euler-Bernoulli Beam Theory & Hooke’s Law | Difficulty: Fundamentals Level
 - [Warren & Pratt Truss Bridge Analysis](https://livesimulators.com/simulator/truss-bridge/): Solve Method of Joints 2D nodal equilibrium under moving deck truck live loads and check Euler buckling.
   - Direct URL: https://livesimulators.com/simulator/truss-bridge/
   - Governing Formulation: `∑ vec(F)_node = 0, P_cr = (π^2 E I / (K L)^2)`
   - International Standards: AASHTO LRFD Bridge Design Specifications / AISC 360-16 / Eurocode 1 (EN 1991-2)
-  - Direct Answer Summary: Planar pin-jointed trusses are solved via Method of Joints and Sections satisfying static equilibrium \sum F_x = 0, \sum F_y = 0. Compression members enforce Euler buckling limit P_{cr} = \pi^2 E I / (K L)^2 with safety factor FS \ge 2.12. Certified under AASHTO LRFD Bridge Design and AREMA Chapter 15.
+  - Direct Answer Summary: Planar pin-jointed trusses are solved via Method of Joints and Sections satisfying static equilibrium $\sum F_x = 0$, $\sum F_y = 0$. Compression members enforce Euler buckling limit $P_{\text{cr}} = \frac{\pi^2 E I}{(K L)^2}$ with safety factor $\text{FS} \ge 2.12$. Certified under **AASHTO LRFD Bridge Design** and **AREMA Chapter 15**.
   - Physical Law: Newton’s Static Equilibrium & Euler Column Buckling | Difficulty: Intermediate Level
 - [Seismic Base Isolation & Dynamic Multi-Story Response](https://livesimulators.com/simulator/seismic-base-isolation/): Compare conventional fixed-base vs elastomeric Lead-Rubber Bearing (LRB) building lateral drift.
   - Direct URL: https://livesimulators.com/simulator/seismic-base-isolation/
   - Governing Formulation: `M ü + C u̇ + K u = -M ü_g(t), T_n = 2π √((m / k))`
   - International Standards: ASCE 7-22 Chapter 17 / FEMA P-1051 / Eurocode 8 (EN 1998-1)
-  - Direct Answer Summary: Seismic base isolation decouples structures via elastomeric Lead-Rubber Bearings (LRBs), elongating fundamental period T_b = 2\pi\sqrt{m / k_{iso}} \gg T_s and providing hysteretic damping \beta_{eff} \ge 15\%. Design limits inter-story drift to < 1.5% per ASCE 7-22 Chapter 17 and FEMA 356 seismic criteria.
+  - Direct Answer Summary: Seismic base isolation decouples structures from horizontal ground accelerations according to natural period $T_{\text{iso}} = 2\pi\sqrt{\frac{m}{k_{\text{iso}}}}$, lengthening structural period beyond the dominant destructive earthquake spectrum ($T_{\text{iso}} > 2.5\text{ s}$). Substructure damping reduces spectral base shear by $> 75\%$. Governed by **ASCE 7-22 Chapter 17** and **IBC 2024**.
   - Physical Law: Newton’s Second Law & Elastomeric Hysteresis | Difficulty: Advanced Level
 - [Mohr’s Circle of Stress & Soil Shear Slip Failure](https://livesimulators.com/simulator/mohr-circle-soil/): Transform 2D normal and shear stresses to principal axes (σ₁, σ₂) and evaluate Coulomb failure envelopes.
   - Direct URL: https://livesimulators.com/simulator/mohr-circle-soil/
   - Governing Formulation: `τ_f = c + σ_n tan φ, R = √(((σ_x - σ_y / 2))^2 + τ_xy^2)`
   - International Standards: ASTM D3080 / BS 1377-7 / Eurocode 7 (EN 1997-1) (Direct Shear & Soil Triaxial Tests)
-  - Direct Answer Summary: Geotechnical shear failure satisfies the Mohr-Coulomb criterion \tau_f = c' + \sigma_n' \tan\phi' with principal stresses \sigma_1', \sigma_3' = [(\sigma_x + \sigma_y)/2] \pm \sqrt{[(\sigma_x - \sigma_y)/2]^2 + \tau_{xy}^2}. Slope stability enforces factor of safety FS \ge 1.50 per ASTM D3080 and Eurocode 7 (EN 1997-1).
+  - Direct Answer Summary: Geotechnical shear failure satisfies the Mohr-Coulomb criterion $\tau_f = c' + \sigma_n' \tan\phi'$ with effective principal stresses $\sigma_1', \sigma_3' = \frac{\sigma_x + \sigma_y}{2} \pm \sqrt{\left(\frac{\sigma_x - \sigma_y}{2}\right)^2 + \tau_{xy}^2}$. Slope stability enforces factor of safety $\text{FS} \ge 1.50$ per **ASTM D3080** and **Eurocode 7 (EN 1997-1)**.
   - Physical Law: Stress Tensor Coordinate Transformation & Coulomb Friction | Difficulty: Intermediate Level
 - [Reinforced Concrete Beam Flexural Design & Whitney Stress Block](https://livesimulators.com/simulator/rc-beam-design/): Calculate nominal moment capacity Mn, Whitney block depth a, rebar strain εt, and tension-controlled safety.
   - Direct URL: https://livesimulators.com/simulator/rc-beam-design/
   - Governing Formulation: `M_n = A_s f_y (d - (a / 2)), a = (A_s f_y / 0.85 f'_c b), c = (a / β_1), ε_t = 0.003 (d - c / c)`
   - International Standards: ACI 318-19 (Building Code Requirements for Structural Concrete) / Eurocode 2 (EN 1992-1-1)
-  - Direct Answer Summary: Reinforced concrete flexure follows Whitney stress block formulation with nominal moment M_n = A_s f_y (d - a/2) where a = A_s f_y / (0.85 f'_c b). Ductile design enforces tension-controlled strain \epsilon_t \ge 0.005 with strength reduction factor \phi = 0.90. Compliant with ACI 318-19 and Eurocode 2.
+  - Direct Answer Summary: Reinforced concrete flexure follows Whitney stress block formulation with nominal moment $M_n = A_s f_y \left(d - \frac{a}{2}\right)$ where $a = \frac{A_s f_y}{0.85 f'_c b}$. Ductile design enforces tension-controlled strain $\epsilon_t \ge 0.005$ with strength reduction factor $\phi = 0.90$. Compliant with **ACI 318-19** and **Eurocode 2**.
   - Physical Law: Euler-Bernoulli Plane Sections Remain Plane & Internal Moment Couple Equilibrium | Difficulty: Intermediate Level
 - [Euler Column Buckling & P-Delta Instability](https://livesimulators.com/simulator/column-buckling/): Calculate elastic critical bifurcation loads, effective length K factors, and non-linear P-Δ amplification.
   - Direct URL: https://livesimulators.com/simulator/column-buckling/
   - Governing Formulation: `P_cr = (π^2 E I / (K L)^2), σ_cr = (π^2 E / λ^2), λ = (K L / r)`
   - International Standards: AISC 360-16 Section E3 / Eurocode 3 (EN 1993-1-1) / ASTM E9 (Compressive Testing & Column Instability)
-  - Direct Answer Summary: Slender column stability is governed by Euler critical buckling formulation P_{cr} = \pi^2 E I / (K L)^2 with slenderness ratio \lambda = K L / r. Transition to inelastic buckling occurs when \lambda < \pi \sqrt{2 E / F_y}. Built per AISC 360-16 Specification Chapter E and ASME Section VIII structural standards.
+  - Direct Answer Summary: Slender structural column stability obeys Euler critical buckling load $P_{\text{cr}} = \frac{\pi^2 E I}{(K L)^2}$ and critical buckling stress $\sigma_{\text{cr}} = \frac{\pi^2 E}{(K L / r)^2}$. Boundary conditions mandate effective length factors $K = 1.0$ (pinned-pinned), $K = 0.5$ (fixed-fixed), and $K = 2.0$ (fixed-free). Governed by **AISC 360-16 Chapter E** and **Eurocode 3**.
   - Physical Law: Euler's Buckling Theory & Geometric Non-Linearity (P-Δ Effect) | Difficulty: Intermediate Level
 
 ### Quantum & Semiconductor Physics (PH-500)
@@ -312,37 +312,37 @@ Simulators:
   - Direct URL: https://livesimulators.com/simulator/pn-junction/
   - Governing Formulation: `W = √((2ε_s / q)((1 / N_A) + (1 / N_D))(V_bi - V_a)), I = I_s(e^qV_a / k_B T - 1)`
   - International Standards: IEEE Trans. Electron Devices / Sze Physics of Semiconductor Devices
-  - Direct Answer Summary: Semiconductor P-N diode physics obey the Shockley formulation J = J_0 [\exp(q V_a / k T) - 1] with built-in potential V_{bi} = (k T / q) \ln(N_A N_D / n_i^2) and depletion width W = \sqrt{(2\epsilon_s / q)(1/N_A + 1/N_D)(V_{bi} - V_a)}. Operating temperature is limited to T \le 150^\circ\text{C} per JEDEC JESD22 and IEC 60747-2 standards.
+  - Direct Answer Summary: Semiconductor P-N diode junctions obey the Shockley equation $J = J_0\left[\exp\left(\frac{q V_a}{k T}\right) - 1\right]$ with built-in potential $V_{\text{bi}} = \frac{k T}{q} \ln\left(\frac{N_A N_D}{n_i^2}\right)$ and depletion width $W = \sqrt{\frac{2\epsilon_s}{q}\left(\frac{1}{N_A} + \frac{1}{N_D}\right)(V_{\text{bi}} - V_a)}$. Operating temperature is limited to $T \le 150^\circ\text{C}$ per **JEDEC JESD22** and **IEC 60747-2**.
   - Physical Law: Poisson's Electrostatic Equation & Fermi-Dirac Carrier Distribution | Difficulty: Intermediate Level
 - [Silicon Carbide (SiC) MOSFET Double-Pulse Switching & Slew Rates](https://livesimulators.com/simulator/sic-switching/): Capture ultra-fast dv/dt (up to 100 V/ns), Miller plateau dynamics, inductive ringing, and switching energy losses E_on / E_off.
   - Direct URL: https://livesimulators.com/simulator/sic-switching/
   - Governing Formulation: `E_sw = ∫_0^t_sw v_ds(t) · i_d(t) dt, ((dv / dt))_max = (V_gs - V_plat / R_g,tot C_gd(V_ds))`
   - International Standards: JEDEC JESD24-11 / IEC 60747-8 / IEC 60747-9 (Power Semiconductor Switching Tests)
-  - Direct Answer Summary: Silicon Carbide (SiC) MOSFET switching dynamics follow energy loss formulations E_{sw} = \int V_{ds}(t) I_d(t) dt with fast gate slew rates dV/dt \le 100\text{ V/ns}. Gate oxide voltages are constrained to -4\text{ V} \le V_{gs} \le +18\text{ V}. Governed by JEDEC JEP183 and IEC 60747-8 wide-bandgap guidelines.
+  - Direct Answer Summary: Silicon Carbide (SiC) power MOSFET switching dynamics evaluate transient switching energy loss $E_{\text{sw}} = \int V_{\text{ds}}(t) I_d(t) dt$ under ultra-fast slew rates $\frac{dV}{dt} \le 100\text{ V/ns}$. Gate oxide voltage is strictly clamped to $-4\text{ V} \le V_{\text{gs}} \le +18\text{ V}$ to prevent dielectric gate rupture per **JEDEC JEP183** and **IEC 60747-8**.
   - Physical Law: Maxwell's Displacement Current, Carrier Drift-Diffusion & Parasitic RLC Resonant Tank | Difficulty: Advanced Level
 - [IGBT Module Multi-Layer Thermal Foster Network & SOA](https://livesimulators.com/simulator/igbt-thermal/): Model multi-layer conduction from Silicon Die through DBC ceramic and baseplate to heatsink, tracking T_j ripple.
   - Direct URL: https://livesimulators.com/simulator/igbt-thermal/
   - Governing Formulation: `Z_th(t) = ∑_i=1^4 R_i (1 - e^-t / τ_i), T_j(t) = T_a + P_tot R_th(j-a) + Δ T_j,ripple`
   - International Standards: IEC 60747-15 / JEDEC JESD51-14 / SEMI G42 (Thermal Test of Power Semiconductor Devices)
-  - Direct Answer Summary: IGBT module transient thermal impedance follows the multi-layer Foster/Cauer RC network T_j(t) = T_c + P_{loss} \sum R_i (1 - e^{-t/\tau_i}) with junction temperature constrained to T_j \le 175^\circ\text{C}. Short-circuit withstand is rated for t_{sc} \le 10\ \mu\text{s} per IEC 60747-9 and JEDEC JESD51 power electronics standards.
+  - Direct Answer Summary: Insulated Gate Bipolar Transistor (IGBT) transient thermal impedance follows the multi-layer Foster/Cauer RC network $T_j(t) = T_c + P_{\text{loss}} \sum R_i(1 - e^{-t/\tau_i})$ with junction temperature constrained to $T_j \le 175^\circ\text{C}$. Short-circuit withstand capability is rated for $t_{\text{sc}} \le 10\ \mu\text{s}$ per **IEC 60747-9** and **JEDEC JESD51**.
   - Physical Law: Fourier Heat Conduction & Electro-Thermal Network Analogy (JEDEC JESD51) | Difficulty: Intermediate Level
 - [MOSFET Inversion Channel, Band Bending & 2D Electron Gas](https://livesimulators.com/simulator/mosfet-channel/): Solve surface potential band bending, visualize 2D electron sheet accumulation, and observe channel pinch-off.
   - Direct URL: https://livesimulators.com/simulator/mosfet-channel/
   - Governing Formulation: `φ_s = (q N_A W_dep^2 / 2ε_s), Q_inv = -C_ox(V_gs - V_th), I_D = μ C_ox (W / L)[(V_gs - V_th)V_ds - (V_ds^2 / 2)]`
   - International Standards: IEEE Trans. Electron Devices / BSIM4 Standard MOSFET Model / Sze Physics of Semiconductor Devices
-  - Direct Answer Summary: MOSFET field-effect conduction follows BSIM channel physics with linear current I_D = \mu_n C_{ox} (W/L)[(V_{GS} - V_{th})V_{DS} - V_{DS}^2/2] and saturation I_D = \frac{1}{2} \mu_n C_{ox} (W/L)(V_{GS} - V_{th})^2(1 + \lambda V_{DS}). Gate dielectric electric field is bounded by E_{ox} \le 10\text{ MV/cm} per JEDEC JESD77 and IEC 60747-8 standards.
+  - Direct Answer Summary: Sub-micron MOSFET field-effect channel conduction follows BSIM physics with linear current $I_D = \mu_n C_{\text{ox}} \frac{W}{L}\left[(V_{GS} - V_{\text{th}})V_{DS} - \frac{V_{DS}^2}{2}\right]$ and saturation $I_D = \frac{1}{2}\mu_n C_{\text{ox}} \frac{W}{L}(V_{GS} - V_{\text{th}})^2(1 + \lambda V_{DS})$. Gate dielectric electric field is bounded by $E_{\text{ox}} \le 10\text{ MV/cm}$ per **JEDEC JESD77** and **IEC 60747-8**.
   - Physical Law: Poisson-Boltzmann Electrostatics & Fermi-Dirac Statistics (BSIM4) | Difficulty: Intermediate Level
 - [Photoelectric Effect & Einstein Quantum Work Function](https://livesimulators.com/simulator/photoelectric-effect/): Verify quantum photon particle theory, metal work functions Φ, and stopping potential V_stop.
   - Direct URL: https://livesimulators.com/simulator/photoelectric-effect/
   - Governing Formulation: `K_max = hν - Φ = q V_stop`
   - International Standards: NIST Reference on Constants, Units, and Uncertainty (CODATA Planck Constant h)
-  - Direct Answer Summary: Photoelectric quantum emission satisfies Einstein's conservation formulation E_{k,max} = h\nu - \Phi = q V_{stop} where \Phi is the cathode work function and \nu_0 = \Phi/h is threshold frequency. Photocurrent scales linearly with incident photon flux. Calibrated to NIST fundamental physical constants and IEC 60027 standards.
+  - Direct Answer Summary: Photoelectric quantum emission satisfies Einstein conservation formulation $E_{k,\text{max}} = h\nu - \Phi = q V_{\text{stop}}$ where $\Phi$ is cathode work function and $\nu_0 = \frac{\Phi}{h}$ is cutoff threshold frequency. Saturated photocurrent scales linearly with incident photon flux. Calibrated against **NIST** physical constants and **IEC 60027**.
   - Physical Law: Planck-Einstein Quantum Relation E = hν & Energy Conservation | Difficulty: Intermediate Level
 - [Quantum Barrier Tunneling & Resonant Diode (RTD) NDR](https://livesimulators.com/simulator/quantum-tunneling/): Simulate WKB barrier tunneling, resonant double-barrier transmission, and negative differential resistance.
   - Direct URL: https://livesimulators.com/simulator/quantum-tunneling/
   - Governing Formulation: `T(E) ≈ exp(-2 ∫_x_1^x_2 √((2m^* / ħ^2)big(V(x) - Ebig)) dx), I(V) = (2e / h)∫ T(E,V)big(f_L(E) - f_R(E)big) dE`
   - International Standards: IEEE Electron Devices Society (EDS) / NIST Quantum Devices Benchmark / ISO/IEC 80000-10 (Quantum & Solid-State Physics)
-  - Direct Answer Summary: Quantum mechanical barrier tunneling follows the WKB transmission formulation T(E) \approx 16 (E/V_0)(1 - E/V_0) e^{-2\kappa a} with decay parameter \kappa = \sqrt{2m(V_0 - E)}/\hbar. Applicable across barrier thicknesses a \le 5.0\text{ nm}. Governed by IEEE Nanotechnology Council and ISO 80000-10 quantum physical standards.
+  - Direct Answer Summary: Quantum mechanical barrier tunneling follows the WKB transmission formulation $T(E) \approx 16 \frac{E}{V_0}\left(1 - \frac{E}{V_0}\right) e^{-2\kappa a}$ with wave decay parameter $\kappa = \frac{\sqrt{2m(V_0 - E)}}{\hbar}$. Applicable across barrier thicknesses $a \le 5.0\text{ nm}$. Governed by **IEEE Nanotechnology Council** and **ISO 80000-10** quantum standards.
   - Physical Law: Time-Independent Schrödinger Equation & WKB Wavepacket Tunneling | Difficulty: Advanced Level
 
 ## Industrial Engineering Labs Workbench

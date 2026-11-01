@@ -9,6 +9,7 @@ import { getSeoMetadata } from '../src/utils/seo';
 import { routeToPath, SITE_URL, TOP_FLAGSHIP_EMBED_SLUGS } from '../src/utils/routes';
 import { getEngineeringTheory, cleanLatexToPlainText } from '../src/utils/engineeringTheory';
 import { getCrossDisciplineEquivalents } from '../src/data/crossDisciplineEquivalents';
+import { generateSimulatorUniqueParagraph } from '../src/utils/simulatorExplanations';
 import { generateLlmsContent } from './generate-llms-txt.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -381,6 +382,24 @@ function renderContentForRoute(route: AppRoute): string {
           </div>
         </div>
 
+        <!-- Section 1: Physical Insight & Dynamic Simulation Integration -->
+        <section id="section-insight" aria-labelledby="heading-insight" style="margin-bottom:2.5rem; padding:1.5rem; background:#070d19; border:1px solid rgba(245,158,11,0.4); border-left:4px solid #f59e0b; border-radius:1rem;">
+          <h2 id="heading-insight" style="font-size:1.35rem; font-weight:bold; color:#fbbf24; font-family:monospace; margin-bottom:0.75rem;">
+            ✦ Section 1: Physical Phenomenon Insight &amp; Dynamic Integration
+          </h2>
+          <p style="color:#e2e8f0; font-size:0.95rem; line-height:1.6; margin-bottom:1rem;">
+            ${escapeHtml(sim.description)}
+          </p>
+          <div style="background:#030712; padding:1.25rem; border-radius:0.5rem; border:1px solid #1e293b;">
+            <div style="font-size:0.8rem; font-weight:bold; font-family:monospace; color:#fbbf24; text-transform:uppercase; margin-bottom:0.35rem;">
+              Dynamic State &amp; Parameter Evaluation:
+            </div>
+            <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.65; margin:0;">
+              ${escapeHtml(generateSimulatorUniqueParagraph(sim))}
+            </p>
+          </div>
+        </section>
+
         <!-- REUSABLE ENGINEERING THEORY, GOVERNING FORMULAS & STEP-BY-STEP CALCULATOR GUIDE -->
         <details open class="theory-formulas-accordion" style="margin-bottom:2.5rem; padding:1.5rem; background:#070d19; border:1px solid #0284c7; border-radius:1rem; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);">
           <summary style="font-size:1.35rem; font-weight:900; color:#38bdf8; cursor:pointer; margin-bottom:1.25rem; user-select:none; font-family:monospace;">
@@ -389,8 +408,8 @@ function renderContentForRoute(route: AppRoute): string {
 
           <div style="margin-top:1.5rem; space-y:2rem;">
             <!-- 1. Governing Equations & MathML / KaTeX Mathematical Formulation -->
-            <section style="margin-bottom:2rem;">
-              <h2 style="font-size:1.35rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:1rem; border-bottom:1px solid #1e293b; padding-bottom:0.5rem;">
+            <section id="section-theory" aria-labelledby="heading-theory" style="margin-bottom:2rem;">
+              <h2 id="heading-theory" style="font-size:1.35rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:1rem; border-bottom:1px solid #1e293b; padding-bottom:0.5rem;">
                 <span style="color:#38bdf8;">1.</span> Governing Equations &amp; Mathematical Formulation
               </h2>
               ${equationsHtml}
@@ -466,8 +485,8 @@ function renderContentForRoute(route: AppRoute): string {
             </section>
 
             <!-- 4. Referenced Engineering Standards & Verification -->
-            <section style="margin-bottom:2rem;">
-              <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
+            <section id="section-standards" aria-labelledby="heading-standards" style="margin-bottom:2rem;">
+              <h2 id="heading-standards" style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
                 <span style="color:#06b6d4;">4.</span> Referenced Engineering Standards &amp; Verification
               </h2>
               <div style="padding:1rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem;">
@@ -485,9 +504,9 @@ function renderContentForRoute(route: AppRoute): string {
             </section>
 
             <!-- 5. Adjustable System Parameters & Dynamic Range -->
-            <section style="margin-bottom:2rem;">
-              <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
-                <span style="color:#cbd5e1;">5.</span> Adjustable System Parameters &amp; Dynamic Range
+            <section id="section-telemetry" aria-labelledby="heading-telemetry" style="margin-bottom:2rem;">
+              <h2 id="heading-telemetry" style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
+                <span style="color:#cbd5e1;">5.</span> Adjustable System Parameters &amp; Telemetry Dynamic Range
               </h2>
               <table style="width:100%; border-collapse:collapse; text-align:left; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem; overflow:hidden;">
                 <thead style="background:#0f172a; color:#f8fafc; font-size:0.8rem; font-family:monospace;">
@@ -504,8 +523,8 @@ function renderContentForRoute(route: AppRoute): string {
 
             ${sim.courseMapping ? `
             <!-- 6. University Syllabus & Curriculum Mapping -->
-            <section style="margin-bottom:2rem;">
-              <h2 style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
+            <section id="section-curriculum" aria-labelledby="heading-curriculum" style="margin-bottom:2rem;">
+              <h2 id="heading-curriculum" style="font-size:1.25rem; font-weight:bold; color:#ffffff; font-family:monospace; margin-bottom:0.75rem;">
                 <span style="color:#a855f7;">6.</span> University Syllabus &amp; Curriculum Mapping
               </h2>
               <div style="padding:1rem; background:#0b1324; border:1px solid #1e293b; border-radius:0.5rem;">
